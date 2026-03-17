@@ -1,0 +1,220 @@
+backend/
+├── src/
+│   ├── main.ts
+│   ├── app.module.ts
+│   ├── config/
+│   │   ├── database.config.ts
+│   │   └── jwt.config.ts
+│   ├── common/
+│   │   ├── guards/
+│   │   │   └── jwt-auth.guard.ts
+│   │   ├── decorators/
+│   │   │   └── current-user.decorator.ts
+│   │   ├── filters/
+│   │   │   └── http-exception.filter.ts
+│   │   └── interceptors/
+│   │       └── transform.interceptor.ts
+│   ├── modules/
+│   │   ├── auth/
+│   │   │   ├── auth.controller.ts
+│   │   │   ├── auth.service.ts
+│   │   │   ├── auth.module.ts
+│   │   │   ├── dto/
+│   │   │   │   ├── login.dto.ts
+│   │   │   │   └── register.dto.ts
+│   │   │   └── strategies/
+│   │   │       └── jwt.strategy.ts
+│   │   ├── users/
+│   │   │   ├── users.controller.ts
+│   │   │   ├── users.service.ts
+│   │   │   ├── users.module.ts
+│   │   │   ├── entities/
+│   │   │   │   └── user.entity.ts
+│   │   │   └── dto/
+│   │   │       └── update-user.dto.ts
+│   │   ├── games/
+│   │   │   ├── games.controller.ts
+│   │   │   ├── games.service.ts
+│   │   │   ├── games.module.ts
+│   │   │   ├── entities/
+│   │   │   │   ├── game.entity.ts
+│   │   │   │   ├── category.entity.ts
+│   │   │   │   └── question.entity.ts
+│   │   │   └── dto/
+│   │   │       ├── create-game.dto.ts
+│   │   │       ├── update-game.dto.ts
+│   │   │       └── publish-game.dto.ts
+│   │   ├── sessions/
+│   │   │   ├── sessions.controller.ts
+│   │   │   ├── sessions.service.ts
+│   │   │   ├── sessions.module.ts
+│   │   │   ├── entities/
+│   │   │   │   ├── session.entity.ts
+│   │   │   │   ├── team.entity.ts
+│   │   │   │   └── player.entity.ts
+│   │   │   ├── dto/
+│   │   │   │   ├── create-session.dto.ts
+│   │   │   │   ├── join-session.dto.ts
+│   │   │   │   └── update-score.dto.ts
+│   │   │   └── gateway/
+│   │   │       └── sessions.gateway.ts
+│   │   └── library/
+│   │       ├── library.controller.ts
+│   │       ├── library.service.ts
+│   │       ├── library.module.ts
+│   │       └── dto/
+│   │           └── search-games.dto.ts
+│   ├── database/
+│   │   ├── migrations/
+│   │   └── seeds/
+│   │       └── initial.seed.ts
+│   └── types/
+│       └── index.ts
+├── test/
+├── .env
+├── .env.example
+├── package.json
+├── tsconfig.json
+├── nest-cli.json
+└── README.md
+
+
+frontend/src/
+├── app/
+│   ├── App.css
+│   ├── App.tsx
+│   ├── providers/
+│   │   └── index.tsx
+│   ├── router/
+│   │   └── AppRouter.tsx
+│   └── store/
+│       ├── hooks.ts
+│       └── store.ts
+│
+├── features/
+│   ├── auth/
+│   │   ├── api/
+│   │   ├── components/
+│   │   ├── hooks/
+│   │   ├── store/
+│   │   ├── types/
+│   │   └── index.ts
+│   │
+│   ├── templates/
+│   │   ├── types/
+│   │   │   └── template.types.ts
+│   │   ├── hooks/
+│   │   │   └── useTemplateBuilder.ts
+│   │   ├── utils/
+│   │   │   └── template.utils.ts
+│   │   └── index.ts
+│   │
+│   ├── games/
+│   │   ├── api/
+│   │   ├── components/
+│   │   ├── hooks/
+│   │   ├── store/
+│   │   ├── types/
+│   │   │   └── game.types.ts
+│   │   └── index.ts
+│   │
+│   └── sessions/
+│       ├── api/
+│       ├── components/
+│       ├── hooks/
+│       ├── store/
+│       ├── types/
+│       │   └── session.types.ts
+│       └── index.ts
+│
+├── pages/
+│   ├── create-game/
+│   │   ├── CreateGamePage.css
+│   │   └── CreateGamePage.tsx
+│   │
+│   ├── my-games/
+│   │   ├── MyGamesPage.css
+│   │   └── MyGamesPage.tsx
+│   │
+│   ├── library/
+│   │   ├── LibraryPage.css
+│   │   └── LibraryPage.tsx
+│   │
+│   ├── game-sessions/
+│   │   ├── GameSessionsPage.css
+│   │   └── GameSessionsPage.tsx
+│   │
+│   ├── template-builder/
+│   │   ├── components/
+│   │   │   ├── BuilderLayout.tsx
+│   │   │   ├── BuilderLayout.css
+│   │   │   ├── OwnGameBuilder.tsx
+│   │   │   ├── OwnGameBuilder.css
+│   │   │   ├── QuizGameBuilder.tsx
+│   │   │   └── QuizGameBuilder.css
+│   │   ├── TemplateBuilderPage.css
+│   │   └── TemplateBuilderPage.tsx
+│   │
+│   └── game/
+│       ├── GamePage.css
+│       └── GamePage.tsx
+│
+├── widgets/
+│   ├── game-card/
+│   │   ├── GameCard.css
+│   │   └── GameCard.tsx
+│   │
+│   ├── template-card/
+│   │   ├── TemplateCard.css
+│   │   └── TemplateCard.tsx
+│   │
+│   ├── session-card/
+│   │   ├── SessionCard.css
+│   │   └── SessionCard.tsx
+│   │
+│   └── menu/
+│       ├── Menu.css
+│       └── Menu.tsx
+│
+├── shared/
+│   ├── api/
+│   │   ├── axios.instance.ts
+│   │   └── index.ts
+│   │
+│   ├── ui/
+│   │   ├── Button/
+│   │   │   ├── Button.css
+│   │   │   └── Button.tsx
+│   │   │
+│   │   ├── Input/
+│   │   │   ├── Input.css
+│   │   │   └── Input.tsx
+│   │   │
+│   │   ├── Modal/
+│   │   │   ├── Modal.css
+│   │   │   └── Modal.tsx
+│   │   │
+│   │   ├── Card/
+│   │   │   ├── Card.css
+│   │   │   └── Card.tsx
+│   │   │
+│   │   └── Table/
+│   │       ├── Table.css
+│   │       └── Table.tsx
+│   │
+│   ├── lib/
+│   │   ├── helpers.ts
+│   │   └── constants.ts
+│   │
+│   ├── hooks/
+│   │   ├── useLocalStorage.ts
+│   │   └── useDebounce.ts
+│   │
+│   ├── config/
+│   │   └── index.ts
+│   │
+│   └── types/
+│       └── global.types.ts
+│
+├── index.css
+└── main.tsx

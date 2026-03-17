@@ -1,0 +1,252 @@
+.game-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.game-page.lobby {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-container {
+  max-width: 800px;
+  width: 100%;
+  background: white;
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.5s ease;
+}
+
+.game-title {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 30px;
+  text-align: center;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.session-info {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.session-info p {
+  margin: 8px 0;
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+.session-info strong {
+  color: var(--primary-color);
+  font-size: 24px;
+  margin-left: 10px;
+}
+
+.teams-section h2 {
+  font-size: 24px;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+}
+
+.teams-list {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.team-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.team-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.team-players {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.game-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+/* Активная игра */
+.game-page.active {
+  display: flex;
+  flex-direction: column;
+}
+
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 15px 30px;
+  border-radius: 50px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.game-info {
+  display: flex;
+  gap: 30px;
+}
+
+.game-code {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.game-question {
+  color: var(--text-secondary);
+}
+
+.game-content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.question-container {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.question-value {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 30px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.question-text {
+  font-size: 24px;
+  color: var(--text-primary);
+  margin-bottom: 30px;
+  line-height: 1.5;
+}
+
+.question-answer {
+  font-size: 20px;
+  color: var(--success-color);
+  font-weight: 500;
+}
+
+.question-answer.hidden {
+  opacity: 0;
+  user-select: none;
+}
+
+.teams-scoreboard {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  height: fit-content;
+}
+
+.teams-scoreboard h3 {
+  font-size: 18px;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.scoreboard-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.scoreboard-row:last-child {
+  border-bottom: none;
+}
+
+.scoreboard-row .team-name {
+  flex: 1;
+}
+
+.scoreboard-row .team-score {
+  font-weight: 600;
+  color: var(--primary-color);
+  min-width: 60px;
+  text-align: center;
+}
+
+.score-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.game-footer {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 30px;
+  padding: 20px;
+  background: white;
+  border-radius: 50px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .game-content {
+    grid-template-columns: 1fr;
+  }
+
+  .game-header {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .game-info {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .scoreboard-row {
+    flex-wrap: wrap;
+  }
+
+  .score-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

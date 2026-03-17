@@ -1,0 +1,61 @@
+// Типы для "Своя игра"
+export interface OwnGameQuestion {
+  value: number;
+  question: string;
+  answer: string;
+  isAnswered?: boolean;
+}
+
+export interface OwnGameCategory {
+  id: string;
+  name: string;
+  questions: OwnGameQuestion[];
+}
+
+export interface OwnGameTemplate {
+  id?: string;
+  name: string;
+  type: 'own';
+  categories: OwnGameCategory[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Типы для "Викторина"
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  answer: string;
+  options?: string[];
+  points: number;
+}
+
+export interface QuizTemplate {
+  id?: string;
+  name: string;
+  type: 'quiz';
+  questions: QuizQuestion[];
+  timePerQuestion?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Общий тип для всех шаблонов
+export type GameTemplate = OwnGameTemplate | QuizTemplate;
+
+// Типы для валидации
+export interface ValidationError {
+  field: string;
+  message: string;
+}
+
+// Константы для шаблонов
+export const TEMPLATE_CONSTANTS = {
+  MAX_CATEGORIES: 6,
+  MIN_CATEGORIES: 1,
+  QUESTIONS_PER_CATEGORY: 5,
+  QUESTION_VALUES: [100, 200, 300, 400, 500],
+  DEFAULT_TIME_PER_QUESTION: 30,
+  MIN_TIME_PER_QUESTION: 5,
+  MAX_TIME_PER_QUESTION: 120
+};
