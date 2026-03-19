@@ -89,6 +89,13 @@
   overflow: hidden;
 }
 
+.menu-item-button {
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+}
+
 .menu-item::before {
   content: '';
   position: absolute;

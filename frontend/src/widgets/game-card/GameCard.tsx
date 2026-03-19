@@ -21,7 +21,6 @@ interface GameCardProps {
 }
 
 export const GameCard: React.FC<GameCardProps> = ({
-  id,
   title,
   type,
   description,

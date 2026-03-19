@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { SessionCard } from '../../widgets/session-card/SessionCard';
 import { Button } from '../../shared/ui/Button/Button';
 import { Modal } from '../../shared/ui/Modal/Modal';
-import { mockSessions } from '../../features/sessions/types/session.types';
 import './GameSessionsPage.css';
 
 interface Session {
@@ -20,7 +19,7 @@ interface Session {
 
 export const GameSessionsPage: React.FC = () => {
   const navigate = useNavigate();
-  const [sessions, setSessions] = useState<Session[]>([
+  const [sessions] = useState<Session[]>([
     {
       id: '1',
       gameTitle: 'История России',

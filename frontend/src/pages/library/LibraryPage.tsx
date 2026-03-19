@@ -4,7 +4,6 @@ import { GameCard } from '../../widgets/game-card/GameCard';
 import { Input } from '../../shared/ui/Input/Input';
 import { Button } from '../../shared/ui/Button/Button';
 import { useDebounce } from '../../shared/hooks/useDebounce';
-import { mockGames } from '../../features/games/types/game.types';
 import './LibraryPage.css';
 
 interface PublicGame {

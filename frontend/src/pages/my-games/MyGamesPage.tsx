@@ -4,7 +4,6 @@ import { GameCard } from '../../widgets/game-card/GameCard';
 import { Button } from '../../shared/ui/Button/Button';
 import { Modal } from '../../shared/ui/Modal/Modal';
 import { Input } from '../../shared/ui/Input/Input';
-import { mockGames } from '../../features/games/types/game.types';
 import './MyGamesPage.css';
 
 interface Game {

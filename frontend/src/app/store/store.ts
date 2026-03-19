@@ -1,4 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
+import { authReducer } from '../../features/auth/model/authSlice';
 
 // Здесь будут импортироваться редюсеры из features
 // import authReducer from '../../features/auth/store/authSlice';
@@ -7,7 +8,7 @@ import { configureStore } from '@reduxjs/toolkit';
 
 export const store = configureStore({
   reducer: {
-    // auth: authReducer,
+    auth: authReducer,
     // games: gamesReducer,
     // sessions: sessionsReducer,
   },

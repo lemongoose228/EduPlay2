@@ -173,7 +173,7 @@ export const OwnGameBuilder: React.FC<OwnGameBuilderProps> = ({
         </div>
 
         <div className="categories-list">
-          {categories.map((category, index) => (
+          {categories.map((category) => (
             <Card
               key={category.id}
               title={

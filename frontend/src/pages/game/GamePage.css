@@ -52,6 +52,10 @@
   margin-left: 10px;
 }
 
+.teams-section {
+  margin-bottom: 30px;
+}
+
 .teams-section h2 {
   font-size: 24px;
   color: var(--text-primary);
@@ -61,7 +65,6 @@
 .teams-list {
   display: grid;
   gap: 12px;
-  margin-bottom: 30px;
 }
 
 .team-item {
@@ -94,6 +97,7 @@
 .game-page.active {
   display: flex;
   flex-direction: column;
+  padding: 0;
 }
 
 .game-header {
@@ -102,43 +106,163 @@
   align-items: center;
   background: white;
   padding: 15px 30px;
-  border-radius: 50px;
-  margin-bottom: 30px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
 }
 
 .game-info {
   display: flex;
   gap: 30px;
+  align-items: center;
 }
 
-.game-code {
+.game-title-header {
+  font-size: 20px;
   font-weight: 600;
   color: var(--primary-color);
 }
 
-.game-question {
+.game-code {
   color: var(--text-secondary);
+  font-size: 14px;
+  background: #f0f0f0;
+  padding: 4px 12px;
+  border-radius: 20px;
 }
 
 .game-content {
-  flex: 1;
   display: grid;
   grid-template-columns: 1fr 300px;
   gap: 20px;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   width: 100%;
+  padding: 0 20px;
 }
 
-.question-container {
+.game-board {
   background: white;
   border-radius: 16px;
-  padding: 40px;
+  padding: 20px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+}
+
+.jeopardy-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+
+.jeopardy-table th {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  color: white;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.jeopardy-table td {
+  border: 2px solid var(--border-color);
+  padding: 0;
+  text-align: center;
+  background: #f8f9fa;
+}
+
+.question-button {
+  width: 100%;
+  height: 80px;
+  background: linear-gradient(135deg, #6B4EFF 0%, #4B2EC0 100%);
+  border: none;
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.question-button:hover:not(:disabled) {
+  transform: scale(1.05);
+  background: linear-gradient(135deg, #8F7AFF 0%, #6B4EFF 100%);
+  box-shadow: 0 4px 12px rgba(107, 78, 255, 0.4);
+}
+
+.question-button.answered {
+  background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.teams-scoreboard {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  height: fit-content;
+}
+
+.teams-scoreboard h3 {
+  font-size: 18px;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  text-align: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.scoreboard-list {
   display: flex;
   flex-direction: column;
+  gap: 12px;
+}
+
+.scoreboard-row {
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.team-info {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
+  margin-bottom: 8px;
+}
+
+.team-info .team-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.team-info .team-score {
+  font-weight: 700;
+  color: var(--primary-color);
+  font-size: 18px;
+}
+
+.score-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.score-actions button {
+  padding: 4px 12px;
+  font-size: 12px;
+}
+
+/* Модальное окно вопроса */
+.question-modal {
+  padding: 20px 0;
   text-align: center;
 }
 
@@ -158,78 +282,34 @@
   color: var(--text-primary);
   margin-bottom: 30px;
   line-height: 1.5;
+  padding: 0 20px;
 }
 
 .question-answer {
   font-size: 20px;
   color: var(--success-color);
-  font-weight: 500;
-}
-
-.question-answer.hidden {
-  opacity: 0;
-  user-select: none;
-}
-
-.teams-scoreboard {
-  background: white;
-  border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  height: fit-content;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border-left: 4px solid var(--success-color);
+  text-align: left;
 }
 
-.teams-scoreboard h3 {
-  font-size: 18px;
-  color: var(--text-primary);
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.scoreboard-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.scoreboard-row:last-child {
-  border-bottom: none;
-}
-
-.scoreboard-row .team-name {
-  flex: 1;
-}
-
-.scoreboard-row .team-score {
-  font-weight: 600;
-  color: var(--primary-color);
-  min-width: 60px;
-  text-align: center;
-}
-
-.score-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.game-footer {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  margin-top: 30px;
-  padding: 20px;
-  background: white;
-  border-radius: 50px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .game-content {
     grid-template-columns: 1fr;
   }
 
+  .game-board {
+    order: 2;
+  }
+
+  .teams-scoreboard {
+    order: 1;
+  }
+}
+
+@media (max-width: 768px) {
   .game-header {
     flex-direction: column;
     gap: 10px;
@@ -241,12 +321,13 @@
     gap: 5px;
   }
 
-  .scoreboard-row {
-    flex-wrap: wrap;
+  .question-button {
+    height: 60px;
+    font-size: 18px;
   }
 
-  .score-actions {
-    width: 100%;
-    justify-content: flex-end;
+  .category-header {
+    font-size: 14px;
+    padding: 10px;
   }
 }
