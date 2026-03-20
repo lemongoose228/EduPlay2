@@ -11,8 +11,8 @@ export class SearchGamesDto {
   type?: 'own' | 'quiz';
 
   @IsOptional()
-  @IsEnum(['popular', 'rating', 'newest'])
-  sortBy?: 'popular' | 'rating' | 'newest';
+  @IsEnum(['popular', 'likes', 'newest'])
+  sortBy?: 'popular' | 'likes' | 'newest';
 
   @IsOptional()
   @Type(() => Number)

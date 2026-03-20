@@ -1,8 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '../../shared/ui/Button/Button';
 import { Modal } from '../../shared/ui/Modal/Modal';
+import { Input } from '../../shared/ui/Input/Input';
 import './GamePage.css';
+import { useAppSelector } from '../../app/store/hooks';
+import { selectAuthUser } from '../../features/auth/model/selectors';
+import {
+  answerQuestionApi,
+  answerQuestionWithBodyApi,
+  addTeamApi,
+  finishSessionApi,
+  getSessionApi,
+  startSessionApi,
+  revealQuizQuestionApi,
+  updateScoreApi,
+} from '../../features/sessions/api/sessionsApi';
 
 interface Question {
   id: string;
@@ -22,20 +35,42 @@ interface Team {
   id: string;
   name: string;
   score: number;
-  players: { name: string }[];
+  players: { id?: string; userId?: string; teamId?: string; name: string; isHost?: boolean }[];
 }
 
 interface GameSession {
   id: string;
   game: {
     title: string;
+    type: 'own' | 'quiz';
     categories: Category[];
+    settings?: {
+      timePerQuestion?: number;
+      allowNegativeScores?: boolean;
+    };
   };
   teams: Team[];
-  status: 'waiting' | 'active' | 'finished';
+  status: 'waiting' | 'active' | 'paused' | 'finished';
+  hostId: string;
   currentQuestionIndex?: number;
-  answeredQuestions: { categoryId: string; questionId: string }[];
+  answeredQuestions: Array<{
+    categoryId: string;
+    questionId: string;
+    userId?: string;
+    teamId?: string;
+    isCorrect?: boolean;
+    submittedAnswer?: string;
+    scored?: boolean;
+  }>;
   inviteCode: string;
+  settings: {
+    maxTeams: number;
+    maxPlayersPerTeam: number;
+    timePerQuestion: number;
+    allowNegativeScores: boolean;
+  };
+  startedAt?: string;
+  finishedAt?: string;
 }
 
 export const GamePage: React.FC = () => {
@@ -44,75 +79,169 @@ export const GamePage: React.FC = () => {
   const [selectedQuestion, setSelectedQuestion] = useState<{ category: Category; question: Question } | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [isHost, setIsHost] = useState(false);
-
-  // Моковые данные для демонстрации
+  const user = useAppSelector(selectAuthUser);
+  const currentQuestionValue = selectedQuestion?.question.value;
+  const pointsLockRef = useRef(false);
+  const [isPointsLocked, setIsPointsLocked] = useState(false);
+  
   useEffect(() => {
-    const mockSession: GameSession = {
-      id: sessionId || '1',
-      game: {
-        title: 'История России',
-        categories: [
-          {
-            id: '1',
-            name: 'Древняя Русь',
-            questions: [
-              { id: 'q1', value: 100, question: 'В каком году произошло крещение Руси?', answer: '988 год', isAnswered: false },
-              { id: 'q2', value: 200, question: 'Кто был основателем династии Рюриковичей?', answer: 'Рюрик', isAnswered: false },
-              { id: 'q3', value: 300, question: 'Как назывался сбор дани в Древней Руси?', answer: 'Полюдье', isAnswered: false },
-              { id: 'q4', value: 400, question: 'Какой город был столицей Древней Руси до Киева?', answer: 'Новгород', isAnswered: false },
-              { id: 'q5', value: 500, question: 'В каком веке была написана "Повесть временных лет"?', answer: 'XII век', isAnswered: false },
-            ],
-          },
-          {
-            id: '2',
-            name: 'Российская Империя',
-            questions: [
-              { id: 'q6', value: 100, question: 'Кто был первым императором России?', answer: 'Петр I', isAnswered: false },
-              { id: 'q7', value: 200, question: 'В каком году был основан Санкт-Петербург?', answer: '1703 год', isAnswered: false },
-              { id: 'q8', value: 300, question: 'При ком произошло присоединение Крыма к Российской империи?', answer: 'Екатерина II', isAnswered: false },
-              { id: 'q9', value: 400, question: 'Кто победил в Северной войне?', answer: 'Россия', isAnswered: false },
-              { id: 'q10', value: 500, question: 'В каком году было отменено крепостное право?', answer: '1861 год', isAnswered: false },
-            ],
-          },
-          {
-            id: '3',
-            name: 'Советский период',
-            questions: [
-              { id: 'q11', value: 100, question: 'В каком году произошла Октябрьская революция?', answer: '1917 год', isAnswered: false },
-              { id: 'q12', value: 200, question: 'Кто был первым космонавтом?', answer: 'Юрий Гагарин', isAnswered: false },
-              { id: 'q13', value: 300, question: 'В каком году началась Великая Отечественная война?', answer: '1941 год', isAnswered: false },
-              { id: 'q14', value: 400, question: 'Кто был лидером СССР в период перестройки?', answer: 'Михаил Горбачев', isAnswered: false },
-              { id: 'q15', value: 500, question: 'В каком году распался СССР?', answer: '1991 год', isAnswered: false },
-            ],
-          },
-          {
-            id: '4',
-            name: 'Современная Россия',
-            questions: [
-              { id: 'q16', value: 100, question: 'Кто является действующим президентом РФ?', answer: 'Владимир Путин', isAnswered: false },
-              { id: 'q17', value: 200, question: 'В каком году была принята действующая Конституция РФ?', answer: '1993 год', isAnswered: false },
-              { id: 'q18', value: 300, question: 'Как называется российский парламент?', answer: 'Федеральное собрание', isAnswered: false },
-              { id: 'q19', value: 400, question: 'В каком году проходили первые зимние Олимпийские игры в России?', answer: '2014 год', isAnswered: false },
-              { id: 'q20', value: 500, question: 'Какой город стал столицей в 1918 году?', answer: 'Москва', isAnswered: false },
-            ],
-          },
-        ],
-      },
-      teams: [
-        { id: 't1', name: 'Команда А', score: 0, players: [{ name: 'Игрок 1' }, { name: 'Игрок 2' }] },
-        { id: 't2', name: 'Команда Б', score: 0, players: [{ name: 'Игрок 3' }] },
-      ],
-      status: 'active',
-      answeredQuestions: [],
-      inviteCode: 'ABC123',
+    if (!session || !user) {
+      setIsHost(false);
+      return;
+    }
+    setIsHost(session.hostId === user.id);
+  }, [session, user]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSession() {
+      if (!sessionId) return;
+      try {
+        const s = await getSessionApi(sessionId);
+        if (cancelled) return;
+        setSession(s);
+      } catch (e) {
+        console.error(e);
+        if (!cancelled) setSession(null);
+      }
+    }
+
+    loadSession();
+    return () => {
+      cancelled = true;
     };
-    
-    setSession(mockSession);
-    setIsHost(true);
   }, [sessionId]);
 
+  const answeredSet = useMemo(() => {
+    return new Set(
+      (session?.answeredQuestions || []).map((a) => `${a.categoryId}:${a.questionId}`),
+    );
+  }, [session]);
+
+  const allowNegativeScores = session?.settings?.allowNegativeScores ?? false;
+
+  const myPlayer = useMemo(() => {
+    if (!session || !user?.id) return undefined;
+    return session.teams
+      .flatMap((t) => t.players)
+      .find((p) => p.userId === user.id);
+  }, [session, user?.id]);
+
+  const myTeamId = myPlayer?.teamId;
+
+  const quizQuestionRefs = useMemo(() => {
+    if (!session || session.game.type !== 'quiz') return [];
+    return session.game.categories.flatMap((cat) =>
+      cat.questions.map((q) => ({
+        categoryId: cat.id,
+        questionId: q.id,
+        category: cat,
+        question: q,
+      })),
+    );
+  }, [session]);
+
+  const currentQuizIndex = session?.currentQuestionIndex ?? 0;
+  const currentQuizQuestionRef = quizQuestionRefs[currentQuizIndex];
+
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [quizAnswerDraft, setQuizAnswerDraft] = useState('');
+  const [newOwnTeamName, setNewOwnTeamName] = useState('');
+  const [quizReview, setQuizReview] = useState<null | {
+    categoryId: string;
+    questionId: string;
+    questionText: string;
+    correctAnswer: string;
+    value: number;
+  }>(null);
+  const quizRevealInFlightKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!session) return;
+    if (session.game.type !== 'quiz') return;
+    if (session.status !== 'active') return;
+    if (quizReview) return; // Пока показываем результаты — не трогаем таймер.
+
+    setTimeLeft(session.settings?.timePerQuestion ?? 30);
+    setQuizAnswerDraft('');
+    quizRevealInFlightKeyRef.current = null;
+  }, [session?.id, session?.currentQuestionIndex, session?.status, quizReview]);
+
+  useEffect(() => {
+    if (!session) return;
+    if (session.game.type !== 'quiz') return;
+    if (session.status !== 'active') return;
+    if (quizReview) return;
+
+    const interval = window.setInterval(() => {
+      setTimeLeft((t) => Math.max(0, t - 1));
+    }, 1000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [session?.id, session?.currentQuestionIndex, session?.status, quizReview]);
+
+  useEffect(() => {
+    if (!session) return;
+    if (session.game.type !== 'quiz') return;
+    if (session.status !== 'active') return;
+    if (quizReview) return;
+    if (timeLeft > 0) return;
+    if (!currentQuizQuestionRef) return;
+
+    const key = `${currentQuizQuestionRef.categoryId}:${currentQuizQuestionRef.questionId}`;
+    if (quizRevealInFlightKeyRef.current === key) return;
+    quizRevealInFlightKeyRef.current = key;
+
+    // Ставим UI-режим "показать правильный ответ"
+    setQuizReview({
+      categoryId: currentQuizQuestionRef.categoryId,
+      questionId: currentQuizQuestionRef.questionId,
+      questionText: currentQuizQuestionRef.question.question,
+      correctAnswer: currentQuizQuestionRef.question.answer,
+      value: currentQuizQuestionRef.question.value,
+    });
+
+    revealQuizQuestionApi(session.id, currentQuizQuestionRef.categoryId, currentQuizQuestionRef.questionId)
+      .then((updated) => setSession(updated))
+      .catch((e) => {
+        console.error(e);
+        const msg = (e as any)?.response?.data?.message ?? (e as any)?.message ?? '';
+        if (typeof msg === 'string' && msg.toLowerCase().includes('текущ')) {
+          // Другой участник уже раскрыл вопрос и продвинул индекс на сервере.
+          return;
+        }
+        alert('Не удалось показать правильный ответ');
+      })
+      .finally(() => {
+        // Переходим к следующему вопросу после небольшого отображения результата
+        window.setTimeout(() => {
+          setQuizReview(null);
+          setQuizAnswerDraft('');
+          quizRevealInFlightKeyRef.current = null;
+        }, 1500);
+      });
+  }, [
+    session?.id,
+    session?.currentQuestionIndex,
+    session?.status,
+    quizReview,
+    timeLeft,
+    currentQuizQuestionRef,
+    revealQuizQuestionApi,
+  ]);
+
   const handleQuestionClick = (category: Category, question: Question) => {
-    if (question.isAnswered) return;
+    const isAlreadySelected =
+      selectedQuestion?.category.id === category.id &&
+      selectedQuestion?.question.id === question.id;
+
+    const answeredKey = `${category.id}:${question.id}`;
+    if (answeredSet.has(answeredKey) || isAlreadySelected) return;
+    pointsLockRef.current = false;
+    setIsPointsLocked(false);
     setSelectedQuestion({ category, question });
     setShowAnswer(false);
   };
@@ -122,45 +251,71 @@ export const GamePage: React.FC = () => {
   };
 
   const handleCloseQuestion = () => {
-    if (selectedQuestion && session) {
-      // Отмечаем вопрос как отвеченный
-      const updatedSession = { ...session };
-      const category = updatedSession.game.categories.find(c => c.id === selectedQuestion.category.id);
-      const question = category?.questions.find(q => q.id === selectedQuestion.question.id);
-      if (question) {
-        question.isAnswered = true;
-      }
-      updatedSession.answeredQuestions.push({
-        categoryId: selectedQuestion.category.id,
-        questionId: selectedQuestion.question.id,
+    if (!selectedQuestion || !session) return;
+
+    // Фиксируем закрытие на сервере (дубли запрещены на уровне backend)
+    answerQuestionApi(session.id, selectedQuestion.category.id, selectedQuestion.question.id)
+      .then((updated) => setSession(updated))
+      .catch((e) => {
+        console.error(e);
+        alert('Не удалось закрыть вопрос');
+      })
+      .finally(() => {
+        pointsLockRef.current = false;
+        setIsPointsLocked(false);
+        setSelectedQuestion(null);
+        setShowAnswer(false);
       });
-      setSession(updatedSession);
-    }
+  };
+
+  const handleModalClose = () => {
+    pointsLockRef.current = false;
+    setIsPointsLocked(false);
     setSelectedQuestion(null);
     setShowAnswer(false);
   };
 
   const handleAddScore = (teamId: string, points: number) => {
     if (!session) return;
-    
-    const updatedTeams = session.teams.map(team =>
-      team.id === teamId ? { ...team, score: team.score + points } : team
-    );
-    setSession({ ...session, teams: updatedTeams });
+    if (pointsLockRef.current) return;
+    pointsLockRef.current = true;
+    setIsPointsLocked(true);
+
+    updateScoreApi(session.id, { teamId, points })
+      .then((updated) => setSession(updated))
+      .catch((e) => {
+        console.error(e);
+        alert('Не удалось начислить очки');
+      })
+      .finally(() => {
+        pointsLockRef.current = false;
+        setIsPointsLocked(false);
+      });
   };
 
   const handleSubtractScore = (teamId: string, points: number) => {
     if (!session) return;
-    
-    const updatedTeams = session.teams.map(team =>
-      team.id === teamId ? { ...team, score: team.score - points } : team
-    );
-    setSession({ ...session, teams: updatedTeams });
+    if (pointsLockRef.current) return;
+    pointsLockRef.current = true;
+    setIsPointsLocked(true);
+
+    updateScoreApi(session.id, { teamId, points: -points })
+      .then((updated) => setSession(updated))
+      .catch((e) => {
+        console.error(e);
+        alert('Не удалось снять очки');
+      })
+      .finally(() => {
+        pointsLockRef.current = false;
+        setIsPointsLocked(false);
+      });
   };
 
   if (!session) {
     return <div className="loading">Загрузка...</div>;
   }
+
+  const maxOwnRows = Math.max(...session.game.categories.map((c) => c.questions.length), 0);
 
   if (session.status === 'waiting') {
     return (
@@ -187,9 +342,201 @@ export const GamePage: React.FC = () => {
 
           {isHost && (
             <div className="game-actions">
-              <Button variant="primary" size="large">
+              <Button
+                variant="primary"
+                size="large"
+                disabled={session.teams.length < 1}
+                onClick={() => {
+                  startSessionApi(session.id)
+                    .then((updated) => setSession(updated))
+                    .catch((e) => {
+                      console.error(e);
+                      alert('Не удалось начать игру');
+                    });
+                }}
+              >
                 Начать игру
               </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (session.status === 'finished') {
+    return (
+      <div className="game-page finished">
+        <div className="game-header">
+          <div className="game-info">
+            <span className="game-title-header">{session.game.title}</span>
+            <span className="game-code">Код: {session.inviteCode}</span>
+          </div>
+          {isHost && <span className="game-finished-note">Игра завершена</span>}
+        </div>
+
+        <div className="game-content">
+          <div className="teams-scoreboard">
+            <h3>Игра завершена</h3>
+            <div className="scoreboard-list">
+              {session.teams.map((team) => (
+                <div key={team.id} className="scoreboard-row">
+                  <div className="team-info">
+                    <span className="team-name">{team.name}</span>
+                    <span className="team-score">{team.score}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (session.game.type === 'quiz') {
+    const total = quizQuestionRefs.length;
+    const q = currentQuizQuestionRef;
+
+    if (!q) {
+      return (
+        <div className="game-page quiz-active">
+          <div className="game-header">
+            <div className="game-info">
+              <span className="game-title-header">{session.game.title}</span>
+              <span className="game-code">Код: {session.inviteCode}</span>
+            </div>
+          </div>
+          <div className="quiz-empty">Вопросы не найдены.</div>
+        </div>
+      );
+    }
+
+    const myCurrentSubmission = session.answeredQuestions.find(
+      (aq) =>
+        aq.userId === user?.id &&
+        aq.categoryId === q.categoryId &&
+        aq.questionId === q.questionId,
+    );
+
+    const quizReviewIndex =
+      quizReview?.questionId
+        ? quizQuestionRefs.findIndex((x) => x.questionId === quizReview.questionId && x.categoryId === quizReview.categoryId)
+        : -1;
+
+    const correctTeamsForReview =
+      quizReview
+        ? new Set(
+            session.answeredQuestions
+              .filter(
+                (aq) =>
+                  aq.categoryId === quizReview.categoryId &&
+                  aq.questionId === quizReview.questionId &&
+                  Boolean(aq.teamId) &&
+                  aq.isCorrect &&
+                  aq.scored,
+              )
+              .map((aq) => aq.teamId as string),
+          )
+        : new Set<string>();
+
+    return (
+      <div className="game-page quiz-active">
+        <div className="game-header">
+          <div className="game-info">
+            <span className="game-title-header">{session.game.title}</span>
+            <span className="game-code">Код: {session.inviteCode}</span>
+          </div>
+          {isHost && (
+            <Button
+              variant="secondary"
+              size="small"
+              onClick={() => {
+                finishSessionApi(session.id)
+                  .then((updated) => setSession(updated))
+                  .catch((e) => {
+                    console.error(e);
+                    alert('Не удалось завершить игру');
+                  });
+              }}
+            >
+              Завершить игру
+            </Button>
+          )}
+        </div>
+
+        <div className="quiz-content">
+          <div className="quiz-meta">
+            <span>
+              Вопрос{' '}
+              {quizReview
+                ? `${Math.min(quizReviewIndex + 1, total)}/${total}`
+                : `${Math.min(currentQuizIndex + 1, total)}/${total}`}
+            </span>
+            {!quizReview && (
+              <span>
+                Время: <strong>{timeLeft}s</strong>
+              </span>
+            )}
+          </div>
+
+          {quizReview ? (
+            <div className="quiz-answer-block">
+              <div className="quiz-answer">
+                <strong>Правильный ответ:</strong> {quizReview.correctAnswer}
+              </div>
+
+              <div className="quiz-results">
+                <div className="quiz-results-title">Результаты</div>
+                {session.teams.map((team) => {
+                  const isCorrectTeam = correctTeamsForReview.has(team.id);
+                  return (
+                    <div key={team.id} className="quiz-team-result">
+                      <span className="quiz-team-name">{team.name}</span>
+                      <span className="quiz-team-score">{team.score}</span>
+                      <span className="quiz-team-correct">{isCorrectTeam ? '✅' : '—'}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="quiz-card">
+              <div className="quiz-question">{q.question.question}</div>
+
+              <div className="quiz-answer-input">
+                <Input
+                  label="Ваш ответ"
+                  value={quizAnswerDraft}
+                  onChange={(e) => setQuizAnswerDraft(e.target.value)}
+                  placeholder="Введите ответ"
+                  disabled={!myTeamId || Boolean(myCurrentSubmission) || timeLeft <= 0}
+                />
+
+                <Button
+                  variant="primary"
+                  disabled={!myTeamId || Boolean(myCurrentSubmission) || timeLeft <= 0 || !quizAnswerDraft.trim()}
+                  onClick={async () => {
+                    try {
+                      const updated = await answerQuestionWithBodyApi(session.id, q.categoryId, q.questionId, {
+                        answer: quizAnswerDraft,
+                      });
+                      setSession(updated);
+                    } catch (e) {
+                      console.error(e);
+                      alert('Не удалось отправить ответ');
+                    }
+                  }}
+                >
+                  Отправить
+                </Button>
+
+                {myCurrentSubmission ? (
+                  <div className="quiz-submitted-note">
+                    Ответ принят. Правильность будет показана по истечению времени.
+                  </div>
+                ) : null}
+              </div>
             </div>
           )}
         </div>
@@ -205,9 +552,48 @@ export const GamePage: React.FC = () => {
           <span className="game-code">Код: {session.inviteCode}</span>
         </div>
         {isHost && (
-          <Button variant="secondary" size="small">
+          <Button
+            variant="secondary"
+            size="small"
+            onClick={() => {
+              finishSessionApi(session.id)
+                .then((updated) => setSession(updated))
+                .catch((e) => {
+                  console.error(e);
+                  alert('Не удалось завершить игру');
+                });
+            }}
+          >
             Завершить игру
           </Button>
+        )}
+
+        {isHost && (
+          <div className="own-team-add">
+            <Input
+              label="Команда (необязательно)"
+              value={newOwnTeamName}
+              onChange={(e) => setNewOwnTeamName(e.target.value)}
+              placeholder={`Команда ${session.teams.length + 1}`}
+            />
+            <Button
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const updated = await addTeamApi(session.id, {
+                    name: newOwnTeamName || undefined,
+                  });
+                  setSession(updated);
+                  setNewOwnTeamName('');
+                } catch (e) {
+                  console.error(e);
+                  alert('Не удалось добавить команду');
+                }
+              }}
+            >
+              Добавить команду
+            </Button>
+          </div>
         )}
       </div>
 
@@ -224,21 +610,29 @@ export const GamePage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {[0, 1, 2, 3, 4].map((rowIndex) => (
+              {Array.from({ length: maxOwnRows }).map((_, rowIndex) => (
                 <tr key={rowIndex}>
                   {session.game.categories.map((category) => {
                     const question = category.questions[rowIndex];
-                    const isAnswered = question?.isAnswered;
+                    const answeredKey = question ? `${category.id}:${question.id}` : '';
+                    const isAnswered = question ? answeredSet.has(answeredKey) : false;
+                    const isCurrentOpen =
+                      !!question &&
+                      selectedQuestion?.category.id === category.id &&
+                      selectedQuestion?.question.id === question.id;
+                    const isUsed = Boolean(isAnswered || isCurrentOpen);
                     
                     return (
                       <td key={category.id} className="question-cell">
                         {question && (
                           <button
-                            className={`question-button ${isAnswered ? 'answered' : ''}`}
+                            className={`question-button ${
+                              isAnswered ? 'answered' : isCurrentOpen ? 'used' : ''
+                            }`}
                             onClick={() => handleQuestionClick(category, question)}
-                            disabled={isAnswered}
+                            disabled={isUsed}
                           >
-                            {question.value}
+                            {!isUsed && <span className="question-button__value">{question.value}</span>}
                           </button>
                         )}
                       </td>
@@ -259,24 +653,6 @@ export const GamePage: React.FC = () => {
                   <span className="team-name">{team.name}</span>
                   <span className="team-score">{team.score}</span>
                 </div>
-                {isHost && (
-                  <div className="score-actions">
-                    <Button
-                      variant="success"
-                      size="small"
-                      onClick={() => handleAddScore(team.id, selectedQuestion?.question.value || 100)}
-                    >
-                      +{selectedQuestion?.question.value || 100}
-                    </Button>
-                    <Button
-                      variant="danger"
-                      size="small"
-                      onClick={() => handleSubtractScore(team.id, selectedQuestion?.question.value || 100)}
-                    >
-                      -{selectedQuestion?.question.value || 100}
-                    </Button>
-                  </div>
-                )}
               </div>
             ))}
           </div>
@@ -285,7 +661,7 @@ export const GamePage: React.FC = () => {
 
       <Modal
         isOpen={!!selectedQuestion}
-        onClose={handleCloseQuestion}
+        onClose={handleModalClose}
         title={selectedQuestion?.category.name || ''}
         size="large"
         footer={
@@ -303,16 +679,48 @@ export const GamePage: React.FC = () => {
         }
       >
         {selectedQuestion && (
-          <div className="question-modal">
-            <div className="question-value">{selectedQuestion.question.value}</div>
-            <div className="question-text">
-              {selectedQuestion.question.question}
+          <div className="question-and-points">
+            <div className="question-modal">
+              <div className="question-value">{selectedQuestion.question.value}</div>
+              <div className="question-text">{selectedQuestion.question.question}</div>
+              {showAnswer && (
+                <div className="question-answer">
+                  <strong>Ответ:</strong> {selectedQuestion.question.answer}
+                </div>
+              )}
             </div>
-            {showAnswer && (
-              <div className="question-answer">
-                <strong>Ответ:</strong> {selectedQuestion.question.answer}
+
+            <div className="points-modal" aria-label="Начисление очков командам">
+              <h4 className="points-title">Начисление очков</h4>
+              <div className="points-list">
+                {session.teams.map((team) => (
+                  <div key={team.id} className="points-team-row">
+                    <div className="points-team-meta">
+                      <span className="points-team-name">{team.name}</span>
+                      <span className="points-team-score">{team.score}</span>
+                    </div>
+                    <div className="points-actions">
+                      <Button
+                        variant="success"
+                        size="small"
+                        disabled={!isHost || isPointsLocked}
+                        onClick={() => handleAddScore(team.id, currentQuestionValue ?? 0)}
+                      >
+                        +{currentQuestionValue ?? 0}
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="small"
+                        disabled={!isHost || !allowNegativeScores || isPointsLocked}
+                        onClick={() => handleSubtractScore(team.id, currentQuestionValue ?? 0)}
+                      >
+                        -{currentQuestionValue ?? 0}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
           </div>
         )}
       </Modal>

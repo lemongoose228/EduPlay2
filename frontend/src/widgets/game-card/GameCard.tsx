@@ -12,12 +12,15 @@ interface GameCardProps {
   isPublished?: boolean;
   author?: string;
   plays?: number;
+  likes?: number;
   rating?: number;
+  isLiked?: boolean;
   onClick?: () => void;
   onEdit?: () => void;
   onPublish?: () => void;
   onPlay?: () => void;
   onDelete?: () => void;
+  onLikeToggle?: () => void;
 }
 
 export const GameCard: React.FC<GameCardProps> = ({
@@ -29,12 +32,15 @@ export const GameCard: React.FC<GameCardProps> = ({
   isPublished,
   author,
   plays,
+  likes,
   rating,
+  isLiked,
   onClick,
   onEdit,
   onPublish,
   onPlay,
-  onDelete
+  onDelete,
+  onLikeToggle
 }) => {
   const getTypeIcon = () => {
     return type === 'own' ? '🎮' : '❓';
@@ -83,7 +89,7 @@ export const GameCard: React.FC<GameCardProps> = ({
           )}
         </div>
 
-        {(plays !== undefined || rating !== undefined) && (
+        {(plays !== undefined || likes !== undefined || rating !== undefined) && (
           <div className="game-card-stats">
             {plays !== undefined && (
               <div className="game-card-stat">
@@ -91,7 +97,13 @@ export const GameCard: React.FC<GameCardProps> = ({
                 <span>{plays}</span>
               </div>
             )}
-            {rating !== undefined && (
+            {likes !== undefined && (
+              <div className="game-card-stat">
+                <span className="stat-icon">♥</span>
+                <span>{likes}</span>
+              </div>
+            )}
+            {likes === undefined && rating !== undefined && (
               <div className="game-card-stat">
                 <span className="stat-icon">⭐</span>
                 <span>{rating.toFixed(1)}</span>
@@ -102,6 +114,18 @@ export const GameCard: React.FC<GameCardProps> = ({
       </div>
 
       <div className="game-card-footer">
+        {onLikeToggle && likes !== undefined && (
+          <Button
+            variant={isLiked ? 'primary' : 'outline'}
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              onLikeToggle();
+            }}
+          >
+            {isLiked ? '♥ В избранном' : '♡ Лайк'}
+          </Button>
+        )}
         {onPlay && (
           <Button variant="primary" size="small" onClick={(e) => { e.stopPropagation(); onPlay(); }}>
             Играть

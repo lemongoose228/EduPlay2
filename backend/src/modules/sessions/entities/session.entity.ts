@@ -50,7 +50,16 @@ export class Session {
   currentQuestionIndex: number;
 
   @Column({ type: 'jsonb', default: [] })
-  answeredQuestions: { categoryId: string; questionId: string }[];
+  answeredQuestions: Array<{
+    categoryId: string;
+    questionId: string;
+    // Для викторины: ответы каждого пользователя отдельно
+    userId?: string;
+    teamId?: string;
+    isCorrect?: boolean;
+    submittedAnswer?: string;
+    scored?: boolean;
+  }>;
 
   @Column({ type: 'jsonb', default: {} })
   settings: {

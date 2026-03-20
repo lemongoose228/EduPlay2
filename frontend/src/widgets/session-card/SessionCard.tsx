@@ -16,6 +16,7 @@ interface SessionCardProps {
   onJoin?: () => void;
   onInvite?: () => void;
   onViewResults?: () => void;
+  onDelete?: () => void;
 }
 
 export const SessionCard: React.FC<SessionCardProps> = ({
@@ -30,7 +31,8 @@ export const SessionCard: React.FC<SessionCardProps> = ({
   onClick,
   onJoin,
   onInvite,
-  onViewResults
+  onViewResults,
+  onDelete,
 }) => {
   const getStatusText = () => {
     switch (status) {
@@ -117,6 +119,20 @@ export const SessionCard: React.FC<SessionCardProps> = ({
         {status === 'finished' && onViewResults && (
           <Button variant="secondary" size="small" fullWidth onClick={onViewResults}>
             Результаты
+          </Button>
+        )}
+
+        {onDelete && (
+          <Button
+            variant="danger"
+            size="small"
+            fullWidth
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+          >
+            Удалить
           </Button>
         )}
       </div>

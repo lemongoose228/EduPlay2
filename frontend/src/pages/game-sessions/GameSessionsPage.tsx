@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SessionCard } from '../../widgets/session-card/SessionCard';
 import { Button } from '../../shared/ui/Button/Button';
 import { Modal } from '../../shared/ui/Modal/Modal';
+import { Input } from '../../shared/ui/Input/Input';
 import './GameSessionsPage.css';
+import {
+  deleteSessionApi,
+  getMySessionsApi,
+  joinSessionApi,
+} from '../../features/sessions/api/sessionsApi';
+import { useAppSelector } from '../../app/store/hooks';
+import { selectAuthUser } from '../../features/auth/model/selectors';
 
 interface Session {
   id: string;
@@ -15,61 +23,18 @@ interface Session {
   startedAt: string;
   endedAt?: string;
   inviteCode: string;
+  hostId?: string;
 }
 
 export const GameSessionsPage: React.FC = () => {
   const navigate = useNavigate();
-  const [sessions] = useState<Session[]>([
-    {
-      id: '1',
-      gameTitle: 'История России',
-      gameType: 'own',
-      status: 'active',
-      teams: 2,
-      maxTeams: 4,
-      startedAt: '15:30, 25.01.2024',
-      inviteCode: 'ABC123'
-    },
-    {
-      id: '2',
-      gameTitle: 'География мира',
-      gameType: 'quiz',
-      status: 'waiting',
-      teams: 1,
-      maxTeams: 6,
-      startedAt: '16:00, 25.01.2024',
-      inviteCode: 'XYZ789'
-    },
-    {
-      id: '3',
-      gameTitle: 'Научные открытия',
-      gameType: 'own',
-      status: 'finished',
-      teams: 4,
-      maxTeams: 4,
-      startedAt: '14:00, 24.01.2024',
-      endedAt: '15:30, 24.01.2024',
-      inviteCode: 'DEF456'
-    }
-  ]);
+  const user = useAppSelector(selectAuthUser);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const [isResultsModalOpen, setIsResultsModalOpen] = useState(false);
   const [filter, setFilter] = useState<'all' | 'waiting' | 'active' | 'finished'>('all');
-
-  const handleSessionClick = (session: Session) => {
-    if (session.status === 'finished') {
-      setSelectedSession(session);
-      setIsResultsModalOpen(true);
-    } else {
-      navigate(`/game/${session.id}`);
-    }
-  };
-
-  const handleJoinGame = (sessionId: string) => {
-    navigate(`/game/${sessionId}`);
-  };
 
   const handleInvite = (session: Session) => {
     setSelectedSession(session);
@@ -97,6 +62,58 @@ export const GameSessionsPage: React.FC = () => {
 
   const counts = getSessionsCount();
 
+  const [joinInviteCode, setJoinInviteCode] = useState('');
+  const [joinName, setJoinName] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setIsLoading(true);
+      try {
+        const backendSessions = await getMySessionsApi();
+        if (cancelled) return;
+        const mapped: Session[] = (backendSessions || []).map((s: any) => ({
+          id: s.id,
+          gameTitle: s.game?.title ?? '',
+          gameType: s.game?.type ?? 'own',
+          status: s.status,
+          teams: s.teams?.length ?? 0,
+          maxTeams: s.settings?.maxTeams ?? 0,
+          startedAt: s.startedAt
+            ? new Date(s.startedAt).toLocaleString('ru-RU')
+            : '',
+          endedAt: s.finishedAt ? new Date(s.finishedAt).toLocaleString('ru-RU') : undefined,
+          inviteCode: s.inviteCode,
+          hostId: s.hostId,
+        }));
+        setSessions(mapped);
+      } catch (e) {
+        console.error(e);
+        if (!cancelled) setSessions([]);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleJoinByCode = async () => {
+    try {
+      const session = await joinSessionApi({
+        inviteCode: joinInviteCode,
+        teamName: joinName || undefined,
+        playerName: joinName || 'Игрок',
+      });
+      navigate(`/game/${session.id}`);
+    } catch (e) {
+      console.error(e);
+      alert('Не удалось присоединиться к сессии');
+    }
+  };
+
   return (
     <div className="game-sessions-page">
       <div className="page-header">
@@ -104,6 +121,27 @@ export const GameSessionsPage: React.FC = () => {
         <p className="page-description">
           Активные и завершенные игровые сессии
         </p>
+      </div>
+
+      <div className="join-section">
+        <h3 className="join-title">Присоединиться по коду</h3>
+        <div className="join-form">
+          <Input
+            label="Код приглашения"
+            value={joinInviteCode}
+            onChange={(e) => setJoinInviteCode(e.target.value)}
+            placeholder="Например: ABC123"
+          />
+          <Input
+            label="Имя игрока или название команды"
+            value={joinName}
+            onChange={(e) => setJoinName(e.target.value)}
+            placeholder="Например: Алексей или Команда 1"
+          />
+          <Button onClick={handleJoinByCode} disabled={!joinInviteCode.trim()}>
+            Присоединиться
+          </Button>
+        </div>
       </div>
 
       <div className="sessions-stats">
@@ -152,7 +190,9 @@ export const GameSessionsPage: React.FC = () => {
         </button>
       </div>
 
-      {filteredSessions.length > 0 ? (
+      {isLoading ? (
+        <div className="loading-container">Загрузка...</div>
+      ) : filteredSessions.length > 0 ? (
         <div className="sessions-grid">
           {filteredSessions.map((session) => (
             <SessionCard
@@ -166,13 +206,39 @@ export const GameSessionsPage: React.FC = () => {
               startedAt={session.startedAt}
               endedAt={session.endedAt}
               inviteCode={session.inviteCode}
-              onClick={() => handleSessionClick(session)}
-              onJoin={() => handleJoinGame(session.id)}
+              onClick={() => navigate(`/game/${session.id}`)}
               onInvite={() => handleInvite(session)}
-              onViewResults={() => {
-                setSelectedSession(session);
-                setIsResultsModalOpen(true);
-              }}
+              onDelete={
+                session.hostId && user?.id && session.hostId === user.id
+                  ? async () => {
+                      if (!window.confirm('Удалить эту сессию?')) return;
+                      try {
+                        await deleteSessionApi(session.id);
+                        const backendSessions = await getMySessionsApi();
+                        const mapped: Session[] = (backendSessions || []).map((s: any) => ({
+                          id: s.id,
+                          gameTitle: s.game?.title ?? '',
+                          gameType: s.game?.type ?? 'own',
+                          status: s.status,
+                          teams: s.teams?.length ?? 0,
+                          maxTeams: s.settings?.maxTeams ?? 0,
+                          startedAt: s.startedAt
+                            ? new Date(s.startedAt).toLocaleString('ru-RU')
+                            : '',
+                          endedAt: s.finishedAt
+                            ? new Date(s.finishedAt).toLocaleString('ru-RU')
+                            : undefined,
+                          inviteCode: s.inviteCode,
+                          hostId: s.hostId,
+                        }));
+                        setSessions(mapped);
+                      } catch (e) {
+                        console.error(e);
+                        alert('Не удалось удалить сессию');
+                      }
+                    }
+                  : undefined
+              }
             />
           ))}
         </div>
@@ -210,51 +276,6 @@ export const GameSessionsPage: React.FC = () => {
         </div>
       </Modal>
 
-      <Modal
-        isOpen={isResultsModalOpen}
-        onClose={() => setIsResultsModalOpen(false)}
-        title="Результаты игры"
-        size="large"
-      >
-        {selectedSession && (
-          <div className="results-modal">
-            <div className="results-summary">
-              <div className="result-item">
-                <span className="result-label">Игра:</span>
-                <span className="result-value">{selectedSession.gameTitle}</span>
-              </div>
-              <div className="result-item">
-                <span className="result-label">Дата:</span>
-                <span className="result-value">{selectedSession.startedAt}</span>
-              </div>
-              <div className="result-item">
-                <span className="result-label">Команд:</span>
-                <span className="result-value">{selectedSession.teams}</span>
-              </div>
-            </div>
-
-            <h3 className="scores-title">Итоговый счет</h3>
-            <div className="scores-list">
-              <div className="score-row header">
-                <span>Команда</span>
-                <span>Счет</span>
-              </div>
-              <div className="score-row">
-                <span className="team-name">Команда А</span>
-                <span className="team-score">2500</span>
-              </div>
-              <div className="score-row">
-                <span className="team-name">Команда Б</span>
-                <span className="team-score">1800</span>
-              </div>
-              <div className="score-row">
-                <span className="team-name">Команда В</span>
-                <span className="team-score">1200</span>
-              </div>
-            </div>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 };

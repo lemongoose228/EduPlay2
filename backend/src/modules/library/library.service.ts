@@ -35,8 +35,8 @@ export class LibraryService {
       case 'popular':
         queryBuilder.orderBy('game.plays', 'DESC');
         break;
-      case 'rating':
-        queryBuilder.orderBy('game.rating', 'DESC');
+      case 'likes':
+        queryBuilder.orderBy('game.likes', 'DESC');
         break;
       case 'newest':
         queryBuilder.orderBy('game.createdAt', 'DESC');
@@ -73,7 +73,7 @@ export class LibraryService {
     return this.gamesRepository.find({
       where: { status: 'published' },
       relations: ['author'],
-      order: { rating: 'DESC' },
+      order: { likes: 'DESC' },
       take: limit,
     });
   }

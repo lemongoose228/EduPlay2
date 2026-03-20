@@ -12,7 +12,9 @@ import { Player } from './entities/player.entity';
 import { GamesService } from '../games/games.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { JoinSessionDto } from './dto/join-session.dto';
+import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { UpdateScoreDto } from './dto/update-score.dto';
+import { AddTeamDto } from './dto/add-team.dto';
 
 @Injectable()
 export class SessionsService {
@@ -59,8 +61,13 @@ export class SessionsService {
       settings: {
         maxTeams: createSessionDto.settings?.maxTeams || 8,
         maxPlayersPerTeam: createSessionDto.settings?.maxPlayersPerTeam || 4,
-        timePerQuestion: createSessionDto.settings?.timePerQuestion || 30,
-        allowNegativeScores: createSessionDto.settings?.allowNegativeScores || false,
+        // Берем настройки из игры (для викторины важно), но приоритет у параметров сессии.
+        timePerQuestion:
+          createSessionDto.settings?.timePerQuestion ??
+          (game.settings?.timePerQuestion ?? 30),
+        allowNegativeScores:
+          createSessionDto.settings?.allowNegativeScores ??
+          (game.settings?.allowNegativeScores ?? false),
       },
       teams: [],
       answeredQuestions: [],
@@ -69,7 +76,7 @@ export class SessionsService {
     return this.sessionsRepository.save(session);
   }
 
-  async join(joinSessionDto: JoinSessionDto): Promise<Session> {
+  async join(userId: string, joinSessionDto: JoinSessionDto): Promise<Session> {
     const session = await this.sessionsRepository.findOne({
       where: { inviteCode: joinSessionDto.inviteCode },
       relations: ['game', 'teams', 'teams.players'],
@@ -83,8 +90,25 @@ export class SessionsService {
       throw new BadRequestException('Нельзя присоединиться к уже начатой игре');
     }
 
+    // Для "своей игры" участником может быть только организатор (1 игрок).
+    if (session.game?.type === 'own') {
+      if (session.hostId !== userId) {
+        throw new ForbiddenException('В "своей игре" присоединяться по коду может только организатор');
+      }
+
+      const alreadyInSession = session.teams.some((t) =>
+        t.players?.some((p) => p.userId === userId),
+      );
+      if (alreadyInSession) {
+        throw new BadRequestException('Организатор уже участвует в этой сессии');
+      }
+    }
+
     // Ищем команду или создаем новую
-    let team = session.teams.find(t => t.name === (joinSessionDto.teamName || 'Команда 1'));
+    const requestedTeamName = joinSessionDto.teamName?.trim()
+      ? joinSessionDto.teamName.trim()
+      : undefined;
+    let team = requestedTeamName ? session.teams.find((t) => t.name === requestedTeamName) : undefined;
     
     if (!team) {
       if (session.teams.length >= session.settings.maxTeams) {
@@ -92,7 +116,8 @@ export class SessionsService {
       }
 
       team = this.teamsRepository.create({
-        name: joinSessionDto.teamName || `Команда ${session.teams.length + 1}`,
+        // Если teamName не передан — создаем новую команду (Команда 1, 2, 3...).
+        name: requestedTeamName ?? `Команда ${session.teams.length + 1}`,
         sessionId: session.id,
         players: [],
       });
@@ -109,6 +134,7 @@ export class SessionsService {
       name: joinSessionDto.playerName,
       teamId: team.id,
       isHost: session.teams.length === 0 && team.players.length === 0,
+      userId,
     });
 
     await this.playersRepository.save(player);
@@ -151,10 +177,6 @@ export class SessionsService {
       throw new BadRequestException('Игра уже начата');
     }
 
-    if (session.teams.length < 2) {
-      throw new BadRequestException('Для начала игры нужно минимум 2 команды');
-    }
-
     session.status = 'active';
     session.startedAt = new Date();
     session.currentQuestionIndex = 0;
@@ -163,6 +185,90 @@ export class SessionsService {
   }
 
   async answerQuestion(
+    id: string,
+    userId: string,
+    categoryId: string,
+    questionId: string,
+    submitDto?: SubmitAnswerDto,
+  ): Promise<Session> {
+    const session = await this.findOne(id);
+
+    if (session.status !== 'active') {
+      throw new BadRequestException('Игра не активна');
+    }
+
+    if (session.game?.type === 'quiz') {
+      // В викторине пользователь отвечает отдельно на каждый вопрос.
+      // Засчитываем ответ на уровне пользователя (а очки начисляются команде).
+      const player = session.teams
+        .flatMap((t) => t.players)
+        .find((p) => p.userId === userId);
+
+      if (!player) {
+        throw new BadRequestException('Пользователь не состоит в этой сессии');
+      }
+
+      const isAlreadySubmitted = session.answeredQuestions.some(
+        (aq) => aq.categoryId === categoryId && aq.questionId === questionId && aq.userId === userId,
+      );
+
+      if (isAlreadySubmitted) {
+        throw new BadRequestException('Вы уже отвечали на этот вопрос');
+      }
+
+      const question = session.game.categories
+        .flatMap((c) => c.questions.map((q) => ({ categoryId: c.id, category: c, question: q })))
+        .find((x) => x.categoryId === categoryId && x.question.id === questionId)?.question;
+
+      if (!question) {
+        throw new NotFoundException('Вопрос не найден');
+      }
+
+      // Проверяем, что ответ отправляют на текущий вопрос.
+      const quizQuestions = session.game.categories.flatMap((c) =>
+        c.questions.map((q) => ({
+          categoryId: c.id,
+          questionId: q.id,
+        })),
+      );
+      const currentIndex = session.currentQuestionIndex ?? 0;
+      const current = quizQuestions[currentIndex];
+      if (!current || current.categoryId !== categoryId || current.questionId !== questionId) {
+        throw new BadRequestException('Ответ можно отправлять только на текущий вопрос');
+      }
+
+      const answerText = (submitDto?.answer ?? '').trim().toLowerCase();
+      const correctText = (question.answer ?? '').trim().toLowerCase();
+      const isCorrect = answerText.length > 0 && answerText === correctText;
+
+      session.answeredQuestions.push({
+        categoryId,
+        questionId,
+        userId,
+        teamId: player.teamId,
+        isCorrect,
+        submittedAnswer: submitDto?.answer ?? '',
+        scored: false,
+      });
+
+      return this.sessionsRepository.save(session);
+    }
+
+    // Для "своей игры" мы просто блокируем повторное открытие вопроса.
+    const isAnswered = session.answeredQuestions.some(
+      (aq) => aq.categoryId === categoryId && aq.questionId === questionId && !aq.userId,
+    );
+
+    if (isAnswered) {
+      throw new BadRequestException('На этот вопрос уже отвечали');
+    }
+
+    session.answeredQuestions.push({ categoryId, questionId });
+
+    return this.sessionsRepository.save(session);
+  }
+
+  async revealQuizQuestion(
     id: string,
     categoryId: string,
     questionId: string,
@@ -173,16 +279,73 @@ export class SessionsService {
       throw new BadRequestException('Игра не активна');
     }
 
-    // Проверяем, не отвечали ли уже на этот вопрос
-    const isAnswered = session.answeredQuestions.some(
-      aq => aq.categoryId === categoryId && aq.questionId === questionId,
-    );
-
-    if (isAnswered) {
-      throw new BadRequestException('На этот вопрос уже отвечали');
+    if (session.game?.type !== 'quiz') {
+      throw new BadRequestException('Режим викторины не активен');
     }
 
-    session.answeredQuestions.push({ categoryId, questionId });
+    // Проверяем, что сейчас раскрывают текущий вопрос.
+    const quizQuestions = session.game.categories.flatMap((c) =>
+      c.questions.map((q) => ({
+        categoryId: c.id,
+        questionId: q.id,
+      })),
+    );
+    const currentIndex = session.currentQuestionIndex ?? 0;
+    const current = quizQuestions[currentIndex];
+    if (!current || current.categoryId !== categoryId || current.questionId !== questionId) {
+      throw new BadRequestException('Можно раскрывать только текущий вопрос');
+    }
+
+    const question = session.game.categories
+      .flatMap((c) => c.questions.map((q) => ({ categoryId: c.id, question: q })))
+      .find((x) => x.categoryId === categoryId && x.question.id === questionId)?.question;
+
+    if (!question) {
+      throw new NotFoundException('Вопрос не найден');
+    }
+
+    // Начисляем очки тем пользователям, которые ответили правильно.
+    // Очки выдаём команде: value начисляется за каждого корректно ответившего игрока.
+    const toScore = session.answeredQuestions.filter(
+      (aq) =>
+        aq.categoryId === categoryId &&
+        aq.questionId === questionId &&
+        aq.userId &&
+        aq.isCorrect &&
+        !aq.scored,
+    );
+
+    const updatedAnswered = session.answeredQuestions.map((aq) => {
+      const matches =
+        aq.categoryId === categoryId &&
+        aq.questionId === questionId &&
+        aq.userId &&
+        aq.isCorrect;
+
+      if (!matches) return aq;
+      if (aq.scored) return aq;
+
+      return { ...aq, scored: true };
+    });
+
+    // Применяем очки на уровне teams (только для тех, кто ещё не получал очки).
+    for (const sub of toScore) {
+      const team = session.teams.find((t) => t.id === sub.teamId);
+      if (!team) continue;
+      team.score += question.value;
+    }
+
+    session.answeredQuestions = updatedAnswered as any;
+
+    // Переходим к следующему вопросу / финишу.
+    const total = quizQuestions.length;
+    const nextIndex = currentIndex + 1;
+    if (nextIndex >= total) {
+      session.status = 'finished';
+      session.finishedAt = new Date();
+    } else {
+      session.currentQuestionIndex = nextIndex;
+    }
 
     return this.sessionsRepository.save(session);
   }
@@ -219,5 +382,44 @@ export class SessionsService {
     await this.gamesService.incrementPlays(session.gameId);
 
     return this.sessionsRepository.save(session);
+  }
+
+  async addTeam(id: string, userId: string, dto: AddTeamDto): Promise<Session> {
+    const session = await this.findOne(id);
+
+    if (session.hostId !== userId) {
+      throw new ForbiddenException('Только создатель может добавлять команды');
+    }
+
+    if (session.status !== 'active') {
+      throw new BadRequestException('Команды можно добавлять только после старта');
+    }
+
+    if (session.game?.type !== 'own') {
+      throw new BadRequestException('Добавление команд поддерживается только для "своей игры"');
+    }
+
+    const name = dto.name?.trim() ? dto.name.trim() : `Команда ${session.teams.length + 1}`;
+
+    const team = this.teamsRepository.create({
+      name,
+      sessionId: session.id,
+      players: [],
+      score: 0,
+    });
+
+    await this.teamsRepository.save(team);
+
+    return this.findOne(session.id);
+  }
+
+  async remove(id: string, userId: string): Promise<void> {
+    const session = await this.findOne(id);
+
+    if (session.hostId !== userId) {
+      throw new ForbiddenException('Только создатель может удалять сессии');
+    }
+
+    await this.sessionsRepository.remove(session);
   }
 }

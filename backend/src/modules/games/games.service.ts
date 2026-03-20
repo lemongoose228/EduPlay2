@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Game } from './entities/game.entity';
 import { Category } from './entities/category.entity';
 import { Question } from './entities/question.entity';
+import { Session } from '../sessions/entities/session.entity';
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { PublishGameDto } from './dto/publish-game.dto';
@@ -17,6 +18,8 @@ export class GamesService {
     private categoriesRepository: Repository<Category>,
     @InjectRepository(Question)
     private questionsRepository: Repository<Question>,
+    @InjectRepository(Session)
+    private sessionsRepository: Repository<Session>,
   ) {}
 
   async create(userId: string, createGameDto: CreateGameDto): Promise<Game> {
@@ -90,15 +93,19 @@ export class GamesService {
     return this.gamesRepository.save(game);
   }
 
-  async remove(id: string, userId: string): Promise<void> {
-    const game = await this.findOne(id, userId);
+async remove(id: string, userId: string): Promise<void> {
+  const game = await this.findOne(id, userId);
 
-    if (game.authorId !== userId) {
-      throw new ForbiddenException('Нет прав на удаление этой игры');
-    }
-
-    await this.gamesRepository.remove(game);
+  if (game.authorId !== userId) {
+    throw new ForbiddenException('Нет прав на удаление этой игры');
   }
+
+  // Удаляем связанные сессии
+  await this.sessionsRepository.delete({ gameId: id });
+  
+  // Теперь можно безопасно удалить игру
+  await this.gamesRepository.remove(game);
+}
 
   async incrementPlays(id: string): Promise<void> {
     await this.gamesRepository.increment({ id }, 'plays', 1);

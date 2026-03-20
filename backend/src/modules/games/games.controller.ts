@@ -42,7 +42,12 @@ export class GamesController {
     @CurrentUser() user: User,
     @Body() updateGameDto: UpdateGameDto,
   ) {
-    return this.gamesService.update(id, user.id, updateGameDto);
+    try {
+      return this.gamesService.update(id, user.id, updateGameDto);
+    } catch (exception: any) {
+      
+    }
+    
   }
 
   @Post(':id/publish')

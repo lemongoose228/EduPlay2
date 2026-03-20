@@ -32,6 +32,39 @@
   animation: slideIn 0.5s ease 0.1s both;
 }
 
+.library-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.library-tab {
+  padding: 8px 20px;
+  background: none;
+  border: none;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.library-tab:hover {
+  background-color: #f0f0f0;
+  color: var(--text-primary);
+}
+
+.library-tab.active {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(107, 78, 255, 0.3);
+}
+
 .search-section {
   margin-bottom: 20px;
 }
