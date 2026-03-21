@@ -40,10 +40,7 @@ export class SessionsService {
   async create(userId: string, createSessionDto: CreateSessionDto): Promise<Session> {
     const game = await this.gamesService.findOne(createSessionDto.gameId, userId);
 
-    if (game.status !== 'published') {
-      throw new BadRequestException('Нельзя создать сессию для неопубликованной игры');
-    }
-
+    // Сессии можно создавать для любых игр, к которым есть доступ (в т.ч. черновики автора)
     let inviteCode: string;
     let existingSession: Session | null;
     

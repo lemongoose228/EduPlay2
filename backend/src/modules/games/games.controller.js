@@ -31,11 +31,24 @@ let GamesController = class GamesController {
     findAll(user) {
         return this.gamesService.findAll(user.id);
     }
+    getLikedIds(user) {
+        return this.gamesService.getLikedGameIds(user.id);
+    }
+    like(id, user) {
+        return this.gamesService.like(user.id, id);
+    }
+    unlike(id, user) {
+        return this.gamesService.unlike(user.id, id);
+    }
     findOne(id, user) {
         return this.gamesService.findOne(id, user.id);
     }
     update(id, user, updateGameDto) {
-        return this.gamesService.update(id, user.id, updateGameDto);
+        try {
+            return this.gamesService.update(id, user.id, updateGameDto);
+        }
+        catch (exception) {
+        }
     }
     publish(id, user, publishGameDto) {
         return this.gamesService.publish(id, user.id, publishGameDto);
@@ -60,6 +73,29 @@ __decorate([
     __metadata("design:paramtypes", [user_entity_1.User]),
     __metadata("design:returntype", void 0)
 ], GamesController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('liked/ids'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [user_entity_1.User]),
+    __metadata("design:returntype", void 0)
+], GamesController.prototype, "getLikedIds", null);
+__decorate([
+    (0, common_1.Post)(':id/like'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, user_entity_1.User]),
+    __metadata("design:returntype", void 0)
+], GamesController.prototype, "like", null);
+__decorate([
+    (0, common_1.Delete)(':id/like'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, user_entity_1.User]),
+    __metadata("design:returntype", void 0)
+], GamesController.prototype, "unlike", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),

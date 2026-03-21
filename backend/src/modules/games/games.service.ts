@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Game } from './entities/game.entity';
+import { GameLike } from './entities/game-like.entity';
 import { Category } from './entities/category.entity';
 import { Question } from './entities/question.entity';
 import { Session } from '../sessions/entities/session.entity';
@@ -14,6 +15,8 @@ export class GamesService {
   constructor(
     @InjectRepository(Game)
     private gamesRepository: Repository<Game>,
+    @InjectRepository(GameLike)
+    private gameLikesRepository: Repository<GameLike>,
     @InjectRepository(Category)
     private categoriesRepository: Repository<Category>,
     @InjectRepository(Question)
@@ -100,12 +103,53 @@ async remove(id: string, userId: string): Promise<void> {
     throw new ForbiddenException('Нет прав на удаление этой игры');
   }
 
-  // Удаляем связанные сессии
+  // Удаляем лайки и связанные сессии
+  await this.gameLikesRepository.delete({ gameId: id });
   await this.sessionsRepository.delete({ gameId: id });
-  
+
   // Теперь можно безопасно удалить игру
   await this.gamesRepository.remove(game);
 }
+
+  async like(userId: string, gameId: string): Promise<{ likes: number }> {
+    const game = await this.gamesRepository.findOne({ where: { id: gameId } });
+    if (!game) {
+      throw new NotFoundException('Игра не найдена');
+    }
+    if (game.status !== 'published') {
+      throw new BadRequestException('Можно лайкать только опубликованные игры');
+    }
+    const existing = await this.gameLikesRepository.findOne({
+      where: { userId, gameId },
+    });
+    if (existing) {
+      return { likes: game.likes };
+    }
+    await this.gameLikesRepository.save({ userId, gameId });
+    await this.gamesRepository.increment({ id: gameId }, 'likes', 1);
+    return { likes: game.likes + 1 };
+  }
+
+  async unlike(userId: string, gameId: string): Promise<{ likes: number }> {
+    const game = await this.gamesRepository.findOne({ where: { id: gameId } });
+    if (!game) {
+      throw new NotFoundException('Игра не найдена');
+    }
+    const result = await this.gameLikesRepository.delete({ userId, gameId });
+    if (result.affected && result.affected > 0 && game.likes > 0) {
+      await this.gamesRepository.decrement({ id: gameId }, 'likes', 1);
+      return { likes: game.likes - 1 };
+    }
+    return { likes: game.likes };
+  }
+
+  async getLikedGameIds(userId: string): Promise<string[]> {
+    const likes = await this.gameLikesRepository.find({
+      where: { userId },
+      select: ['gameId'],
+    });
+    return likes.map((l) => l.gameId);
+  }
 
   async incrementPlays(id: string): Promise<void> {
     await this.gamesRepository.increment({ id }, 'plays', 1);

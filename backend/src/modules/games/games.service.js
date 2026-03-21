@@ -17,13 +17,17 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const game_entity_1 = require("./entities/game.entity");
+const game_like_entity_1 = require("./entities/game-like.entity");
 const category_entity_1 = require("./entities/category.entity");
 const question_entity_1 = require("./entities/question.entity");
+const session_entity_1 = require("../sessions/entities/session.entity");
 let GamesService = class GamesService {
-    constructor(gamesRepository, categoriesRepository, questionsRepository) {
+    constructor(gamesRepository, gameLikesRepository, categoriesRepository, questionsRepository, sessionsRepository) {
         this.gamesRepository = gamesRepository;
+        this.gameLikesRepository = gameLikesRepository;
         this.categoriesRepository = categoriesRepository;
         this.questionsRepository = questionsRepository;
+        this.sessionsRepository = sessionsRepository;
     }
     async create(userId, createGameDto) {
         const game = this.gamesRepository.create({
@@ -87,7 +91,48 @@ let GamesService = class GamesService {
         if (game.authorId !== userId) {
             throw new common_1.ForbiddenException('Нет прав на удаление этой игры');
         }
+        // Удаляем лайки и связанные сессии
+        await this.gameLikesRepository.delete({ gameId: id });
+        await this.sessionsRepository.delete({ gameId: id });
+        // Теперь можно безопасно удалить игру
         await this.gamesRepository.remove(game);
+    }
+    async like(userId, gameId) {
+        const game = await this.gamesRepository.findOne({ where: { id: gameId } });
+        if (!game) {
+            throw new common_1.NotFoundException('Игра не найдена');
+        }
+        if (game.status !== 'published') {
+            throw new common_1.BadRequestException('Можно лайкать только опубликованные игры');
+        }
+        const existing = await this.gameLikesRepository.findOne({
+            where: { userId, gameId },
+        });
+        if (existing) {
+            return { likes: game.likes };
+        }
+        await this.gameLikesRepository.save({ userId, gameId });
+        await this.gamesRepository.increment({ id: gameId }, 'likes', 1);
+        return { likes: game.likes + 1 };
+    }
+    async unlike(userId, gameId) {
+        const game = await this.gamesRepository.findOne({ where: { id: gameId } });
+        if (!game) {
+            throw new common_1.NotFoundException('Игра не найдена');
+        }
+        const result = await this.gameLikesRepository.delete({ userId, gameId });
+        if (result.affected && result.affected > 0 && game.likes > 0) {
+            await this.gamesRepository.decrement({ id: gameId }, 'likes', 1);
+            return { likes: game.likes - 1 };
+        }
+        return { likes: game.likes };
+    }
+    async getLikedGameIds(userId) {
+        const likes = await this.gameLikesRepository.find({
+            where: { userId },
+            select: ['gameId'],
+        });
+        return likes.map((l) => l.gameId);
     }
     async incrementPlays(id) {
         await this.gamesRepository.increment({ id }, 'plays', 1);
@@ -97,9 +142,13 @@ exports.GamesService = GamesService;
 exports.GamesService = GamesService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(game_entity_1.Game)),
-    __param(1, (0, typeorm_1.InjectRepository)(category_entity_1.Category)),
-    __param(2, (0, typeorm_1.InjectRepository)(question_entity_1.Question)),
+    __param(1, (0, typeorm_1.InjectRepository)(game_like_entity_1.GameLike)),
+    __param(2, (0, typeorm_1.InjectRepository)(category_entity_1.Category)),
+    __param(3, (0, typeorm_1.InjectRepository)(question_entity_1.Question)),
+    __param(4, (0, typeorm_1.InjectRepository)(session_entity_1.Session)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository])
 ], GamesService);

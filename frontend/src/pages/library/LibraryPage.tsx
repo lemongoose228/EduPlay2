@@ -7,6 +7,7 @@ import { useDebounce } from '../../shared/hooks/useDebounce';
 import { useAppSelector } from '../../app/store/hooks';
 import { selectAuthUser } from '../../features/auth/model/selectors';
 import { createSessionApi, joinSessionApi } from '../../features/sessions/api/sessionsApi';
+import { likeGameApi, unlikeGameApi, getLikedGameIdsApi } from '../../features/games/api/gamesApi';
 import { searchLibraryApi } from '../../features/library/api/libraryApi';
 import './LibraryPage.css';
 
@@ -29,9 +30,9 @@ export const LibraryPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'favorites'>('all');
   const user = useAppSelector(selectAuthUser);
 
-  const storageKey = user ? `likedGames_${user.id}` : 'likedGames_guest';
   const [likedIds, setLikedIds] = useState<string[]>([]);
-  
+  const [likesByGame, setLikesByGame] = useState<Record<string, number>>({});
+
   const debouncedSearch = useDebounce(searchTerm, 500);
 
   const navigate = useNavigate();
@@ -40,21 +41,23 @@ export const LibraryPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      setLikedIds(raw ? JSON.parse(raw) : []);
-    } catch {
+    if (!user) {
       setLikedIds([]);
+      setActiveTab('all');
+      return;
     }
-  }, [storageKey]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(likedIds));
-    } catch {
-      // Игнорируем ошибку записи в localStorage
-    }
-  }, [likedIds, storageKey]);
+    let cancelled = false;
+    getLikedGameIdsApi()
+      .then((ids) => {
+        if (!cancelled) setLikedIds(ids);
+      })
+      .catch(() => {
+        if (!cancelled) setLikedIds([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   const games = useMemo(() => {
     return items.map((game: any) => {
@@ -62,6 +65,7 @@ export const LibraryPage: React.FC = () => {
         (sum: number, cat: any) => sum + (cat.questions?.length ?? 0),
         0,
       );
+      const likes = likesByGame[game.id] ?? game.likes ?? 0;
 
       return {
         id: game.id,
@@ -70,11 +74,11 @@ export const LibraryPage: React.FC = () => {
         description: game.description,
         author: game.author?.name ?? '',
         plays: game.plays ?? 0,
-        likes: (game.likes ?? 0) + (likedIds.includes(game.id) ? 1 : 0),
+        likes,
         questionsCount,
       } as PublicGame;
     });
-  }, [items, likedIds]);
+  }, [items, likesByGame]);
 
   const visibleGames = useMemo(() => {
     return activeTab === 'favorites' ? games.filter((g) => likedIds.includes(g.id)) : games;
@@ -118,11 +122,31 @@ export const LibraryPage: React.FC = () => {
     };
   }, [debouncedSearch, selectedType, sortBy]);
 
-  const handleToggleLike = (gameId: string) => {
-    setLikedIds((prevIds) => {
-      const alreadyLiked = prevIds.includes(gameId);
-      return alreadyLiked ? prevIds.filter((id) => id !== gameId) : [...prevIds, gameId];
+  useEffect(() => {
+    const map: Record<string, number> = {};
+    items.forEach((g: any) => {
+      map[g.id] = g.likes ?? 0;
     });
+    setLikesByGame((prev) => ({ ...prev, ...map }));
+  }, [items]);
+
+  const handleToggleLike = async (gameId: string) => {
+    if (!user) return;
+    const alreadyLiked = likedIds.includes(gameId);
+    try {
+      if (alreadyLiked) {
+        const { likes } = await unlikeGameApi(gameId);
+        setLikedIds((prev) => prev.filter((id) => id !== gameId));
+        setLikesByGame((prev) => ({ ...prev, [gameId]: likes }));
+      } else {
+        const { likes } = await likeGameApi(gameId);
+        setLikedIds((prev) => [...prev, gameId]);
+        setLikesByGame((prev) => ({ ...prev, [gameId]: likes }));
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Не удалось изменить лайк');
+    }
   };
 
   const handlePlayGame = async (gameId: string) => {
@@ -160,12 +184,14 @@ export const LibraryPage: React.FC = () => {
         >
           Все игры
         </button>
-        <button
-          className={`library-tab ${activeTab === 'favorites' ? 'active' : ''}`}
-          onClick={() => setActiveTab('favorites')}
-        >
-          Избранное {likedIds.length > 0 ? `(${likedIds.length})` : ''}
-        </button>
+        {user && (
+          <button
+            className={`library-tab ${activeTab === 'favorites' ? 'active' : ''}`}
+            onClick={() => setActiveTab('favorites')}
+          >
+            Избранное {likedIds.length > 0 ? `(${likedIds.length})` : ''}
+          </button>
+        )}
       </div>
 
       <div className="library-controls">
@@ -230,7 +256,7 @@ export const LibraryPage: React.FC = () => {
               plays={game.plays}
               likes={game.likes}
               isLiked={likedIds.includes(game.id)}
-              onLikeToggle={() => handleToggleLike(game.id)}
+              onLikeToggle={user ? () => handleToggleLike(game.id) : undefined}
               onPlay={() => handlePlayGame(game.id)}
             />
           ))}

@@ -31,6 +31,21 @@ export class GamesController {
     return this.gamesService.findAll(user.id);
   }
 
+  @Get('liked/ids')
+  getLikedIds(@CurrentUser() user: User) {
+    return this.gamesService.getLikedGameIds(user.id);
+  }
+
+  @Post(':id/like')
+  like(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.gamesService.like(user.id, id);
+  }
+
+  @Delete(':id/like')
+  unlike(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.gamesService.unlike(user.id, id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string, @CurrentUser() user: User) {
     return this.gamesService.findOne(id, user.id);

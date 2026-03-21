@@ -66,3 +66,22 @@ export async function deleteGameApi(id: string) {
   await axiosInstance.delete(`/games/${id}`);
 }
 
+export async function likeGameApi(gameId: string) {
+  const res: AxiosResponse<ApiEnvelope<{ likes: number }>> = await axiosInstance.post(
+    `/games/${gameId}/like`,
+  );
+  return res.data.data;
+}
+
+export async function unlikeGameApi(gameId: string) {
+  const res: AxiosResponse<ApiEnvelope<{ likes: number }>> = await axiosInstance.delete(
+    `/games/${gameId}/like`,
+  );
+  return res.data.data;
+}
+
+export async function getLikedGameIdsApi(): Promise<string[]> {
+  const res: AxiosResponse<ApiEnvelope<string[]>> = await axiosInstance.get('/games/liked/ids');
+  return res.data.data ?? [];
+}
+
