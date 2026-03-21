@@ -156,6 +156,7 @@ export const GamePage: React.FC = () => {
     value: number;
   }>(null);
   const quizRevealInFlightKeyRef = useRef<string | null>(null);
+  const quizCountdownStartedRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!session) return;
@@ -163,6 +164,7 @@ export const GamePage: React.FC = () => {
     if (session.status !== 'active') return;
     if (quizReview) return; // Пока показываем результаты — не трогаем таймер.
 
+    quizCountdownStartedRef.current = null;
     setTimeLeft(session.settings?.timePerQuestion ?? 30);
     setQuizAnswerDraft('');
     quizRevealInFlightKeyRef.current = null;
@@ -175,7 +177,13 @@ export const GamePage: React.FC = () => {
     if (quizReview) return;
 
     const interval = window.setInterval(() => {
-      setTimeLeft((t) => Math.max(0, t - 1));
+      setTimeLeft((t) => {
+        const next = Math.max(0, t - 1);
+        if (t > 0 && next === 0) {
+          quizCountdownStartedRef.current = `${session.currentQuestionIndex ?? 0}`;
+        }
+        return next;
+      });
     }, 1000);
 
     return () => {
@@ -190,6 +198,7 @@ export const GamePage: React.FC = () => {
     if (quizReview) return;
     if (timeLeft > 0) return;
     if (!currentQuizQuestionRef) return;
+    if (quizCountdownStartedRef.current !== `${currentQuizIndex}`) return;
 
     const key = `${currentQuizQuestionRef.categoryId}:${currentQuizQuestionRef.questionId}`;
     if (quizRevealInFlightKeyRef.current === key) return;
@@ -229,8 +238,8 @@ export const GamePage: React.FC = () => {
     session?.status,
     quizReview,
     timeLeft,
+    currentQuizIndex,
     currentQuizQuestionRef,
-    revealQuizQuestionApi,
   ]);
 
   const handleQuestionClick = (category: Category, question: Question) => {

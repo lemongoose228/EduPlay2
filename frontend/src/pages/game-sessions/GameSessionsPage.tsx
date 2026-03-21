@@ -102,10 +102,13 @@ export const GameSessionsPage: React.FC = () => {
 
   const handleJoinByCode = async () => {
     try {
+      const playerName = (joinName?.trim() && joinName.trim().length >= 1)
+        ? joinName.trim()
+        : 'Игрок';
       const session = await joinSessionApi({
-        inviteCode: joinInviteCode,
-        teamName: joinName || undefined,
-        playerName: joinName || 'Игрок',
+        inviteCode: joinInviteCode.trim(),
+        teamName: joinName?.trim() || undefined,
+        playerName,
       });
       navigate(`/game/${session.id}`);
     } catch (e) {
