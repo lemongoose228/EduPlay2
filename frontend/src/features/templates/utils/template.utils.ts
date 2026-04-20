@@ -34,3 +34,28 @@ export const formatTemplateForSave = (template: any) => {
     createdAt: template.createdAt || new Date().toISOString()
   };
 };
+
+
+import type { CrocodileTerm } from '../types/template.types';
+
+export const createEmptyTerm = (): CrocodileTerm => ({
+  id: `term-${Date.now()}-${Math.random()}`,
+  term: '',
+  isGuessed: false
+});
+
+export const createEmptyCrocodileGame = () => ({
+  name: '',
+  type: 'crocodile' as const,
+  terms: [createEmptyTerm()],
+  timePerTerm: TEMPLATE_CONSTANTS.DEFAULT_TIME_PER_TERM
+});
+
+export const shuffleArray = <T>(array: T[]): T[] => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};

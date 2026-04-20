@@ -9,24 +9,13 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.JoinSessionDto = void 0;
+exports.MarkCrocodileTermDto = void 0;
 const class_validator_1 = require("class-validator");
-class JoinSessionDto {
+class MarkCrocodileTermDto {
 }
-exports.JoinSessionDto = JoinSessionDto;
-__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)({ message: 'Код приглашения обязателен' }),
-    __metadata("design:type", String)
-], JoinSessionDto.prototype, "inviteCode", void 0);
-__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(1, { message: 'Имя игрока должно быть не менее 1 символа' }),
-    (0, class_validator_1.IsNotEmpty)({ message: 'Имя игрока обязательно' }),
-    __metadata("design:type", String)
-], JoinSessionDto.prototype, "playerName", void 0);
+exports.MarkCrocodileTermDto = MarkCrocodileTermDto;
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsUUID)(),
     __metadata("design:type", String)
-], JoinSessionDto.prototype, "teamName", void 0);
+], MarkCrocodileTermDto.prototype, "termId", void 0);

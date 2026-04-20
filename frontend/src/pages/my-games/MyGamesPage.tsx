@@ -13,7 +13,7 @@ import { selectAuthUser } from '../../features/auth/model/selectors';
 interface Game {
   id: string;
   title: string;
-  type: 'own' | 'quiz';
+  type: 'own' | 'quiz' | 'crocodile';
   description?: string;
   questionsCount: number;
   createdAt: string;
@@ -78,9 +78,10 @@ export const MyGamesPage: React.FC = () => {
 
   const handlePlayGame = async (gameId: string) => {
     try {
+      const game = games.find((item) => item.id === gameId);
       const session = await createSessionApi({ gameId });
-      // Чтобы хост мог стартовать игру, сразу добавим его в сессию как игрока/команду.
-      if (user) {
+      // Для "Крокодила" сессия однопользовательская: никого не подключаем.
+      if (user && game?.type !== 'crocodile') {
         const trimmed = user.name?.trim();
         const playerName = trimmed && trimmed.length >= 2 ? trimmed : 'Хост';
         try {

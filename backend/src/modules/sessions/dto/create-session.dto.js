@@ -38,6 +38,13 @@ __decorate([
 ], SessionSettingsDto.prototype, "timePerQuestion", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(10),
+    (0, class_validator_1.Max)(120),
+    __metadata("design:type", Number)
+], SessionSettingsDto.prototype, "timePerTerm", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], SessionSettingsDto.prototype, "allowNegativeScores", void 0);

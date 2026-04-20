@@ -21,6 +21,12 @@ export class SessionSettingsDto {
   timePerQuestion?: number;
 
   @IsOptional()
+  @IsNumber()
+  @Min(10)
+  @Max(120)
+  timePerTerm?: number;
+
+  @IsOptional()
   @IsBoolean()
   allowNegativeScores?: boolean;
 }

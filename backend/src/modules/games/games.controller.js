@@ -14,13 +14,13 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GamesController = void 0;
 const common_1 = require("@nestjs/common");
-const games_service_1 = require("./games.service");
 const create_game_dto_1 = require("./dto/create-game.dto");
 const update_game_dto_1 = require("./dto/update-game.dto");
 const publish_game_dto_1 = require("./dto/publish-game.dto");
 const jwt_auth_guard_1 = require("../../common/guards/jwt-auth.guard");
 const current_user_decorator_1 = require("../../common/decorators/current-user.decorator");
 const user_entity_1 = require("../users/entities/user.entity");
+const games_service_1 = require("./games.service");
 let GamesController = class GamesController {
     constructor(gamesService) {
         this.gamesService = gamesService;

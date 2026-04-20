@@ -9,6 +9,7 @@ import { GamePage } from '../../pages/game/GamePage';
 import { AuthPage } from '../../features/auth/ui/AuthPage';
 import { useAppSelector } from '../store/hooks';
 import { selectIsAuthenticated } from '../../features/auth/model/selectors';
+import { SettingsPage } from '../../pages/settings/SettingsPage';
 
 export const AppRouter: React.FC = () => {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
@@ -42,6 +43,10 @@ export const AppRouter: React.FC = () => {
       <Route
         path="/game/:sessionId"
         element={isAuthenticated ? <GamePage /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/settings"
+        element={isAuthenticated ? <SettingsPage /> : <Navigate to="/login" replace />}
       />
     </Routes>
   );

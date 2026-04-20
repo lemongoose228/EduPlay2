@@ -61,6 +61,10 @@ __decorate([
     __metadata("design:type", Number)
 ], Session.prototype, "currentQuestionIndex", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'timestamp', nullable: true }),
+    __metadata("design:type", Object)
+], Session.prototype, "questionStartedAt", void 0);
+__decorate([
     (0, typeorm_1.Column)({ type: 'jsonb', default: [] }),
     __metadata("design:type", Array)
 ], Session.prototype, "answeredQuestions", void 0);
@@ -68,6 +72,10 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'jsonb', default: {} }),
     __metadata("design:type", Object)
 ], Session.prototype, "settings", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'jsonb', nullable: true }),
+    __metadata("design:type", Object)
+], Session.prototype, "crocodileState", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", Date)

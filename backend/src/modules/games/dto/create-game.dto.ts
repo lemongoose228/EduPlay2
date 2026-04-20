@@ -13,6 +13,7 @@ import { Type } from 'class-transformer';
 export enum GameType {
   Own = 'own',
   Quiz = 'quiz',
+  Crocodile = 'crocodile',
 }
 
 class QuestionDto {
@@ -23,7 +24,7 @@ class QuestionDto {
   answer!: string;
 
   @IsNumber()
-  @Min(100)
+  @Min(1)
   @Max(1000)
   value!: number;
 }
@@ -57,6 +58,7 @@ export class CreateGameDto {
   @IsOptional()
   settings?: {
     timePerQuestion?: number;
+    timePerTerm?: number;
     allowNegativeScores?: boolean;
   };
 }

@@ -15,7 +15,9 @@ const AppLayout: React.FC = () => {
   const token = useAppSelector(selectAuthToken);
 
   React.useEffect(() => {
-    if (token) dispatch(fetchProfile());
+    if (token) {
+      dispatch(fetchProfile());
+    }
   }, [dispatch, token]);
 
   return (

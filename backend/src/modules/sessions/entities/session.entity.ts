@@ -13,6 +13,18 @@ import { Team } from './team.entity';
 
 export type SessionStatus = 'waiting' | 'active' | 'paused' | 'finished';
 
+export type CrocodileTermResult = 'guessed' | 'missed';
+
+export interface CrocodileState {
+  termOrder: string[];
+  currentTermId: string | null;
+  turnEndsAt: string | null;
+  termResults: Array<{
+    termId: string;
+    result: CrocodileTermResult;
+  }>;
+}
+
 @Entity('sessions')
 export class Session {
   @PrimaryGeneratedColumn('uuid')
@@ -49,11 +61,13 @@ export class Session {
   @Column({ nullable: true })
   currentQuestionIndex: number;
 
+  @Column({ type: 'timestamp', nullable: true })
+  questionStartedAt: Date | null;
+
   @Column({ type: 'jsonb', default: [] })
   answeredQuestions: Array<{
     categoryId: string;
     questionId: string;
-    // Для викторины: ответы каждого пользователя отдельно
     userId?: string;
     teamId?: string;
     isCorrect?: boolean;
@@ -66,8 +80,12 @@ export class Session {
     maxTeams: number;
     maxPlayersPerTeam: number;
     timePerQuestion: number;
+    timePerTerm?: number;
     allowNegativeScores: boolean;
   };
+
+  @Column({ type: 'jsonb', nullable: true })
+  crocodileState?: CrocodileState | null;
 
   @Column({ nullable: true })
   startedAt: Date;

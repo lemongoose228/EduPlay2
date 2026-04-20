@@ -14,6 +14,7 @@ import { JoinSessionDto } from './dto/join-session.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { UpdateScoreDto } from './dto/update-score.dto';
 import { AddTeamDto } from './dto/add-team.dto';
+import { MarkCrocodileTermDto } from './dto/mark-crocodile-term.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
@@ -81,6 +82,24 @@ export class SessionsController {
   @Post(':id/finish')
   finish(@Param('id') id: string, @CurrentUser() user: User) {
     return this.sessionsService.finish(id, user.id);
+  }
+
+  @Post(':id/crocodile/guess')
+  markCrocodileGuessed(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+    @Body() dto: MarkCrocodileTermDto,
+  ) {
+    return this.sessionsService.markCrocodileTerm(id, user.id, 'guessed', dto.termId);
+  }
+
+  @Post(':id/crocodile/miss')
+  markCrocodileMissed(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+    @Body() dto: MarkCrocodileTermDto,
+  ) {
+    return this.sessionsService.markCrocodileTerm(id, user.id, 'missed', dto.termId);
   }
 
   @Post(':id/teams')

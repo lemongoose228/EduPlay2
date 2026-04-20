@@ -35,6 +35,77 @@ let SessionsService = class SessionsService {
         }
         return code;
     }
+    shuffleArray(items) {
+        const shuffled = [...items];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    }
+    getCrocodileTerms(session) {
+        if (session.game?.type !== 'crocodile')
+            return [];
+        return (session.game.categories ?? []).flatMap((category) => (category.questions ?? []).map((question) => ({
+            id: question.id,
+            term: question.question,
+        })));
+    }
+    getCrocodileTimePerTerm(session) {
+        return (session.settings?.timePerTerm ??
+            session.game?.settings?.timePerTerm ??
+            30);
+    }
+    buildNextTurnEndsAt(session) {
+        const ms = this.getCrocodileTimePerTerm(session) * 1000;
+        return new Date(Date.now() + ms).toISOString();
+    }
+    ensureCrocodileHost(session, userId) {
+        if (session.hostId !== userId) {
+            throw new common_1.ForbiddenException('Только создатель может управлять "Крокодилом"');
+        }
+        if (session.game?.type !== 'crocodile') {
+            throw new common_1.BadRequestException('Эта операция доступна только для "Крокодила"');
+        }
+    }
+    buildInitialCrocodileState(session) {
+        const terms = this.getCrocodileTerms(session);
+        if (!terms.length) {
+            throw new common_1.BadRequestException('В игре нет терминов для режима "Крокодил"');
+        }
+        const termOrder = this.shuffleArray(terms.map((term) => term.id));
+        const firstTermId = termOrder[0] ?? null;
+        return {
+            termOrder,
+            currentTermId: firstTermId,
+            turnEndsAt: firstTermId ? this.buildNextTurnEndsAt(session) : null,
+            termResults: [],
+        };
+    }
+    applyCrocodileTermResult(session, state, result) {
+        const currentTermId = state.currentTermId;
+        if (!currentTermId) {
+            throw new common_1.BadRequestException('В "Крокодиле" уже нет активных терминов');
+        }
+        const alreadyResolved = state.termResults.some((item) => item.termId === currentTermId);
+        if (alreadyResolved) {
+            throw new common_1.BadRequestException('Текущий термин уже обработан');
+        }
+        const termResults = [...state.termResults, { termId: currentTermId, result }];
+        const nextTermId = state.termOrder[termResults.length] ?? null;
+        return {
+            ...state,
+            currentTermId: nextTermId,
+            turnEndsAt: nextTermId ? this.buildNextTurnEndsAt(session) : null,
+            termResults,
+        };
+    }
+    finalizeCrocodileIfCompleted(session, state) {
+        if (!state.currentTermId && state.termResults.length >= state.termOrder.length) {
+            session.status = 'finished';
+            session.finishedAt = new Date();
+        }
+    }
     async create(userId, createSessionDto) {
         const game = await this.gamesService.findOne(createSessionDto.gameId, userId);
         // Сессии можно создавать для любых игр, к которым есть доступ (в т.ч. черновики автора)
@@ -56,11 +127,14 @@ let SessionsService = class SessionsService {
                 // Берем настройки из игры (для викторины важно), но приоритет у параметров сессии.
                 timePerQuestion: createSessionDto.settings?.timePerQuestion ??
                     (game.settings?.timePerQuestion ?? 30),
+                timePerTerm: createSessionDto.settings?.timePerTerm ??
+                    (game.settings?.timePerTerm ?? 30),
                 allowNegativeScores: createSessionDto.settings?.allowNegativeScores ??
                     (game.settings?.allowNegativeScores ?? false),
             },
             teams: [],
             answeredQuestions: [],
+            crocodileState: game.type === 'crocodile' ? null : undefined,
         });
         return this.sessionsRepository.save(session);
     }
@@ -74,6 +148,9 @@ let SessionsService = class SessionsService {
         }
         if (session.status !== 'waiting') {
             throw new common_1.BadRequestException('Нельзя присоединиться к уже начатой игре');
+        }
+        if (session.game?.type === 'crocodile') {
+            throw new common_1.ForbiddenException('Сессия "Крокодил" запускается только локально у преподавателя');
         }
         // Для "своей игры" участником может быть только организатор (1 игрок).
         if (session.game?.type === 'own') {
@@ -145,7 +222,30 @@ let SessionsService = class SessionsService {
         }
         session.status = 'active';
         session.startedAt = new Date();
-        session.currentQuestionIndex = 0;
+        if (session.game?.type === 'crocodile') {
+            session.crocodileState = this.buildInitialCrocodileState(session);
+        }
+        else {
+            session.currentQuestionIndex = 0;
+        }
+        return this.sessionsRepository.save(session);
+    }
+    async markCrocodileTerm(id, userId, result, termId) {
+        const session = await this.findOne(id);
+        this.ensureCrocodileHost(session, userId);
+        if (session.status !== 'active') {
+            throw new common_1.BadRequestException('Игра не активна');
+        }
+        const state = session.crocodileState;
+        if (!state) {
+            throw new common_1.BadRequestException('Состояние "Крокодила" не инициализировано');
+        }
+        if (termId && state.currentTermId !== termId) {
+            throw new common_1.BadRequestException('Текущий термин уже изменился, обновите страницу');
+        }
+        const updatedState = this.applyCrocodileTermResult(session, state, result);
+        session.crocodileState = updatedState;
+        this.finalizeCrocodileIfCompleted(session, updatedState);
         return this.sessionsRepository.save(session);
     }
     async answerQuestion(id, userId, categoryId, questionId, submitDto) {
@@ -283,6 +383,16 @@ let SessionsService = class SessionsService {
         const session = await this.findOne(id);
         if (session.hostId !== userId) {
             throw new common_1.ForbiddenException('Только создатель может завершить игру');
+        }
+        if (session.status === 'finished') {
+            return session;
+        }
+        if (session.game?.type === 'crocodile' && session.crocodileState) {
+            let state = session.crocodileState;
+            while (state.currentTermId) {
+                state = this.applyCrocodileTermResult(session, state, 'missed');
+            }
+            session.crocodileState = state;
         }
         session.status = 'finished';
         session.finishedAt = new Date();

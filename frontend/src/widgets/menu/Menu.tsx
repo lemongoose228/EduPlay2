@@ -4,6 +4,11 @@ import { useAppDispatch, useAppSelector } from '../../app/store/hooks';
 import { logout } from '../../features/auth/model/authSlice';
 import { selectAuthUser } from '../../features/auth/model/selectors';
 import './Menu.css';
+import ConstructorImg from '../../assets/menu/constructor.svg'
+import LibImg from '../../assets/menu/lib.svg'
+import MyGamesImg from '../../assets/menu/mygames.svg'
+import SessionsImg from '../../assets/menu/sessions.svg'
+import AvatarImg from '../../assets/Person.svg'
 
 interface MenuItem {
   path: string;
@@ -21,10 +26,10 @@ export const Menu: React.FC = () => {
   const displayEmail = useMemo(() => user?.email || '', [user?.email]);
 
   const menuItems: MenuItem[] = [
-    { path: '/create-game', label: 'Создать игру', icon: '🎮' },
-    { path: '/my-games', label: 'Мои игры', icon: '📚' },
-    { path: '/library', label: 'Библиотека игр', icon: '🏛️' },
-    { path: '/game-sessions', label: 'Игровые сессии', icon: '🎯' },
+    { path: '/create-game', label: 'Создать игру', icon: ConstructorImg },
+    { path: '/my-games', label: 'Мои игры', icon: MyGamesImg },
+    { path: '/library', label: 'Библиотека игр', icon: LibImg },
+    { path: '/game-sessions', label: 'Игровые сессии', icon: SessionsImg },
   ];
 
   const handleSearch = (e: React.FormEvent) => {
@@ -39,7 +44,7 @@ export const Menu: React.FC = () => {
       <div className="menu-header">
         <div className="user-info">
           <div className="user-avatar">
-            <span className="avatar-icon">👤</span>
+            <img src={AvatarImg}/>
           </div>
           <div className="user-details">
             <span className="user-name">{displayName}</span>
@@ -55,7 +60,8 @@ export const Menu: React.FC = () => {
             to={item.path}
             className={({ isActive }) => `menu-item ${isActive ? 'menu-item-active' : ''}`}
           >
-            <span className="menu-item-icon">{item.icon}</span>
+            
+            <img src={item.icon}/>
             <span className="menu-item-label">{item.label}</span>
           </NavLink>
         ))}

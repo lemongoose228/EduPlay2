@@ -16,6 +16,7 @@ var GameType;
 (function (GameType) {
     GameType["Own"] = "own";
     GameType["Quiz"] = "quiz";
+    GameType["Crocodile"] = "crocodile";
 })(GameType || (exports.GameType = GameType = {}));
 class QuestionDto {
 }
@@ -29,7 +30,7 @@ __decorate([
 ], QuestionDto.prototype, "answer", void 0);
 __decorate([
     (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(100),
+    (0, class_validator_1.Min)(1),
     (0, class_validator_1.Max)(1000),
     __metadata("design:type", Number)
 ], QuestionDto.prototype, "value", void 0);

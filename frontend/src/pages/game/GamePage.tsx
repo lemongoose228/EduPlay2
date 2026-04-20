@@ -12,10 +12,13 @@ import {
   addTeamApi,
   finishSessionApi,
   getSessionApi,
+  markCrocodileGuessedApi,
+  markCrocodileMissedApi,
   startSessionApi,
   revealQuizQuestionApi,
   updateScoreApi,
 } from '../../features/sessions/api/sessionsApi';
+import { CrocodileGamePage } from './CrocodileGamePage';
 
 interface Question {
   id: string;
@@ -42,10 +45,11 @@ interface GameSession {
   id: string;
   game: {
     title: string;
-    type: 'own' | 'quiz';
+    type: 'own' | 'quiz' | 'crocodile';
     categories: Category[];
     settings?: {
       timePerQuestion?: number;
+      timePerTerm?: number;
       allowNegativeScores?: boolean;
     };
   };
@@ -67,8 +71,15 @@ interface GameSession {
     maxTeams: number;
     maxPlayersPerTeam: number;
     timePerQuestion: number;
+    timePerTerm?: number;
     allowNegativeScores: boolean;
   };
+  crocodileState?: {
+    termOrder: string[];
+    currentTermId: string | null;
+    turnEndsAt: string | null;
+    termResults: Array<{ termId: string; result: 'guessed' | 'missed' }>;
+  } | null;
   startedAt?: string;
   finishedAt?: string;
 }
@@ -322,6 +333,56 @@ export const GamePage: React.FC = () => {
 
   if (!session) {
     return <div className="loading">Загрузка...</div>;
+  }
+
+  if (session.game.type === 'crocodile') {
+    const crocodileGameData = {
+      id: session.id,
+      title: session.game.title,
+      terms: session.game.categories.flatMap((cat) =>
+        cat.questions.map((q) => ({
+          id: q.id,
+          term: q.question,
+          isGuessed: false,
+        })),
+      ),
+      timePerTerm: session.settings?.timePerTerm ?? session.game.settings?.timePerTerm ?? 30,
+      status: session.status as 'waiting' | 'active' | 'finished',
+    };
+
+    return (
+      <CrocodileGamePage
+        sessionId={session.id}
+        gameData={crocodileGameData}
+        isHost={isHost}
+        crocodileState={session.crocodileState}
+        onStart={async () => {
+          try {
+            const updated = await startSessionApi(session.id);
+            setSession(updated);
+          } catch (e) {
+            console.error(e);
+            alert('Не удалось начать игру');
+          }
+        }}
+        onMarkGuessed={async (termId) => {
+          const updated = await markCrocodileGuessedApi(session.id, { termId });
+          setSession(updated);
+        }}
+        onMarkMissed={async (termId) => {
+          const updated = await markCrocodileMissedApi(session.id, { termId });
+          setSession(updated);
+        }}
+        onFinish={() => {
+          finishSessionApi(session.id)
+            .then((updated) => setSession(updated))
+            .catch((e) => {
+              console.error(e);
+              alert('Не удалось завершить игру');
+            });
+        }}
+      />
+    );
   }
 
   const maxOwnRows = Math.max(...session.game.categories.map((c) => c.questions.length), 0);

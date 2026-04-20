@@ -1,0 +1,139 @@
+.crocodile-game-builder {
+  animation: slideIn 0.5s ease;
+}
+
+.builder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding: 24px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+
+.builder-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #ff9e8b 0%, #ff6b4e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.builder-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.basic-info-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.terms-section {
+  margin-top: 24px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 0 4px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.section-description {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.terms-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.term-card-wrapper {
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.term-field {
+  width: 100%;
+}
+
+.term-field .input-wrapper {
+  margin-bottom: 0;
+}
+
+.builder-footer {
+  margin-top: 32px;
+  padding: 20px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.terms-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+.info-icon {
+  font-size: 20px;
+}
+
+.terms-info strong {
+  color: #ff6b4e;
+  font-size: 18px;
+}
+
+.info-note {
+  font-size: 13px;
+  color: var(--text-light);
+}
+
+@media (max-width: 768px) {
+  .basic-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .section-header button {
+    width: 100%;
+  }
+}

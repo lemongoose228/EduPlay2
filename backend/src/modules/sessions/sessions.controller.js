@@ -20,6 +20,7 @@ const join_session_dto_1 = require("./dto/join-session.dto");
 const submit_answer_dto_1 = require("./dto/submit-answer.dto");
 const update_score_dto_1 = require("./dto/update-score.dto");
 const add_team_dto_1 = require("./dto/add-team.dto");
+const mark_crocodile_term_dto_1 = require("./dto/mark-crocodile-term.dto");
 const jwt_auth_guard_1 = require("../../common/guards/jwt-auth.guard");
 const current_user_decorator_1 = require("../../common/decorators/current-user.decorator");
 const user_entity_1 = require("../users/entities/user.entity");
@@ -53,6 +54,12 @@ let SessionsController = class SessionsController {
     }
     finish(id, user) {
         return this.sessionsService.finish(id, user.id);
+    }
+    markCrocodileGuessed(id, user, dto) {
+        return this.sessionsService.markCrocodileTerm(id, user.id, 'guessed', dto.termId);
+    }
+    markCrocodileMissed(id, user, dto) {
+        return this.sessionsService.markCrocodileTerm(id, user.id, 'missed', dto.termId);
     }
     addTeam(id, user, dto) {
         return this.sessionsService.addTeam(id, user.id, dto);
@@ -140,6 +147,26 @@ __decorate([
     __metadata("design:paramtypes", [String, user_entity_1.User]),
     __metadata("design:returntype", void 0)
 ], SessionsController.prototype, "finish", null);
+__decorate([
+    (0, common_1.Post)(':id/crocodile/guess'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, user_entity_1.User,
+        mark_crocodile_term_dto_1.MarkCrocodileTermDto]),
+    __metadata("design:returntype", void 0)
+], SessionsController.prototype, "markCrocodileGuessed", null);
+__decorate([
+    (0, common_1.Post)(':id/crocodile/miss'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, user_entity_1.User,
+        mark_crocodile_term_dto_1.MarkCrocodileTermDto]),
+    __metadata("design:returntype", void 0)
+], SessionsController.prototype, "markCrocodileMissed", null);
 __decorate([
     (0, common_1.Post)(':id/teams'),
     __param(0, (0, common_1.Param)('id')),

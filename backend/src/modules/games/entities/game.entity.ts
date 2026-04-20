@@ -10,7 +10,7 @@ import {
 import { User } from '../../users/entities/user.entity';
 import { Category } from './category.entity';
 
-export type GameType = 'own' | 'quiz';
+export type GameType = 'own' | 'quiz' | 'crocodile';
 export type GameStatus = 'draft' | 'published' | 'archived';
 
 @Entity('games')
@@ -26,7 +26,7 @@ export class Game {
 
   @Column({
     type: 'enum',
-    enum: ['own', 'quiz'],
+    enum: ['own', 'quiz', 'crocodile'],
     default: 'own',
   })
   type: GameType;
@@ -62,6 +62,7 @@ export class Game {
   @Column({ type: 'jsonb', nullable: true })
   settings: {
     timePerQuestion?: number;
+    timePerTerm?: number;
     allowNegativeScores?: boolean;
   };
 

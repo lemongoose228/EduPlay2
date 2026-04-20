@@ -15,6 +15,7 @@ export type CreateSessionDto = {
     maxTeams: number;
     maxPlayersPerTeam: number;
     timePerQuestion: number;
+    timePerTerm: number;
     allowNegativeScores: boolean;
   }>;
 };
@@ -74,6 +75,22 @@ export async function updateScoreApi(sessionId: string, dto: UpdateScoreDto) {
 
 export async function finishSessionApi(sessionId: string) {
   const res: AxiosResponse<ApiEnvelope<any>> = await axiosInstance.post(`/sessions/${sessionId}/finish`);
+  return res.data.data;
+}
+
+export async function markCrocodileGuessedApi(sessionId: string, payload?: { termId?: string }) {
+  const res: AxiosResponse<ApiEnvelope<any>> = await axiosInstance.post(
+    `/sessions/${sessionId}/crocodile/guess`,
+    payload ?? {},
+  );
+  return res.data.data;
+}
+
+export async function markCrocodileMissedApi(sessionId: string, payload?: { termId?: string }) {
+  const res: AxiosResponse<ApiEnvelope<any>> = await axiosInstance.post(
+    `/sessions/${sessionId}/crocodile/miss`,
+    payload ?? {},
+  );
   return res.data.data;
 }
 

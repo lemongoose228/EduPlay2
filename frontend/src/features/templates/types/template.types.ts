@@ -41,7 +41,7 @@ export interface QuizTemplate {
 }
 
 // Общий тип для всех шаблонов
-export type GameTemplate = OwnGameTemplate | QuizTemplate;
+export type GameTemplate = OwnGameTemplate | QuizTemplate | CrocodileTemplate;
 
 // Типы для валидации
 export interface ValidationError {
@@ -57,5 +57,29 @@ export const TEMPLATE_CONSTANTS = {
   QUESTION_VALUES: [100, 200, 300, 400, 500],
   DEFAULT_TIME_PER_QUESTION: 30,
   MIN_TIME_PER_QUESTION: 5,
-  MAX_TIME_PER_QUESTION: 120
+  MAX_TIME_PER_QUESTION: 120,
+  DEFAULT_TIME_PER_TERM: 30,
+  MIN_TIME_PER_TERM: 10,
+  MAX_TIME_PER_TERM: 60,
+  MAX_TERMS: 50,
+  MIN_TERMS: 3
 };
+
+
+// Типы для игры "Крокодил"
+export interface CrocodileTerm {
+  id: string;
+  term: string;
+  isGuessed?: boolean;
+}
+
+export interface CrocodileTemplate {
+  id?: string;
+  name: string;
+  type: 'crocodile';
+  terms: CrocodileTerm[];
+  timePerTerm: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+

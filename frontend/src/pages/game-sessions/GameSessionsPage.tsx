@@ -16,7 +16,7 @@ import { selectAuthUser } from '../../features/auth/model/selectors';
 interface Session {
   id: string;
   gameTitle: string;
-  gameType: 'own' | 'quiz';
+  gameType: 'own' | 'quiz' | 'crocodile';
   status: 'waiting' | 'active' | 'finished';
   teams: number;
   maxTeams: number;
