@@ -8,9 +8,6 @@ import { Modal } from '../../shared/ui/Modal/Modal';
 import { resolveAvatarSrc } from '../../shared/lib/resolveAvatarSrc';
 import './SettingsPage.css';
 
-const DEFAULT_AVATAR_FALLBACK =
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
-
 export const SettingsPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector(selectAuthUser);
@@ -22,7 +19,7 @@ export const SettingsPage: React.FC = () => {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    avatar: user?.avatar || '',
+    avatar: user?.avatar ?? null,
   });
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
@@ -46,7 +43,7 @@ export const SettingsPage: React.FC = () => {
       setFormData({
         name: user.name || '',
         email: user.email || '',
-        avatar: user.avatar || '',
+        avatar: user.avatar ?? null,
       });
       revokeBlobPreview();
       setSelectedAvatarFile(null);
@@ -55,18 +52,22 @@ export const SettingsPage: React.FC = () => {
   }, [user, revokeBlobPreview]);
 
   const predefinedAvatars = [
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=1',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=18',
     'https://api.dicebear.com/7.x/avataaars/svg?seed=2',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=3',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=4',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=5',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=39',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=545',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=55',
     'https://api.dicebear.com/7.x/avataaars/svg?seed=6',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=7',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=8',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=79',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=873',
     'https://api.dicebear.com/7.x/avataaars/svg?seed=9',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=10',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=11',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=12',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=108',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=125',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=124',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=933',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=1089',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=1244',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=1204',
   ];
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,6 +80,16 @@ export const SettingsPage: React.FC = () => {
     setFormData((prev) => ({ ...prev, avatar: avatarUrl }));
     setAvatarPreview(avatarUrl);
     setShowAvatarModal(false);
+  };
+
+  const handleRemoveAvatar = () => {
+    revokeBlobPreview();
+    setSelectedAvatarFile(null);
+    setAvatarPreview(null);
+    setFormData((prev) => ({ ...prev, avatar: null }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,8 +145,9 @@ export const SettingsPage: React.FC = () => {
     fileInputRef.current?.click();
   };
 
-  const previewSrc =
-    resolveAvatarSrc(avatarPreview || undefined) || DEFAULT_AVATAR_FALLBACK;
+  const previewSrc = resolveAvatarSrc(avatarPreview || undefined);
+  const hasAvatarSelection = Boolean(avatarPreview || formData.avatar || selectedAvatarFile);
+  const hasAvatarImage = Boolean(previewSrc);
 
   return (
     <div className="settings-page">
@@ -150,13 +162,15 @@ export const SettingsPage: React.FC = () => {
         <div className="settings-content">
           <div className="avatar-section">
             <div className="avatar-container">
-              {avatarPreview || user?.avatar ? (
+              {hasAvatarImage ? (
                 <img
                   src={previewSrc}
                   alt="Avatar"
                   className="avatar-image"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = DEFAULT_AVATAR_FALLBACK;
+                    (e.target as HTMLImageElement).style.display = 'none';
+                    setAvatarPreview(null);
+                    setFormData((prev) => ({ ...prev, avatar: null }));
                   }}
                 />
               ) : (
@@ -186,6 +200,14 @@ export const SettingsPage: React.FC = () => {
                 onClick={triggerFileInput}
               >
                 Загрузить фото
+              </Button>
+              <Button
+                variant="danger"
+                size="small"
+                onClick={handleRemoveAvatar}
+                disabled={!hasAvatarSelection}
+              >
+                Удалить фото
               </Button>
             </div>
           </div>
@@ -239,9 +261,18 @@ export const SettingsPage: React.FC = () => {
           </div>
           <div className="avatar-modal-footer">
             <p>Или загрузите своё изображение</p>
-            <Button variant="outline" onClick={triggerFileInput}>
-              Загрузить фото
-            </Button>
+            <div className="avatar-modal-actions">
+              <Button variant="outline" onClick={triggerFileInput}>
+                Загрузить фото
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleRemoveAvatar}
+                disabled={!hasAvatarSelection}
+              >
+                Удалить фото
+              </Button>
+            </div>
           </div>
         </div>
       </Modal>

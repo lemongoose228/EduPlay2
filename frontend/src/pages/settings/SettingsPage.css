@@ -152,6 +152,12 @@
   font-size: 14px;
 }
 
+.avatar-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -200,5 +206,9 @@
 
   .avatar-actions button {
     width: 100%;
+  }
+
+  .avatar-modal-actions {
+    flex-direction: column;
   }
 }

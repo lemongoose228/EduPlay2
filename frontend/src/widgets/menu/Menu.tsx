@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/store/hooks';
 import { logout } from '../../features/auth/model/authSlice';
@@ -8,7 +8,6 @@ import ConstructorImg from '../../assets/menu/constructor.svg'
 import LibImg from '../../assets/menu/lib.svg'
 import MyGamesImg from '../../assets/menu/mygames.svg'
 import SessionsImg from '../../assets/menu/sessions.svg'
-import AvatarImg from '../../assets/Person.svg';
 import { resolveAvatarSrc } from '../../shared/lib/resolveAvatarSrc';
 
 interface MenuItem {
@@ -20,15 +19,25 @@ interface MenuItem {
 export const Menu: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
   const dispatch = useAppDispatch();
   const user = useAppSelector(selectAuthUser);
 
   const displayName = useMemo(() => user?.name || 'Гость', [user?.name]);
   const displayEmail = useMemo(() => user?.email || '', [user?.email]);
   const menuAvatarSrc = useMemo(
-    () => resolveAvatarSrc(user?.avatar ?? undefined) ?? AvatarImg,
+    () => resolveAvatarSrc(user?.avatar ?? undefined),
     [user?.avatar],
   );
+  const userInitial = useMemo(
+    () => (displayName.trim() ? displayName.trim().charAt(0).toUpperCase() : '?'),
+    [displayName],
+  );
+  const showAvatarImage = Boolean(menuAvatarSrc) && !avatarLoadFailed;
+
+  useEffect(() => {
+    setAvatarLoadFailed(false);
+  }, [menuAvatarSrc]);
 
   const menuItems: MenuItem[] = [
     { path: '/create-game', label: 'Создать игру', icon: ConstructorImg },
@@ -49,7 +58,17 @@ export const Menu: React.FC = () => {
       <div className="menu-header">
         <div className="user-info">
           <div className="user-avatar">
-            <img src={menuAvatarSrc} alt="" onError={(e) => { (e.target as HTMLImageElement).src = AvatarImg; }} />
+            {showAvatarImage ? (
+              <img
+                src={menuAvatarSrc}
+                alt=""
+                onError={(e) => {
+                  setAvatarLoadFailed(true);
+                }}
+              />
+            ) : (
+              <span className="user-avatar-placeholder">{userInitial}</span>
+            )}
           </div>
           <div className="user-details">
             <span className="user-name">{displayName}</span>

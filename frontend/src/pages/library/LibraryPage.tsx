@@ -14,7 +14,7 @@ import './LibraryPage.css';
 interface PublicGame {
   id: string;
   title: string;
-  type: 'own' | 'quiz';
+  type: 'own' | 'quiz' | 'crocodile';
   description?: string;
   author: string;
   plays: number;
@@ -25,7 +25,7 @@ interface PublicGame {
 export const LibraryPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
-  const [selectedType, setSelectedType] = useState<'all' | 'own' | 'quiz'>('all');
+  const [selectedType, setSelectedType] = useState<'all' | 'own' | 'quiz' | 'crocodile'>('all');
   const [sortBy, setSortBy] = useState<'popular' | 'likes' | 'newest'>('popular');
   const [activeTab, setActiveTab] = useState<'all' | 'favorites'>('all');
   const user = useAppSelector(selectAuthUser);
@@ -223,6 +223,12 @@ export const LibraryPage: React.FC = () => {
               onClick={() => setSelectedType('quiz')}
             >
               ❓ Викторина
+            </button>
+            <button
+              className={`filter-btn ${selectedType === 'crocodile' ? 'active' : ''}`}
+              onClick={() => setSelectedType('crocodile')}
+            >
+              🐊 Крокодил
             </button>
           </div>
 

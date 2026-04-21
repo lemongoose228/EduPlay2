@@ -48,11 +48,20 @@ export class UsersService {
 
   async updateProfile(id: string, dto: UpdateProfileDto): Promise<Partial<User>> {
     const user = await this.findById(id);
+    const previousAvatar = user.avatar;
     user.name = dto.name.trim();
+
     if (dto.avatar !== undefined) {
-      user.avatar =
+      const nextAvatar =
         dto.avatar === null || dto.avatar === '' ? null : dto.avatar.trim();
+
+      if (previousAvatar !== nextAvatar) {
+        await this.removeStoredAvatarFile(previousAvatar);
+      }
+
+      user.avatar = nextAvatar;
     }
+
     await this.usersRepository.save(user);
     return this.getProfile(id);
   }
