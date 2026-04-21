@@ -1,20 +1,33 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { promises as fs } from 'fs';
+import { join } from 'path';
 import { User } from './entities/user.entity';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+
+const AVATAR_SUBDIR = 'avatars';
 
 @Injectable()
 export class UsersService {
+  private readonly uploadRoot = join(process.cwd(), 'uploads');
+
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
   ) {}
 
+  private async ensureUploadDirs() {
+    await fs.mkdir(join(this.uploadRoot, AVATAR_SUBDIR), { recursive: true });
+  }
+
   async findById(id: string): Promise<User> {
     const user = await this.usersRepository.findOne({
       where: { id },
-      relations: ['games'],
     });
 
     if (!user) {
@@ -33,10 +46,15 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
+  async updateProfile(id: string, dto: UpdateProfileDto): Promise<Partial<User>> {
     const user = await this.findById(id);
-    Object.assign(user, updateUserDto);
-    return this.usersRepository.save(user);
+    user.name = dto.name.trim();
+    if (dto.avatar !== undefined) {
+      user.avatar =
+        dto.avatar === null || dto.avatar === '' ? null : dto.avatar.trim();
+    }
+    await this.usersRepository.save(user);
+    return this.getProfile(id);
   }
 
   async getProfile(id: string): Promise<Partial<User>> {
@@ -57,5 +75,54 @@ export class UsersService {
     });
 
     return user?.games || [];
+  }
+
+  async setAvatarFromUpload(
+    userId: string,
+    file: Express.Multer.File,
+  ): Promise<Partial<User>> {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException('Пустой файл');
+    }
+
+    await this.ensureUploadDirs();
+
+    const user = await this.findById(userId);
+    await this.removeStoredAvatarFile(user.avatar);
+
+    const ext = this.extensionFromMimetype(file.mimetype);
+    const filename = `${userId}-${Date.now()}${ext}`;
+    const diskPath = join(this.uploadRoot, AVATAR_SUBDIR, filename);
+
+    await fs.writeFile(diskPath, file.buffer);
+
+    user.avatar = `/uploads/${AVATAR_SUBDIR}/${filename}`;
+    await this.usersRepository.save(user);
+
+    return this.getProfile(userId);
+  }
+
+  private extensionFromMimetype(mimetype: string): string {
+    const map: Record<string, string> = {
+      'image/jpeg': '.jpg',
+      'image/jpg': '.jpg',
+      'image/png': '.png',
+      'image/webp': '.webp',
+      'image/gif': '.gif',
+    };
+    return map[mimetype] || '.bin';
+  }
+
+  private async removeStoredAvatarFile(avatarUrl: string | null) {
+    if (!avatarUrl || !avatarUrl.startsWith(`/uploads/${AVATAR_SUBDIR}/`)) {
+      return;
+    }
+    const relative = avatarUrl.replace(/^\/uploads\//, '');
+    const abs = join(this.uploadRoot, relative);
+    try {
+      await fs.unlink(abs);
+    } catch {
+      // файл уже удалён или отсутствует
+    }
   }
 }

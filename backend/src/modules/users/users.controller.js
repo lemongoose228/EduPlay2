@@ -14,11 +14,14 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersController = void 0;
 const common_1 = require("@nestjs/common");
+const platform_express_1 = require("@nestjs/platform-express");
+const multer_1 = require("multer");
 const users_service_1 = require("./users.service");
-const update_user_dto_1 = require("./dto/update-user.dto");
+const update_profile_dto_1 = require("./dto/update-profile.dto");
 const jwt_auth_guard_1 = require("../../common/guards/jwt-auth.guard");
 const current_user_decorator_1 = require("../../common/decorators/current-user.decorator");
 const user_entity_1 = require("./entities/user.entity");
+const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
 let UsersController = class UsersController {
     constructor(usersService) {
         this.usersService = usersService;
@@ -26,8 +29,14 @@ let UsersController = class UsersController {
     getProfile(user) {
         return this.usersService.getProfile(user.id);
     }
-    updateProfile(user, updateUserDto) {
-        return this.usersService.update(user.id, updateUserDto);
+    updateProfile(user, dto) {
+        return this.usersService.updateProfile(user.id, dto);
+    }
+    uploadAvatar(user, file) {
+        if (!file) {
+            throw new common_1.BadRequestException('Файл не передан');
+        }
+        return this.usersService.setAvatarFromUpload(user.id, file);
     }
     getUserGames(user) {
         return this.usersService.getUserGames(user.id);
@@ -47,9 +56,28 @@ __decorate([
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [user_entity_1.User,
-        update_user_dto_1.UpdateUserDto]),
+        update_profile_dto_1.UpdateProfileDto]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "updateProfile", null);
+__decorate([
+    (0, common_1.Post)('profile/avatar'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
+        storage: (0, multer_1.memoryStorage)(),
+        limits: { fileSize: AVATAR_MAX_BYTES },
+        fileFilter: (_req, file, cb) => {
+            const ok = /^image\/(jpeg|jpg|png|gif|webp)$/i.test(file.mimetype);
+            if (!ok) {
+                return cb(new common_1.BadRequestException('Допустимы только изображения JPEG, PNG, GIF или WebP'), false);
+            }
+            cb(null, true);
+        },
+    })),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [user_entity_1.User, Object]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "uploadAvatar", null);
 __decorate([
     (0, common_1.Get)('games'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),

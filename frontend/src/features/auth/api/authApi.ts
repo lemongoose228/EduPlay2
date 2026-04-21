@@ -33,3 +33,25 @@ export async function getProfileApi() {
   return res.data.data;
 }
 
+export async function updateProfileApi(payload: {
+  name: string;
+  avatar?: string | null;
+}) {
+  const body: { name: string; avatar?: string | null } = { name: payload.name };
+  if (payload.avatar !== undefined) {
+    body.avatar = payload.avatar;
+  }
+  const res = await axiosInstance.put<ApiEnvelope<AuthUser>>('/users/profile', body);
+  return res.data.data;
+}
+
+export async function uploadProfileAvatarApi(file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await axiosInstance.post<ApiEnvelope<AuthUser>>(
+    '/users/profile/avatar',
+    formData,
+  );
+  return res.data.data;
+}
+

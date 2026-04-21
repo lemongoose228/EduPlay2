@@ -1,5 +1,12 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { getProfileApi, loginApi, registerApi, type AuthUser } from '../api/authApi';
+import {
+  getProfileApi,
+  loginApi,
+  registerApi,
+  updateProfileApi,
+  uploadProfileAvatarApi,
+  type AuthUser,
+} from '../api/authApi';
 
 export interface AuthState {
   token: string | null;
@@ -15,12 +22,20 @@ const initialState: AuthState = {
   error: null,
 };
 
+function normalizeApiMessage(msg: unknown): string | undefined {
+  if (typeof msg === 'string') return msg;
+  if (Array.isArray(msg)) {
+    return msg.filter((x): x is string => typeof x === 'string').join(', ');
+  }
+  return undefined;
+}
+
 function extractErrorMessage(error: unknown): string {
   if (typeof error === 'string') return error;
   if (error && typeof error === 'object') {
     const anyErr = error as any;
     const msg =
-      anyErr?.response?.data?.message ??
+      normalizeApiMessage(anyErr?.response?.data?.message) ??
       anyErr?.message ??
       anyErr?.toString?.();
     if (typeof msg === 'string') return msg;
@@ -59,6 +74,36 @@ export const fetchProfile = createAsyncThunk(
       return rejectWithValue(extractErrorMessage(e));
     }
   }
+);
+
+export const updateProfile = createAsyncThunk(
+  'auth/updateProfile',
+  async (
+    payload: {
+      name: string;
+      selectedFile?: File | null;
+      avatarFromForm?: string | null;
+    },
+    { rejectWithValue },
+  ) => {
+    try {
+      if (payload.selectedFile) {
+        await uploadProfileAvatarApi(payload.selectedFile);
+      }
+      const avatarForPut =
+        payload.selectedFile != null
+          ? undefined
+          : payload.avatarFromForm === '' || payload.avatarFromForm === undefined
+            ? undefined
+            : payload.avatarFromForm;
+      return await updateProfileApi({
+        name: payload.name.trim(),
+        avatar: avatarForPut,
+      });
+    } catch (e) {
+      return rejectWithValue(extractErrorMessage(e));
+    }
+  },
 );
 
 const authSlice = createSlice({
@@ -122,6 +167,17 @@ const authSlice = createSlice({
       .addCase(fetchProfile.rejected, (state, action) => {
         state.status = 'failed';
         state.error = (action.payload as string) || 'Не удалось загрузить профиль';
+      })
+      .addCase(updateProfile.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        state.user = action.payload;
+        state.error = null;
+      })
+      .addCase(updateProfile.rejected, (state, action) => {
+        state.error =
+          (action.payload as string) || 'Не удалось сохранить профиль';
       });
   },
 });

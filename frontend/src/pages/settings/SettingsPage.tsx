@@ -1,11 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAppSelector, useAppDispatch } from '../../app/store/hooks';
 import { selectAuthUser } from '../../features/auth/model/selectors';
-// import { updateProfile } from '../../features/auth/model/authSlice';
+import { updateProfile } from '../../features/auth/model/authSlice';
 import { Button } from '../../shared/ui/Button/Button';
 import { Input } from '../../shared/ui/Input/Input';
 import { Modal } from '../../shared/ui/Modal/Modal';
+import { resolveAvatarSrc } from '../../shared/lib/resolveAvatarSrc';
 import './SettingsPage.css';
+
+const DEFAULT_AVATAR_FALLBACK =
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
 
 export const SettingsPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -13,26 +17,42 @@ export const SettingsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const blobPreviewRef = useRef<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    avatar: user?.avatar || ''
+    avatar: user?.avatar || '',
   });
 
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar || null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(
+    user?.avatar || null,
+  );
   const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null);
+
+  const revokeBlobPreview = useCallback(() => {
+    if (blobPreviewRef.current) {
+      URL.revokeObjectURL(blobPreviewRef.current);
+      blobPreviewRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => revokeBlobPreview();
+  }, [revokeBlobPreview]);
 
   useEffect(() => {
     if (user) {
       setFormData({
         name: user.name || '',
         email: user.email || '',
-        avatar: user.avatar || ''
+        avatar: user.avatar || '',
       });
+      revokeBlobPreview();
+      setSelectedAvatarFile(null);
       setAvatarPreview(user.avatar || null);
     }
-  }, [user]);
+  }, [user, revokeBlobPreview]);
 
   const predefinedAvatars = [
     'https://api.dicebear.com/7.x/avataaars/svg?seed=1',
@@ -46,17 +66,18 @@ export const SettingsPage: React.FC = () => {
     'https://api.dicebear.com/7.x/avataaars/svg?seed=9',
     'https://api.dicebear.com/7.x/avataaars/svg?seed=10',
     'https://api.dicebear.com/7.x/avataaars/svg?seed=11',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=12'
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=12',
   ];
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, name: e.target.value }));
+    setFormData((prev) => ({ ...prev, name: e.target.value }));
   };
 
   const handleAvatarSelect = (avatarUrl: string) => {
-    setFormData(prev => ({ ...prev, avatar: avatarUrl }));
-    setAvatarPreview(avatarUrl);
+    revokeBlobPreview();
     setSelectedAvatarFile(null);
+    setFormData((prev) => ({ ...prev, avatar: avatarUrl }));
+    setAvatarPreview(avatarUrl);
     setShowAvatarModal(false);
   };
 
@@ -71,15 +92,14 @@ export const SettingsPage: React.FC = () => {
         alert('Пожалуйста, выберите изображение');
         return;
       }
+      revokeBlobPreview();
+      const objectUrl = URL.createObjectURL(file);
+      blobPreviewRef.current = objectUrl;
       setSelectedAvatarFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
-        setFormData(prev => ({ ...prev, avatar: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+      setAvatarPreview(objectUrl);
       setShowAvatarModal(false);
     }
+    e.target.value = '';
   };
 
   const handleSave = async () => {
@@ -90,19 +110,21 @@ export const SettingsPage: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const updateData: { name: string; avatar?: string } = {
-        name: formData.name.trim()
-      };
-      
-      if (formData.avatar) {
-        updateData.avatar = formData.avatar;
-      }
+      await dispatch(
+        updateProfile({
+          name: formData.name,
+          selectedFile: selectedAvatarFile,
+          avatarFromForm: formData.avatar || null,
+        }),
+      ).unwrap();
 
-      // await dispatch(updateProfile(updateData)).unwrap();
-      alert('Профиль успешно обновлён');
-    } catch (error: any) {
+      revokeBlobPreview();
+      setSelectedAvatarFile(null);
+    } catch (error: unknown) {
       console.error('Error updating profile:', error);
-      alert(error?.message || 'Не удалось обновить профиль');
+      const message =
+        typeof error === 'string' ? error : 'Не удалось обновить профиль';
+      alert(message);
     } finally {
       setIsLoading(false);
     }
@@ -111,6 +133,9 @@ export const SettingsPage: React.FC = () => {
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
+
+  const previewSrc =
+    resolveAvatarSrc(avatarPreview || undefined) || DEFAULT_AVATAR_FALLBACK;
 
   return (
     <div className="settings-page">
@@ -125,13 +150,13 @@ export const SettingsPage: React.FC = () => {
         <div className="settings-content">
           <div className="avatar-section">
             <div className="avatar-container">
-              {avatarPreview ? (
-                <img 
-                  src={avatarPreview} 
-                  alt="Avatar" 
+              {avatarPreview || user?.avatar ? (
+                <img
+                  src={previewSrc}
+                  alt="Avatar"
                   className="avatar-image"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
+                    (e.target as HTMLImageElement).src = DEFAULT_AVATAR_FALLBACK;
                   }}
                 />
               ) : (
@@ -141,9 +166,9 @@ export const SettingsPage: React.FC = () => {
               )}
             </div>
             <div className="avatar-actions">
-              <Button 
-                variant="outline" 
-                size="small" 
+              <Button
+                variant="outline"
+                size="small"
                 onClick={() => setShowAvatarModal(true)}
               >
                 Выбрать аватар
@@ -155,9 +180,9 @@ export const SettingsPage: React.FC = () => {
                 style={{ display: 'none' }}
                 onChange={handleFileUpload}
               />
-              <Button 
-                variant="outline" 
-                size="small" 
+              <Button
+                variant="outline"
+                size="small"
                 onClick={triggerFileInput}
               >
                 Загрузить фото
@@ -183,9 +208,9 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           <div className="settings-actions">
-            <Button 
-              variant="primary" 
-              onClick={handleSave} 
+            <Button
+              variant="primary"
+              onClick={handleSave}
               loading={isLoading}
             >
               Сохранить изменения

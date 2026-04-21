@@ -23,7 +23,7 @@ export class User {
   @Column()
   name!: string;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: 'text', nullable: true })
   avatar!: string | null;
 
   @Column({ default: false })

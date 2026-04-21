@@ -8,7 +8,8 @@ import ConstructorImg from '../../assets/menu/constructor.svg'
 import LibImg from '../../assets/menu/lib.svg'
 import MyGamesImg from '../../assets/menu/mygames.svg'
 import SessionsImg from '../../assets/menu/sessions.svg'
-import AvatarImg from '../../assets/Person.svg'
+import AvatarImg from '../../assets/Person.svg';
+import { resolveAvatarSrc } from '../../shared/lib/resolveAvatarSrc';
 
 interface MenuItem {
   path: string;
@@ -24,6 +25,10 @@ export const Menu: React.FC = () => {
 
   const displayName = useMemo(() => user?.name || 'Гость', [user?.name]);
   const displayEmail = useMemo(() => user?.email || '', [user?.email]);
+  const menuAvatarSrc = useMemo(
+    () => resolveAvatarSrc(user?.avatar ?? undefined) ?? AvatarImg,
+    [user?.avatar],
+  );
 
   const menuItems: MenuItem[] = [
     { path: '/create-game', label: 'Создать игру', icon: ConstructorImg },
@@ -44,7 +49,7 @@ export const Menu: React.FC = () => {
       <div className="menu-header">
         <div className="user-info">
           <div className="user-avatar">
-            <img src={AvatarImg}/>
+            <img src={menuAvatarSrc} alt="" onError={(e) => { (e.target as HTMLImageElement).src = AvatarImg; }} />
           </div>
           <div className="user-details">
             <span className="user-name">{displayName}</span>

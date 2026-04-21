@@ -16,15 +16,21 @@ exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
+const fs_1 = require("fs");
+const path_1 = require("path");
 const user_entity_1 = require("./entities/user.entity");
+const AVATAR_SUBDIR = 'avatars';
 let UsersService = class UsersService {
     constructor(usersRepository) {
         this.usersRepository = usersRepository;
+        this.uploadRoot = (0, path_1.join)(process.cwd(), 'uploads');
+    }
+    async ensureUploadDirs() {
+        await fs_1.promises.mkdir((0, path_1.join)(this.uploadRoot, AVATAR_SUBDIR), { recursive: true });
     }
     async findById(id) {
         const user = await this.usersRepository.findOne({
             where: { id },
-            relations: ['games'],
         });
         if (!user) {
             throw new common_1.NotFoundException('Пользователь не найден');
@@ -38,10 +44,15 @@ let UsersService = class UsersService {
         const user = this.usersRepository.create(userData);
         return this.usersRepository.save(user);
     }
-    async update(id, updateUserDto) {
+    async updateProfile(id, dto) {
         const user = await this.findById(id);
-        Object.assign(user, updateUserDto);
-        return this.usersRepository.save(user);
+        user.name = dto.name.trim();
+        if (dto.avatar !== undefined) {
+            user.avatar =
+                dto.avatar === null || dto.avatar === '' ? null : dto.avatar.trim();
+        }
+        await this.usersRepository.save(user);
+        return this.getProfile(id);
     }
     async getProfile(id) {
         const user = await this.findById(id);
@@ -59,6 +70,44 @@ let UsersService = class UsersService {
             },
         });
         return user?.games || [];
+    }
+    async setAvatarFromUpload(userId, file) {
+        if (!file?.buffer?.length) {
+            throw new common_1.BadRequestException('Пустой файл');
+        }
+        await this.ensureUploadDirs();
+        const user = await this.findById(userId);
+        await this.removeStoredAvatarFile(user.avatar);
+        const ext = this.extensionFromMimetype(file.mimetype);
+        const filename = `${userId}-${Date.now()}${ext}`;
+        const diskPath = (0, path_1.join)(this.uploadRoot, AVATAR_SUBDIR, filename);
+        await fs_1.promises.writeFile(diskPath, file.buffer);
+        user.avatar = `/uploads/${AVATAR_SUBDIR}/${filename}`;
+        await this.usersRepository.save(user);
+        return this.getProfile(userId);
+    }
+    extensionFromMimetype(mimetype) {
+        const map = {
+            'image/jpeg': '.jpg',
+            'image/jpg': '.jpg',
+            'image/png': '.png',
+            'image/webp': '.webp',
+            'image/gif': '.gif',
+        };
+        return map[mimetype] || '.bin';
+    }
+    async removeStoredAvatarFile(avatarUrl) {
+        if (!avatarUrl || !avatarUrl.startsWith(`/uploads/${AVATAR_SUBDIR}/`)) {
+            return;
+        }
+        const relative = avatarUrl.replace(/^\/uploads\//, '');
+        const abs = (0, path_1.join)(this.uploadRoot, relative);
+        try {
+            await fs_1.promises.unlink(abs);
+        }
+        catch {
+            // файл уже удалён или отсутствует
+        }
     }
 };
 exports.UsersService = UsersService;
