@@ -67,6 +67,8 @@ interface GameSession {
     scored?: boolean;
   }>;
   inviteCode: string;
+  /** null/undefined: считать по game.type === 'quiz' */
+  multiplayer?: boolean | null;
   settings: {
     maxTeams: number;
     maxPlayersPerTeam: number;
@@ -335,6 +337,9 @@ export const GamePage: React.FC = () => {
     return <div className="loading">Загрузка...</div>;
   }
 
+  const showInviteCode =
+    (session.multiplayer ?? session.game.type === 'quiz') && Boolean(session.inviteCode?.trim());
+
   if (session.game.type === 'crocodile') {
     const crocodileGameData = {
       id: session.id,
@@ -392,9 +397,13 @@ export const GamePage: React.FC = () => {
       <div className="game-page lobby">
         <div className="game-container">
           <h1 className="game-title">{session.game.title}</h1>
-          <div className="session-info">
-            <p>Код приглашения: <strong>{session.inviteCode}</strong></p>
-          </div>
+          {showInviteCode ? (
+            <div className="session-info">
+              <p>
+                Код приглашения: <strong>{session.inviteCode}</strong>
+              </p>
+            </div>
+          ) : null}
 
           <div className="teams-section">
             <h2>Команды ({session.teams.length})</h2>
@@ -440,7 +449,7 @@ export const GamePage: React.FC = () => {
         <div className="game-header">
           <div className="game-info">
             <span className="game-title-header">{session.game.title}</span>
-            <span className="game-code">Код: {session.inviteCode}</span>
+            {showInviteCode ? <span className="game-code">Код: {session.inviteCode}</span> : null}
           </div>
           {isHost && <span className="game-finished-note">Игра завершена</span>}
         </div>
@@ -474,7 +483,7 @@ export const GamePage: React.FC = () => {
           <div className="game-header">
             <div className="game-info">
               <span className="game-title-header">{session.game.title}</span>
-              <span className="game-code">Код: {session.inviteCode}</span>
+              {showInviteCode ? <span className="game-code">Код: {session.inviteCode}</span> : null}
             </div>
           </div>
           <div className="quiz-empty">Вопросы не найдены.</div>
@@ -515,7 +524,7 @@ export const GamePage: React.FC = () => {
         <div className="game-header">
           <div className="game-info">
             <span className="game-title-header">{session.game.title}</span>
-            <span className="game-code">Код: {session.inviteCode}</span>
+            {showInviteCode ? <span className="game-code">Код: {session.inviteCode}</span> : null}
           </div>
           {isHost && (
             <Button
@@ -619,7 +628,7 @@ export const GamePage: React.FC = () => {
       <div className="game-header">
         <div className="game-info">
           <span className="game-title-header">{session.game.title}</span>
-          <span className="game-code">Код: {session.inviteCode}</span>
+          {showInviteCode ? <span className="game-code">Код: {session.inviteCode}</span> : null}
         </div>
         {isHost && (
           <Button

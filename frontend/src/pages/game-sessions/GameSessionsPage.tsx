@@ -17,6 +17,8 @@ interface Session {
   id: string;
   gameTitle: string;
   gameType: 'own' | 'quiz' | 'crocodile';
+  /** Многопользовательская (викторина): код приглашения и join по коду */
+  multiplayer: boolean;
   status: 'waiting' | 'active' | 'finished';
   teams: number;
   maxTeams: number;
@@ -72,20 +74,24 @@ export const GameSessionsPage: React.FC = () => {
       try {
         const backendSessions = await getMySessionsApi();
         if (cancelled) return;
-        const mapped: Session[] = (backendSessions || []).map((s: any) => ({
-          id: s.id,
-          gameTitle: s.game?.title ?? '',
-          gameType: s.game?.type ?? 'own',
-          status: s.status,
-          teams: s.teams?.length ?? 0,
-          maxTeams: s.settings?.maxTeams ?? 0,
-          startedAt: s.startedAt
-            ? new Date(s.startedAt).toLocaleString('ru-RU')
-            : '',
-          endedAt: s.finishedAt ? new Date(s.finishedAt).toLocaleString('ru-RU') : undefined,
-          inviteCode: s.inviteCode,
-          hostId: s.hostId,
-        }));
+        const mapped: Session[] = (backendSessions || []).map((s: any) => {
+          const multiplayer = s.multiplayer ?? s.game?.type === 'quiz';
+          return {
+            id: s.id,
+            gameTitle: s.game?.title ?? '',
+            gameType: s.game?.type ?? 'own',
+            multiplayer,
+            status: s.status,
+            teams: s.teams?.length ?? 0,
+            maxTeams: s.settings?.maxTeams ?? 0,
+            startedAt: s.startedAt
+              ? new Date(s.startedAt).toLocaleString('ru-RU')
+              : '',
+            endedAt: s.finishedAt ? new Date(s.finishedAt).toLocaleString('ru-RU') : undefined,
+            inviteCode: s.inviteCode ?? '',
+            hostId: s.hostId,
+          };
+        });
         setSessions(mapped);
       } catch (e) {
         console.error(e);
@@ -209,8 +215,9 @@ export const GameSessionsPage: React.FC = () => {
               startedAt={session.startedAt}
               endedAt={session.endedAt}
               inviteCode={session.inviteCode}
+              showInviteCode={session.multiplayer}
               onClick={() => navigate(`/game/${session.id}`)}
-              onInvite={() => handleInvite(session)}
+              onInvite={session.multiplayer ? () => handleInvite(session) : undefined}
               onDelete={
                 session.hostId && user?.id && session.hostId === user.id
                   ? async () => {
@@ -218,22 +225,26 @@ export const GameSessionsPage: React.FC = () => {
                       try {
                         await deleteSessionApi(session.id);
                         const backendSessions = await getMySessionsApi();
-                        const mapped: Session[] = (backendSessions || []).map((s: any) => ({
-                          id: s.id,
-                          gameTitle: s.game?.title ?? '',
-                          gameType: s.game?.type ?? 'own',
-                          status: s.status,
-                          teams: s.teams?.length ?? 0,
-                          maxTeams: s.settings?.maxTeams ?? 0,
-                          startedAt: s.startedAt
-                            ? new Date(s.startedAt).toLocaleString('ru-RU')
-                            : '',
-                          endedAt: s.finishedAt
-                            ? new Date(s.finishedAt).toLocaleString('ru-RU')
-                            : undefined,
-                          inviteCode: s.inviteCode,
-                          hostId: s.hostId,
-                        }));
+                        const mapped: Session[] = (backendSessions || []).map((s: any) => {
+                          const multiplayer = s.multiplayer ?? s.game?.type === 'quiz';
+                          return {
+                            id: s.id,
+                            gameTitle: s.game?.title ?? '',
+                            gameType: s.game?.type ?? 'own',
+                            multiplayer,
+                            status: s.status,
+                            teams: s.teams?.length ?? 0,
+                            maxTeams: s.settings?.maxTeams ?? 0,
+                            startedAt: s.startedAt
+                              ? new Date(s.startedAt).toLocaleString('ru-RU')
+                              : '',
+                            endedAt: s.finishedAt
+                              ? new Date(s.finishedAt).toLocaleString('ru-RU')
+                              : undefined,
+                            inviteCode: s.inviteCode ?? '',
+                            hostId: s.hostId,
+                          };
+                        });
                         setSessions(mapped);
                       } catch (e) {
                         console.error(e);

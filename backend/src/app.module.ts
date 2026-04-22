@@ -7,6 +7,7 @@ import { GamesModule } from './modules/games/games.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
 import { LibraryModule } from './modules/library/library.module';
 import databaseConfig from './config/database.config';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import databaseConfig from './config/database.config';
     GamesModule,
     SessionsModule,
     LibraryModule,
+    RedisModule
   ],
 })
 export class AppModule {}

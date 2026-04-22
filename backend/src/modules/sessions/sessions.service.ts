@@ -28,6 +28,34 @@ export class SessionsService {
     private gamesService: GamesService,
   ) {}
 
+  private isMultiplayerSession(session: Session): boolean {
+    if (session.multiplayer != null) {
+      return session.multiplayer;
+    }
+    return session.game?.type === 'quiz';
+  }
+
+  /** Ответ клиенту: не отдаём код приглашения для однопользовательских сессий. */
+  private toClientSession(session: Session): Session {
+    if (this.isMultiplayerSession(session)) {
+      return session;
+    }
+    return { ...session, inviteCode: '' } as Session;
+  }
+
+  private async loadSessionById(id: string): Promise<Session> {
+    const session = await this.sessionsRepository.findOne({
+      where: { id },
+      relations: ['game', 'game.categories', 'game.categories.questions', 'teams', 'teams.players'],
+    });
+
+    if (!session) {
+      throw new NotFoundException('Сессия не найдена');
+    }
+
+    return session;
+  }
+
   private generateInviteCode(): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let code = '';
@@ -145,6 +173,7 @@ export class SessionsService {
       gameId: game.id,
       hostId: userId,
       inviteCode,
+      multiplayer: game.type === 'quiz',
       settings: {
         maxTeams: createSessionDto.settings?.maxTeams || 8,
         maxPlayersPerTeam: createSessionDto.settings?.maxPlayersPerTeam || 4,
@@ -185,12 +214,14 @@ export class SessionsService {
       throw new ForbiddenException('Сессия "Крокодил" запускается только локально у преподавателя');
     }
 
-    // Для "своей игры" участником может быть только организатор (1 игрок).
-    if (session.game?.type === 'own') {
-      if (session.hostId !== userId) {
-        throw new ForbiddenException('В "своей игре" присоединяться по коду может только организатор');
-      }
+    if (!this.isMultiplayerSession(session) && session.hostId !== userId) {
+      throw new ForbiddenException(
+        'К этой игровой сессии нельзя присоединиться по коду: она предназначена только для локального проведения у преподавателя',
+      );
+    }
 
+    // Для однопользовательской "своей игры" участником по коду может быть только организатор (один раз).
+    if (session.game?.type === 'own' && session.hostId === userId) {
       const alreadyInSession = session.teams.some((t) =>
         t.players?.some((p) => p.userId === userId),
       );
@@ -238,20 +269,12 @@ export class SessionsService {
   }
 
   async findOne(id: string): Promise<Session> {
-    const session = await this.sessionsRepository.findOne({
-      where: { id },
-      relations: ['game', 'game.categories', 'game.categories.questions', 'teams', 'teams.players'],
-    });
-
-    if (!session) {
-      throw new NotFoundException('Сессия не найдена');
-    }
-
-    return session;
+    const session = await this.loadSessionById(id);
+    return this.toClientSession(session);
   }
 
   async findByUser(userId: string): Promise<Session[]> {
-    return this.sessionsRepository.find({
+    const sessions = await this.sessionsRepository.find({
       where: [
         { hostId: userId },
         { teams: { players: { userId } } },
@@ -259,10 +282,11 @@ export class SessionsService {
       relations: ['game', 'teams'],
       order: { createdAt: 'DESC' },
     });
+    return sessions.map((s) => this.toClientSession(s));
   }
 
   async start(id: string, userId: string): Promise<Session> {
-    const session = await this.findOne(id);
+    const session = await this.loadSessionById(id);
 
     if (session.hostId !== userId) {
       throw new ForbiddenException('Только создатель может начать игру');
@@ -281,7 +305,8 @@ export class SessionsService {
       session.currentQuestionIndex = 0;
     }
 
-    return this.sessionsRepository.save(session);
+    const saved = await this.sessionsRepository.save(session);
+    return this.toClientSession(saved);
   }
 
   async markCrocodileTerm(
@@ -290,7 +315,7 @@ export class SessionsService {
     result: CrocodileTermResult,
     termId?: string,
   ): Promise<Session> {
-    const session = await this.findOne(id);
+    const session = await this.loadSessionById(id);
     this.ensureCrocodileHost(session, userId);
 
     if (session.status !== 'active') {
@@ -310,7 +335,8 @@ export class SessionsService {
     session.crocodileState = updatedState;
     this.finalizeCrocodileIfCompleted(session, updatedState);
 
-    return this.sessionsRepository.save(session);
+    const saved = await this.sessionsRepository.save(session);
+    return this.toClientSession(saved);
   }
 
   async answerQuestion(
@@ -320,7 +346,7 @@ export class SessionsService {
     questionId: string,
     submitDto?: SubmitAnswerDto,
   ): Promise<Session> {
-    const session = await this.findOne(id);
+    const session = await this.loadSessionById(id);
 
     if (session.status !== 'active') {
       throw new BadRequestException('Игра не активна');
@@ -380,7 +406,8 @@ export class SessionsService {
         scored: false,
       });
 
-      return this.sessionsRepository.save(session);
+      const saved = await this.sessionsRepository.save(session);
+      return this.toClientSession(saved);
     }
 
     // Для "своей игры" мы просто блокируем повторное открытие вопроса.
@@ -394,7 +421,8 @@ export class SessionsService {
 
     session.answeredQuestions.push({ categoryId, questionId });
 
-    return this.sessionsRepository.save(session);
+    const savedOwn = await this.sessionsRepository.save(session);
+    return this.toClientSession(savedOwn);
   }
 
   async revealQuizQuestion(
@@ -402,7 +430,7 @@ export class SessionsService {
     categoryId: string,
     questionId: string,
   ): Promise<Session> {
-    const session = await this.findOne(id);
+    const session = await this.loadSessionById(id);
 
     if (session.status !== 'active') {
       throw new BadRequestException('Игра не активна');
@@ -476,11 +504,12 @@ export class SessionsService {
       session.currentQuestionIndex = nextIndex;
     }
 
-    return this.sessionsRepository.save(session);
+    const savedReveal = await this.sessionsRepository.save(session);
+    return this.toClientSession(savedReveal);
   }
 
   async updateScore(id: string, userId: string, updateScoreDto: UpdateScoreDto): Promise<Session> {
-    const session = await this.findOne(id);
+    const session = await this.loadSessionById(id);
 
     if (session.hostId !== userId) {
       throw new ForbiddenException('Только создатель может изменять счет');
@@ -498,14 +527,14 @@ export class SessionsService {
   }
 
   async finish(id: string, userId: string): Promise<Session> {
-    const session = await this.findOne(id);
+    const session = await this.loadSessionById(id);
 
     if (session.hostId !== userId) {
       throw new ForbiddenException('Только создатель может завершить игру');
     }
 
     if (session.status === 'finished') {
-      return session;
+      return this.toClientSession(session);
     }
 
     if (session.game?.type === 'crocodile' && session.crocodileState) {
@@ -522,11 +551,12 @@ export class SessionsService {
     // Увеличиваем счетчик игр
     await this.gamesService.incrementPlays(session.gameId);
 
-    return this.sessionsRepository.save(session);
+    const savedFinish = await this.sessionsRepository.save(session);
+    return this.toClientSession(savedFinish);
   }
 
   async addTeam(id: string, userId: string, dto: AddTeamDto): Promise<Session> {
-    const session = await this.findOne(id);
+    const session = await this.loadSessionById(id);
 
     if (session.hostId !== userId) {
       throw new ForbiddenException('Только создатель может добавлять команды');
@@ -555,7 +585,7 @@ export class SessionsService {
   }
 
   async remove(id: string, userId: string): Promise<void> {
-    const session = await this.findOne(id);
+    const session = await this.loadSessionById(id);
 
     if (session.hostId !== userId) {
       throw new ForbiddenException('Только создатель может удалять сессии');

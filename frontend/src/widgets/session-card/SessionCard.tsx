@@ -12,6 +12,8 @@ interface SessionCardProps {
   startedAt?: string;
   endedAt?: string;
   inviteCode?: string;
+  /** Для однопользовательских сессий код и кнопка «Пригласить» скрыты */
+  showInviteCode?: boolean;
   onClick?: () => void;
   onJoin?: () => void;
   onInvite?: () => void;
@@ -28,6 +30,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
   startedAt,
   endedAt,
   inviteCode,
+  showInviteCode = true,
   onClick,
   onJoin,
   onInvite,
@@ -96,7 +99,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
           )}
         </div>
 
-        {inviteCode && status !== 'finished' && (
+        {showInviteCode && inviteCode && status !== 'finished' && (
           <div className="invite-code">
             <span>Код приглашения:</span>
             <strong>{inviteCode}</strong>
@@ -115,7 +118,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
             Войти в игру
           </Button>
         )}
-        {status === 'waiting' && onInvite && (
+        {status === 'waiting' && showInviteCode && onInvite && (
           <Button variant="outline" size="small" fullWidth onClick={onInvite}>
             Пригласить
           </Button>

@@ -151,8 +151,10 @@ export const LibraryPage: React.FC = () => {
 
   const handlePlayGame = async (gameId: string) => {
     try {
+      const game = games.find((item) => item.id === gameId);
       const session = await createSessionApi({ gameId });
-      if (user) {
+      // «Крокодил» — только локально у преподавателя, без join по коду.
+      if (user && game?.type !== 'crocodile') {
         const trimmed = user.name?.trim();
         const playerName = trimmed && trimmed.length >= 2 ? trimmed : 'Хост';
         try {
