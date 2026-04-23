@@ -2,7 +2,7 @@
   "scripts": {
     "prestart": "npm run build",
     "start": "node dist/main.js",
-    "start:dev": "ts-node src/main.ts",
+    "start:dev": "ts-node --prefer-ts-exts src/main.ts",
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
@@ -31,8 +31,10 @@
     "typeorm": "^0.3.28"
   },
   "devDependencies": {
+    "@nestjs/testing": "^11.1.19",
     "@types/bcryptjs": "^2.4.6",
     "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
     "@types/multer": "^1.4.12",
     "@types/node": "^25.5.0",
     "ts-node": "^10.9.2",

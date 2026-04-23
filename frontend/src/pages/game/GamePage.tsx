@@ -8,17 +8,19 @@ import { useAppSelector } from '../../app/store/hooks';
 import { selectAuthUser } from '../../features/auth/model/selectors';
 import {
   answerQuestionApi,
-  answerQuestionWithBodyApi,
   addTeamApi,
   finishSessionApi,
   getSessionApi,
   markCrocodileGuessedApi,
   markCrocodileMissedApi,
   startSessionApi,
-  revealQuizQuestionApi,
   updateScoreApi,
 } from '../../features/sessions/api/sessionsApi';
 import { CrocodileGamePage } from './CrocodileGamePage';
+import {
+  getSessionsSocket,
+  waitForSessionsSocketConnected,
+} from '../../features/sessions/api/sessionsSocket';
 
 interface Question {
   id: string;
@@ -82,6 +84,7 @@ interface GameSession {
     turnEndsAt: string | null;
     termResults: Array<{ termId: string; result: 'guessed' | 'missed' }>;
   } | null;
+  questionStartedAt?: string | null;
   startedAt?: string;
   finishedAt?: string;
 }
@@ -96,6 +99,9 @@ export const GamePage: React.FC = () => {
   const currentQuestionValue = selectedQuestion?.question.value;
   const pointsLockRef = useRef(false);
   const [isPointsLocked, setIsPointsLocked] = useState(false);
+  const [isQuizStartPending, setIsQuizStartPending] = useState(false);
+  const [submittedLocks, setSubmittedLocks] = useState<string[]>([]);
+  const [submitSavedKey, setSubmitSavedKey] = useState<string | null>(null);
   
   useEffect(() => {
     if (!session || !user) {
@@ -125,6 +131,112 @@ export const GamePage: React.FC = () => {
       cancelled = true;
     };
   }, [sessionId]);
+
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const socket = getSessionsSocket();
+    const handleState = (payload: GameSession) => {
+      if (payload?.id !== sessionId) return;
+      setSession(payload);
+    };
+    const handleRevealed = (payload: {
+      categoryId: string;
+      questionId: string;
+      questionText: string;
+      correctAnswer: string;
+      value: number;
+      reason?: 'manual' | 'timer';
+    }) => {
+      if (payload.reason === 'timer') {
+        setQuizReview(null);
+        setQuizAnswerDraft('');
+        return;
+      }
+      setQuizReview({
+        categoryId: payload.categoryId,
+        questionId: payload.questionId,
+        questionText: payload.questionText,
+        correctAnswer: payload.correctAnswer,
+        value: payload.value,
+      });
+      if (quizReviewTimeoutRef.current) {
+        window.clearTimeout(quizReviewTimeoutRef.current);
+      }
+      quizReviewTimeoutRef.current = window.setTimeout(() => {
+        setQuizReview(null);
+        setQuizAnswerDraft('');
+      }, 1500);
+    };
+    const handleSessionError = (payload?: { message?: string }) => {
+      const message = payload?.message?.trim()
+        ? payload.message
+        : 'Ошибка обработки игрового события';
+      alert(message);
+    };
+
+    const joinPayload = { sessionId };
+    const joinAndSync = () => {
+      socket.emit('session:join', joinPayload);
+      socket.emit('session:state:request', joinPayload);
+    };
+
+    socket.on('connect', joinAndSync);
+    socket.on('session:state', handleState);
+    socket.on('quiz:revealed', handleRevealed);
+    socket.on('session:error', handleSessionError);
+
+    if (socket.connected) {
+      joinAndSync();
+    } else {
+      socket.connect();
+    }
+
+    return () => {
+      socket.emit('session:leave', { sessionId });
+      socket.off('connect', joinAndSync);
+      socket.off('session:state', handleState);
+      socket.off('quiz:revealed', handleRevealed);
+      socket.off('session:error', handleSessionError);
+      if (quizReviewTimeoutRef.current) {
+        window.clearTimeout(quizReviewTimeoutRef.current);
+        quizReviewTimeoutRef.current = null;
+      }
+    };
+  }, [sessionId]);
+
+  const handleStartQuizSession = async () => {
+    if (!session) return;
+    setIsQuizStartPending(true);
+
+    try {
+      const socket = await waitForSessionsSocketConnected(2000);
+      socket.emit('quiz:start', { sessionId: session.id });
+
+      // Даем WebSocket короткое окно на синхронизацию состояния.
+      await new Promise((resolve) => window.setTimeout(resolve, 1200));
+      const latest = await getSessionApi(session.id);
+      if (latest.status === 'active') {
+        setSession(latest);
+        return;
+      }
+
+      // Fallback на REST, если WS событие не дало старта.
+      const updated = await startSessionApi(session.id);
+      setSession(updated);
+    } catch (e) {
+      console.error(e);
+      try {
+        const updated = await startSessionApi(session.id);
+        setSession(updated);
+      } catch (fallbackError) {
+        console.error(fallbackError);
+        alert('Не удалось начать игру');
+      }
+    } finally {
+      setIsQuizStartPending(false);
+    }
+  };
 
   const answeredSet = useMemo(() => {
     return new Set(
@@ -168,92 +280,112 @@ export const GamePage: React.FC = () => {
     correctAnswer: string;
     value: number;
   }>(null);
-  const quizRevealInFlightKeyRef = useRef<string | null>(null);
-  const quizCountdownStartedRef = useRef<string | null>(null);
+  const quizReviewTimeoutRef = useRef<number | null>(null);
+  const quizQuestionStartedAtRef = useRef<{ key: string; startedAtMs: number } | null>(null);
+
+  const getQuestionTimerStorageKey = (sessionValue: GameSession) =>
+    `quiz:startAt:${sessionValue.id}:${
+      sessionValue.startedAt ? new Date(sessionValue.startedAt).getTime() : 'nostart'
+    }:${sessionValue.currentQuestionIndex ?? 0}`;
 
   useEffect(() => {
-    if (!session) return;
-    if (session.game.type !== 'quiz') return;
-    if (session.status !== 'active') return;
-    if (quizReview) return; // Пока показываем результаты — не трогаем таймер.
+    if (!session || session.game.type !== 'quiz') return;
+    if (session.status !== 'active' || quizReview) {
+      setTimeLeft(0);
+      return;
+    }
+    if (!currentQuizQuestionRef) {
+      setTimeLeft(0);
+      return;
+    }
 
-    quizCountdownStartedRef.current = null;
-    setTimeLeft(session.settings?.timePerQuestion ?? 30);
-    setQuizAnswerDraft('');
-    quizRevealInFlightKeyRef.current = null;
-  }, [session?.id, session?.currentQuestionIndex, session?.status, quizReview]);
+    const key = getQuestionTimerStorageKey(session);
+    const timePerQuestion = session.settings?.timePerQuestion ?? 30;
+    const persisted = window.sessionStorage.getItem(key);
+    const serverStartedAt = session.questionStartedAt
+      ? new Date(session.questionStartedAt).getTime()
+      : Number.NaN;
+    const cachedStartedAt =
+      quizQuestionStartedAtRef.current?.key === key
+        ? quizQuestionStartedAtRef.current.startedAtMs
+        : Number.NaN;
 
-  useEffect(() => {
-    if (!session) return;
-    if (session.game.type !== 'quiz') return;
-    if (session.status !== 'active') return;
-    if (quizReview) return;
+    let startedAtMs = Number.NaN;
+    if (Number.isFinite(serverStartedAt)) {
+      startedAtMs = serverStartedAt;
+      window.sessionStorage.setItem(key, String(serverStartedAt));
+    } else if (Number.isFinite(cachedStartedAt)) {
+      startedAtMs = cachedStartedAt;
+    } else if (persisted) {
+      const parsed = Number(persisted);
+      if (Number.isFinite(parsed)) {
+        startedAtMs = parsed;
+      }
+    }
 
-    const interval = window.setInterval(() => {
-      setTimeLeft((t) => {
-        const next = Math.max(0, t - 1);
-        if (t > 0 && next === 0) {
-          quizCountdownStartedRef.current = `${session.currentQuestionIndex ?? 0}`;
-        }
-        return next;
-      });
-    }, 1000);
+    if (!Number.isFinite(startedAtMs)) {
+      startedAtMs = Date.now();
+      window.sessionStorage.setItem(key, String(startedAtMs));
+    }
 
-    return () => {
-      window.clearInterval(interval);
+    quizQuestionStartedAtRef.current = { key, startedAtMs };
+
+    const recalc = () => {
+      const elapsed = Math.floor((Date.now() - startedAtMs) / 1000);
+      setTimeLeft(Math.max(0, timePerQuestion - elapsed));
     };
-  }, [session?.id, session?.currentQuestionIndex, session?.status, quizReview]);
+
+    recalc();
+    const interval = window.setInterval(recalc, 250);
+    return () => window.clearInterval(interval);
+  }, [
+    session?.id,
+    session?.status,
+    session?.game.type,
+    session?.currentQuestionIndex,
+    session?.questionStartedAt,
+    session?.settings?.timePerQuestion,
+    currentQuizQuestionRef?.categoryId,
+    currentQuizQuestionRef?.questionId,
+    quizReview,
+  ]);
 
   useEffect(() => {
-    if (!session) return;
-    if (session.game.type !== 'quiz') return;
-    if (session.status !== 'active') return;
-    if (quizReview) return;
-    if (timeLeft > 0) return;
-    if (!currentQuizQuestionRef) return;
-    if (quizCountdownStartedRef.current !== `${currentQuizIndex}`) return;
+    if (!session || session.game.type !== 'quiz') return;
+    // При переключении вопроса сбрасываем черновик ответа.
+    setQuizAnswerDraft('');
+    quizQuestionStartedAtRef.current = null;
+  }, [session?.id, session?.currentQuestionIndex, session?.status, session?.game.type]);
 
-    const key = `${currentQuizQuestionRef.categoryId}:${currentQuizQuestionRef.questionId}`;
-    if (quizRevealInFlightKeyRef.current === key) return;
-    quizRevealInFlightKeyRef.current = key;
-
-    // Ставим UI-режим "показать правильный ответ"
-    setQuizReview({
-      categoryId: currentQuizQuestionRef.categoryId,
-      questionId: currentQuizQuestionRef.questionId,
-      questionText: currentQuizQuestionRef.question.question,
-      correctAnswer: currentQuizQuestionRef.question.answer,
-      value: currentQuizQuestionRef.question.value,
-    });
-
-    revealQuizQuestionApi(session.id, currentQuizQuestionRef.categoryId, currentQuizQuestionRef.questionId)
-      .then((updated) => setSession(updated))
-      .catch((e) => {
-        console.error(e);
-        const msg = (e as any)?.response?.data?.message ?? (e as any)?.message ?? '';
-        if (typeof msg === 'string' && msg.toLowerCase().includes('текущ')) {
-          // Другой участник уже раскрыл вопрос и продвинул индекс на сервере.
-          return;
-        }
-        alert('Не удалось показать правильный ответ');
-      })
-      .finally(() => {
-        // Переходим к следующему вопросу после небольшого отображения результата
-        window.setTimeout(() => {
-          setQuizReview(null);
-          setQuizAnswerDraft('');
-          quizRevealInFlightKeyRef.current = null;
-        }, 1500);
-      });
+  useEffect(() => {
+    if (!session || session.game.type !== 'quiz') return;
+    const key = currentQuizQuestionRef
+      ? `${currentQuizQuestionRef.categoryId}:${currentQuizQuestionRef.questionId}`
+      : null;
+    if (submitSavedKey && key !== submitSavedKey) {
+      setSubmitSavedKey(null);
+    }
   }, [
     session?.id,
     session?.currentQuestionIndex,
-    session?.status,
-    quizReview,
-    timeLeft,
-    currentQuizIndex,
-    currentQuizQuestionRef,
+    session?.game.type,
+    currentQuizQuestionRef?.categoryId,
+    currentQuizQuestionRef?.questionId,
+    submitSavedKey,
   ]);
+
+  useEffect(() => {
+    if (!session || !user?.id) return;
+    const serverSubmittedKeys = session.answeredQuestions
+      .filter((aq) => aq.userId === user.id)
+      .map((aq) => `${aq.categoryId}:${aq.questionId}`);
+
+    if (!serverSubmittedKeys.length) return;
+    setSubmittedLocks((prev) => {
+      const merged = new Set([...prev, ...serverSubmittedKeys]);
+      return Array.from(merged);
+    });
+  }, [session?.answeredQuestions, user?.id]);
 
   const handleQuestionClick = (category: Category, question: Question) => {
     const isAlreadySelected =
@@ -424,8 +556,13 @@ export const GamePage: React.FC = () => {
               <Button
                 variant="primary"
                 size="large"
-                disabled={session.teams.length < 1}
+                disabled={session.teams.length < 1 || isQuizStartPending}
                 onClick={() => {
+                  if (session.game.type === 'quiz') {
+                    void handleStartQuizSession();
+                    return;
+                  }
+
                   startSessionApi(session.id)
                     .then((updated) => setSession(updated))
                     .catch((e) => {
@@ -497,6 +634,9 @@ export const GamePage: React.FC = () => {
         aq.categoryId === q.categoryId &&
         aq.questionId === q.questionId,
     );
+    const currentQuestionKey = `${q.categoryId}:${q.questionId}`;
+    const isSubmissionLocked =
+      Boolean(myCurrentSubmission) || submittedLocks.includes(currentQuestionKey);
 
     const quizReviewIndex =
       quizReview?.questionId
@@ -530,13 +670,14 @@ export const GamePage: React.FC = () => {
             <Button
               variant="secondary"
               size="small"
-              onClick={() => {
-                finishSessionApi(session.id)
-                  .then((updated) => setSession(updated))
-                  .catch((e) => {
-                    console.error(e);
-                    alert('Не удалось завершить игру');
-                  });
+              onClick={async () => {
+                try {
+                  const socket = await waitForSessionsSocketConnected(2000);
+                  socket.emit('session:finish', { sessionId: session.id });
+                } catch (e) {
+                  console.error(e);
+                  alert('Не удалось завершить игру');
+                }
               }}
             >
               Завершить игру
@@ -589,18 +730,52 @@ export const GamePage: React.FC = () => {
                   value={quizAnswerDraft}
                   onChange={(e) => setQuizAnswerDraft(e.target.value)}
                   placeholder="Введите ответ"
-                  disabled={!myTeamId || Boolean(myCurrentSubmission) || timeLeft <= 0}
+                  disabled={!myTeamId || isSubmissionLocked || timeLeft <= 0}
                 />
 
                 <Button
                   variant="primary"
-                  disabled={!myTeamId || Boolean(myCurrentSubmission) || timeLeft <= 0 || !quizAnswerDraft.trim()}
+                  disabled={!myTeamId || isSubmissionLocked || timeLeft <= 0 || !quizAnswerDraft.trim()}
                   onClick={async () => {
                     try {
-                      const updated = await answerQuestionWithBodyApi(session.id, q.categoryId, q.questionId, {
+                      const socket = await waitForSessionsSocketConnected(2000);
+                      socket.emit('quiz:answer', {
+                        sessionId: session.id,
+                        categoryId: q.categoryId,
+                        questionId: q.questionId,
                         answer: quizAnswerDraft,
                       });
-                      setSession(updated);
+                      setSubmittedLocks((prev) =>
+                        prev.includes(currentQuestionKey)
+                          ? prev
+                          : [...prev, currentQuestionKey],
+                      );
+                      setSession((prev) => {
+                        if (!prev) return prev;
+                        const exists = prev.answeredQuestions.some(
+                          (aq) =>
+                            aq.userId === user?.id &&
+                            aq.categoryId === q.categoryId &&
+                            aq.questionId === q.questionId,
+                        );
+                        if (exists) return prev;
+                        return {
+                          ...prev,
+                          answeredQuestions: [
+                            ...prev.answeredQuestions,
+                            {
+                              categoryId: q.categoryId,
+                              questionId: q.questionId,
+                              userId: user?.id,
+                              teamId: myTeamId,
+                              submittedAnswer: quizAnswerDraft,
+                              scored: false,
+                            },
+                          ],
+                        };
+                      });
+                      setQuizAnswerDraft('');
+                      setSubmitSavedKey(currentQuestionKey);
                     } catch (e) {
                       console.error(e);
                       alert('Не удалось отправить ответ');
@@ -614,6 +789,9 @@ export const GamePage: React.FC = () => {
                   <div className="quiz-submitted-note">
                     Ответ принят. Правильность будет показана по истечению времени.
                   </div>
+                ) : null}
+                {submitSavedKey === currentQuestionKey ? (
+                  <div className="quiz-submitted-note">Ответ сохранён</div>
                 ) : null}
               </div>
             </div>

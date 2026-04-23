@@ -16,6 +16,18 @@ import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { UpdateScoreDto } from './dto/update-score.dto';
 import { AddTeamDto } from './dto/add-team.dto';
 
+export interface QuizQuestionRef {
+  categoryId: string;
+  questionId: string;
+}
+
+export interface QuizRevealInfo extends QuizQuestionRef {
+  index: number;
+  questionText: string;
+  correctAnswer: string;
+  value: number;
+}
+
 @Injectable()
 export class SessionsService {
   constructor(
@@ -153,6 +165,90 @@ export class SessionsService {
       session.status = 'finished';
       session.finishedAt = new Date();
     }
+  }
+
+  private getQuizQuestionRefs(session: Session): QuizQuestionRef[] {
+    return session.game.categories.flatMap((category) =>
+      category.questions.map((question) => ({
+        categoryId: category.id,
+        questionId: question.id,
+      })),
+    );
+  }
+
+  private getQuizRevealInfo(
+    session: Session,
+    categoryId: string,
+    questionId: string,
+    index: number,
+  ): QuizRevealInfo {
+    const question = session.game.categories
+      .flatMap((category) =>
+        category.questions.map((item) => ({
+          categoryId: category.id,
+          question: item,
+        })),
+      )
+      .find((x) => x.categoryId === categoryId && x.question.id === questionId)?.question;
+
+    if (!question) {
+      throw new NotFoundException('Вопрос не найден');
+    }
+
+    return {
+      categoryId,
+      questionId,
+      index,
+      questionText: question.question,
+      correctAnswer: question.answer,
+      value: question.value,
+    };
+  }
+
+  private applyQuizReveal(session: Session, reveal: QuizRevealInfo): Session {
+    const toScore = session.answeredQuestions.filter(
+      (aq) =>
+        aq.categoryId === reveal.categoryId &&
+        aq.questionId === reveal.questionId &&
+        aq.userId &&
+        aq.isCorrect &&
+        !aq.scored,
+    );
+
+    const updatedAnswered = session.answeredQuestions.map((aq) => {
+      const matches =
+        aq.categoryId === reveal.categoryId &&
+        aq.questionId === reveal.questionId &&
+        aq.userId &&
+        aq.isCorrect;
+
+      if (!matches || aq.scored) {
+        return aq;
+      }
+
+      return { ...aq, scored: true };
+    });
+
+    for (const sub of toScore) {
+      const team = session.teams.find((t) => t.id === sub.teamId);
+      if (!team) continue;
+      team.score += reveal.value;
+    }
+
+    session.answeredQuestions = updatedAnswered as Session['answeredQuestions'];
+
+    const quizQuestions = this.getQuizQuestionRefs(session);
+    const nextIndex = reveal.index + 1;
+    if (nextIndex >= quizQuestions.length) {
+      session.status = 'finished';
+      session.finishedAt = new Date();
+      session.questionStartedAt = null;
+    } else {
+      session.currentQuestionIndex = nextIndex;
+      session.questionStartedAt = new Date();
+    }
+
+    return session;
   }
 
   async create(userId: string, createSessionDto: CreateSessionDto): Promise<Session> {
@@ -303,6 +399,7 @@ export class SessionsService {
       session.crocodileState = this.buildInitialCrocodileState(session);
     } else {
       session.currentQuestionIndex = 0;
+      session.questionStartedAt = new Date();
     }
 
     const saved = await this.sessionsRepository.save(session);
@@ -380,12 +477,7 @@ export class SessionsService {
       }
 
       // Проверяем, что ответ отправляют на текущий вопрос.
-      const quizQuestions = session.game.categories.flatMap((c) =>
-        c.questions.map((q) => ({
-          categoryId: c.id,
-          questionId: q.id,
-        })),
-      );
+      const quizQuestions = this.getQuizQuestionRefs(session);
       const currentIndex = session.currentQuestionIndex ?? 0;
       const current = quizQuestions[currentIndex];
       if (!current || current.categoryId !== categoryId || current.questionId !== questionId) {
@@ -427,6 +519,7 @@ export class SessionsService {
 
   async revealQuizQuestion(
     id: string,
+    userId: string,
     categoryId: string,
     questionId: string,
   ): Promise<Session> {
@@ -440,72 +533,72 @@ export class SessionsService {
       throw new BadRequestException('Режим викторины не активен');
     }
 
-    // Проверяем, что сейчас раскрывают текущий вопрос.
-    const quizQuestions = session.game.categories.flatMap((c) =>
-      c.questions.map((q) => ({
-        categoryId: c.id,
-        questionId: q.id,
-      })),
-    );
+    if (session.hostId !== userId) {
+      throw new ForbiddenException('Только создатель может раскрывать ответы');
+    }
+
+    const quizQuestions = this.getQuizQuestionRefs(session);
     const currentIndex = session.currentQuestionIndex ?? 0;
     const current = quizQuestions[currentIndex];
     if (!current || current.categoryId !== categoryId || current.questionId !== questionId) {
       throw new BadRequestException('Можно раскрывать только текущий вопрос');
     }
 
-    const question = session.game.categories
-      .flatMap((c) => c.questions.map((q) => ({ categoryId: c.id, question: q })))
-      .find((x) => x.categoryId === categoryId && x.question.id === questionId)?.question;
-
-    if (!question) {
-      throw new NotFoundException('Вопрос не найден');
-    }
-
-    // Начисляем очки тем пользователям, которые ответили правильно.
-    // Очки выдаём команде: value начисляется за каждого корректно ответившего игрока.
-    const toScore = session.answeredQuestions.filter(
-      (aq) =>
-        aq.categoryId === categoryId &&
-        aq.questionId === questionId &&
-        aq.userId &&
-        aq.isCorrect &&
-        !aq.scored,
-    );
-
-    const updatedAnswered = session.answeredQuestions.map((aq) => {
-      const matches =
-        aq.categoryId === categoryId &&
-        aq.questionId === questionId &&
-        aq.userId &&
-        aq.isCorrect;
-
-      if (!matches) return aq;
-      if (aq.scored) return aq;
-
-      return { ...aq, scored: true };
-    });
-
-    // Применяем очки на уровне teams (только для тех, кто ещё не получал очки).
-    for (const sub of toScore) {
-      const team = session.teams.find((t) => t.id === sub.teamId);
-      if (!team) continue;
-      team.score += question.value;
-    }
-
-    session.answeredQuestions = updatedAnswered as any;
-
-    // Переходим к следующему вопросу / финишу.
-    const total = quizQuestions.length;
-    const nextIndex = currentIndex + 1;
-    if (nextIndex >= total) {
-      session.status = 'finished';
-      session.finishedAt = new Date();
-    } else {
-      session.currentQuestionIndex = nextIndex;
-    }
+    const reveal = this.getQuizRevealInfo(session, categoryId, questionId, currentIndex);
+    this.applyQuizReveal(session, reveal);
 
     const savedReveal = await this.sessionsRepository.save(session);
     return this.toClientSession(savedReveal);
+  }
+
+  async revealQuizQuestionByTimer(
+    id: string,
+    expectedQuestionIndex: number,
+  ): Promise<{ session: Session; reveal: QuizRevealInfo } | null> {
+    const session = await this.loadSessionById(id);
+    if (session.status !== 'active' || session.game?.type !== 'quiz') {
+      return null;
+    }
+
+    const currentIndex = session.currentQuestionIndex ?? 0;
+    if (currentIndex !== expectedQuestionIndex) {
+      return null;
+    }
+
+    const current = this.getQuizQuestionRefs(session)[currentIndex];
+    if (!current) {
+      return null;
+    }
+
+    const reveal = this.getQuizRevealInfo(
+      session,
+      current.categoryId,
+      current.questionId,
+      currentIndex,
+    );
+    this.applyQuizReveal(session, reveal);
+    const saved = await this.sessionsRepository.save(session);
+    return { session: this.toClientSession(saved), reveal };
+  }
+
+  async getQuizRevealInfoForCurrentQuestion(id: string): Promise<QuizRevealInfo | null> {
+    const session = await this.loadSessionById(id);
+    if (session.status !== 'active' || session.game?.type !== 'quiz') {
+      return null;
+    }
+
+    const currentIndex = session.currentQuestionIndex ?? 0;
+    const current = this.getQuizQuestionRefs(session)[currentIndex];
+    if (!current) {
+      return null;
+    }
+
+    return this.getQuizRevealInfo(
+      session,
+      current.categoryId,
+      current.questionId,
+      currentIndex,
+    );
   }
 
   async updateScore(id: string, userId: string, updateScoreDto: UpdateScoreDto): Promise<Session> {
@@ -547,6 +640,7 @@ export class SessionsService {
 
     session.status = 'finished';
     session.finishedAt = new Date();
+    session.questionStartedAt = null;
 
     // Увеличиваем счетчик игр
     await this.gamesService.incrementPlays(session.gameId);

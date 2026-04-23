@@ -12,10 +12,10 @@ import { RedisService } from './redis.service';
                 const logger = new Logger('Redis');
                 
                 const redisOptions = {
-                    host: 'localhost',
-                    port: 6379,
-                    password: '123',
-                    db: 0,
+                    host: configService.get<string>('REDIS_HOST') || 'localhost',
+                    port: parseInt(configService.get<string>('REDIS_PORT') || '6379', 10),
+                    password: configService.get<string>('REDIS_PASSWORD') || undefined,
+                    db: parseInt(configService.get<string>('REDIS_DB') || '0', 10),
                     retryStrategy: (times: number) => {
                         const delay = Math.min(times * 50, 2000);
                         return delay;
@@ -29,7 +29,17 @@ import { RedisService } from './redis.service';
                 
                 const client = new Redis(redisOptions);
 
-                await client.config('SET', 'notify-keyspace-events', 'Ex');
+                try {
+                    await client.config('SET', 'notify-keyspace-events', 'Ex');
+                    const configResult = await client.config('GET', 'notify-keyspace-events');
+                    logger.log(`notify-keyspace-events configured: ${JSON.stringify(configResult)}`);
+                } catch (error) {
+                    logger.error(
+                        `Failed to configure notify-keyspace-events. Timer expiry events may not work: ${
+                            error instanceof Error ? error.message : String(error)
+                        }`,
+                    );
+                }
 
                 client.on('connect', () => {
                     logger.log('Redis connected successfully');

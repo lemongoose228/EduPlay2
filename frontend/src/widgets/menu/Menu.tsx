@@ -62,7 +62,7 @@ export const Menu: React.FC = () => {
               <img
                 src={menuAvatarSrc}
                 alt=""
-                onError={(e) => {
+                onError={() => {
                   setAvatarLoadFailed(true);
                 }}
               />

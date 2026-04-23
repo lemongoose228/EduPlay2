@@ -18,11 +18,17 @@ import { MarkCrocodileTermDto } from './dto/mark-crocodile-term.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
+import { SessionsTimerService } from './sessions-timer.service';
+import { SessionsGateway } from './sessions.gateway';
 
 @Controller('sessions')
 @UseGuards(JwtAuthGuard)
 export class SessionsController {
-  constructor(private readonly sessionsService: SessionsService) {}
+  constructor(
+    private readonly sessionsService: SessionsService,
+    private readonly sessionsTimerService: SessionsTimerService,
+    private readonly sessionsGateway: SessionsGateway,
+  ) {}
 
   @Post()
   create(@CurrentUser() user: User, @Body() createSessionDto: CreateSessionDto) {
@@ -45,11 +51,21 @@ export class SessionsController {
   }
 
   @Post(':id/start')
-  start(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.sessionsService.start(id, user.id);
+  async start(@Param('id') id: string, @CurrentUser() user: User) {
+    const session = await this.sessionsService.start(id, user.id);
+    if (session.game?.type === 'quiz' && session.status === 'active') {
+      await this.sessionsTimerService.scheduleQuizQuestionTimer(
+        session.id,
+        session.currentQuestionIndex ?? 0,
+        session.settings?.timePerQuestion ?? 30,
+      );
+    }
+    this.sessionsGateway.emitSessionState(id, session);
+    return session;
   }
 
   @Post(':id/answer/:categoryId/:questionId')
+  /** @deprecated Для викторины используйте WebSocket событие `quiz:answer`. */
   answerQuestion(
     @Param('id') id: string,
     @Param('categoryId') categoryId: string,
@@ -61,13 +77,35 @@ export class SessionsController {
   }
 
   @Post(':id/quiz/reveal/:categoryId/:questionId')
-  revealQuizQuestion(
+  /** @deprecated Для викторины используйте WebSocket событие `quiz:reveal`. */
+  async revealQuizQuestion(
     @Param('id') id: string,
     @Param('categoryId') categoryId: string,
     @Param('questionId') questionId: string,
-    @CurrentUser() _user: User,
+    @CurrentUser() user: User,
   ) {
-    return this.sessionsService.revealQuizQuestion(id, categoryId, questionId);
+    const reveal = await this.sessionsService.getQuizRevealInfoForCurrentQuestion(id);
+    const session = await this.sessionsService.revealQuizQuestion(
+      id,
+      user.id,
+      categoryId,
+      questionId,
+    );
+    if (reveal) {
+      await this.sessionsTimerService.clearQuizQuestionTimer(id, reveal.index);
+    }
+    if (session.game?.type === 'quiz' && session.status === 'active') {
+      await this.sessionsTimerService.scheduleQuizQuestionTimer(
+        session.id,
+        session.currentQuestionIndex ?? 0,
+        session.settings?.timePerQuestion ?? 30,
+      );
+    }
+    if (reveal) {
+      this.sessionsGateway.emitQuizRevealed(id, reveal, 'timer');
+    }
+    this.sessionsGateway.emitSessionState(id, session);
+    return session;
   }
 
   @Post(':id/score')
@@ -80,8 +118,17 @@ export class SessionsController {
   }
 
   @Post(':id/finish')
-  finish(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.sessionsService.finish(id, user.id);
+  async finish(@Param('id') id: string, @CurrentUser() user: User) {
+    const before = await this.sessionsService.findOne(id);
+    const session = await this.sessionsService.finish(id, user.id);
+    if (before.game?.type === 'quiz') {
+      await this.sessionsTimerService.clearQuizQuestionTimer(
+        id,
+        before.currentQuestionIndex ?? 0,
+      );
+    }
+    this.sessionsGateway.emitSessionState(id, session);
+    return session;
   }
 
   @Post(':id/crocodile/guess')

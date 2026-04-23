@@ -55,6 +55,7 @@ export async function answerQuestionApi(sessionId: string, categoryId: string, q
   return answerQuestionWithBodyApi(sessionId, categoryId, questionId);
 }
 
+/** @deprecated Для викторины используйте WebSocket событие `quiz:answer`. */
 export async function answerQuestionWithBodyApi(
   sessionId: string,
   categoryId: string,
@@ -94,6 +95,7 @@ export async function markCrocodileMissedApi(sessionId: string, payload?: { term
   return res.data.data;
 }
 
+/** @deprecated Для викторины используйте WebSocket событие `quiz:reveal`. */
 export async function revealQuizQuestionApi(
   sessionId: string,
   categoryId: string,

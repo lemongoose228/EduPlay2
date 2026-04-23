@@ -28,7 +28,7 @@ import { RedisModule } from './redis/redis.module';
     GamesModule,
     SessionsModule,
     LibraryModule,
-    RedisModule
+    RedisModule,
   ],
 })
 export class AppModule {}
