@@ -52,7 +52,6 @@ export class GamesService {
       throw new NotFoundException('Игра не найдена');
     }
 
-    // Если игра не опубликована, проверяем права доступа
     if (game.status !== 'published' && userId !== game.authorId) {
       throw new ForbiddenException('Нет доступа к этой игре');
     }
@@ -78,7 +77,6 @@ export class GamesService {
       throw new ForbiddenException('Нет прав на публикацию этой игры');
     }
 
-    // Проверяем, что игра заполнена
     if (!game.categories || game.categories.length === 0) {
       throw new ForbiddenException('Нельзя опубликовать пустую игру');
     }
@@ -103,11 +101,9 @@ async remove(id: string, userId: string): Promise<void> {
     throw new ForbiddenException('Нет прав на удаление этой игры');
   }
 
-  // Удаляем лайки и связанные сессии
   await this.gameLikesRepository.delete({ gameId: id });
   await this.sessionsRepository.delete({ gameId: id });
 
-  // Теперь можно безопасно удалить игру
   await this.gamesRepository.remove(game);
 }
 

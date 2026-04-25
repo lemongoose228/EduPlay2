@@ -8,7 +8,6 @@ export const axiosInstance = axios.create({
   },
 });
 
-// Интерцептор для добавления токена
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -25,7 +24,6 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// Интерцептор для обработки ошибок
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {

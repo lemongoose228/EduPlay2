@@ -33,11 +33,7 @@ export class Session {
   @Column({ unique: true })
   inviteCode: string;
 
-  /**
-   * Многопользовательская сессия (викторина): можно приглашать по коду.
-   * Для однопользовательских (своя игра, крокодил) задаётся при создании как false.
-   * null — старые записи: считать по game.type === 'quiz'.
-   */
+  
   @Column({ type: 'boolean', nullable: true })
   multiplayer: boolean | null;
 

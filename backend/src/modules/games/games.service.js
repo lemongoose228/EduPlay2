@@ -51,7 +51,6 @@ let GamesService = class GamesService {
         if (!game) {
             throw new common_1.NotFoundException('Игра не найдена');
         }
-        // Если игра не опубликована, проверяем права доступа
         if (game.status !== 'published' && userId !== game.authorId) {
             throw new common_1.ForbiddenException('Нет доступа к этой игре');
         }
@@ -70,7 +69,6 @@ let GamesService = class GamesService {
         if (game.authorId !== userId) {
             throw new common_1.ForbiddenException('Нет прав на публикацию этой игры');
         }
-        // Проверяем, что игра заполнена
         if (!game.categories || game.categories.length === 0) {
             throw new common_1.ForbiddenException('Нельзя опубликовать пустую игру');
         }
@@ -91,10 +89,8 @@ let GamesService = class GamesService {
         if (game.authorId !== userId) {
             throw new common_1.ForbiddenException('Нет прав на удаление этой игры');
         }
-        // Удаляем лайки и связанные сессии
         await this.gameLikesRepository.delete({ gameId: id });
         await this.sessionsRepository.delete({ gameId: id });
-        // Теперь можно безопасно удалить игру
         await this.gamesRepository.remove(game);
     }
     async like(userId, gameId) {

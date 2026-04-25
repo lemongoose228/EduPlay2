@@ -12,7 +12,7 @@ interface SessionCardProps {
   startedAt?: string;
   endedAt?: string;
   inviteCode?: string;
-  /** Для однопользовательских сессий код и кнопка «Пригласить» скрыты */
+  
   showInviteCode?: boolean;
   onClick?: () => void;
   onJoin?: () => void;

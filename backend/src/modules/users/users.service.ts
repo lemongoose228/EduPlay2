@@ -131,7 +131,6 @@ export class UsersService {
     try {
       await fs.unlink(abs);
     } catch {
-      // файл уже удалён или отсутствует
     }
   }
 }

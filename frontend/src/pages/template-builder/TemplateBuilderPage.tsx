@@ -175,7 +175,6 @@ export const TemplateBuilderPage: React.FC = () => {
       }
       navigate('/my-games');
     } catch (e) {
-      // Для простоты пока показываем alert (можно заменить на toast/ошибки из формы)
       console.error(e);
       alert('Не удалось сохранить игру');
     }

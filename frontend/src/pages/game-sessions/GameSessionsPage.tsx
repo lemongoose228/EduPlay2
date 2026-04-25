@@ -17,7 +17,7 @@ interface Session {
   id: string;
   gameTitle: string;
   gameType: 'own' | 'quiz' | 'crocodile';
-  /** Многопользовательская (викторина): код приглашения и join по коду */
+  
   multiplayer: boolean;
   status: 'waiting' | 'active' | 'finished';
   teams: number;

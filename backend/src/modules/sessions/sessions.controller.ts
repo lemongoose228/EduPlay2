@@ -65,7 +65,7 @@ export class SessionsController {
   }
 
   @Post(':id/answer/:categoryId/:questionId')
-  /** @deprecated Для викторины используйте WebSocket событие `quiz:answer`. */
+  
   answerQuestion(
     @Param('id') id: string,
     @Param('categoryId') categoryId: string,
@@ -77,7 +77,7 @@ export class SessionsController {
   }
 
   @Post(':id/quiz/reveal/:categoryId/:questionId')
-  /** @deprecated Для викторины используйте WebSocket событие `quiz:reveal`. */
+  
   async revealQuizQuestion(
     @Param('id') id: string,
     @Param('categoryId') categoryId: string,

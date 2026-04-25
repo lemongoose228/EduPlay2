@@ -47,7 +47,7 @@ export class SessionsService {
     return session.game?.type === 'quiz';
   }
 
-  /** Ответ клиенту: не отдаём код приглашения для однопользовательских сессий. */
+  
   private toClientSession(session: Session): Session {
     if (this.isMultiplayerSession(session)) {
       return session;
@@ -254,7 +254,6 @@ export class SessionsService {
   async create(userId: string, createSessionDto: CreateSessionDto): Promise<Session> {
     const game = await this.gamesService.findOne(createSessionDto.gameId, userId);
 
-    // Сессии можно создавать для любых игр, к которым есть доступ (в т.ч. черновики автора)
     let inviteCode: string;
     let existingSession: Session | null;
     
@@ -273,7 +272,6 @@ export class SessionsService {
       settings: {
         maxTeams: createSessionDto.settings?.maxTeams || 8,
         maxPlayersPerTeam: createSessionDto.settings?.maxPlayersPerTeam || 4,
-        // Берем настройки из игры (для викторины важно), но приоритет у параметров сессии.
         timePerQuestion:
           createSessionDto.settings?.timePerQuestion ??
           (game.settings?.timePerQuestion ?? 30),
@@ -316,7 +314,6 @@ export class SessionsService {
       );
     }
 
-    // Для однопользовательской "своей игры" участником по коду может быть только организатор (один раз).
     if (session.game?.type === 'own' && session.hostId === userId) {
       const alreadyInSession = session.teams.some((t) =>
         t.players?.some((p) => p.userId === userId),
@@ -326,7 +323,6 @@ export class SessionsService {
       }
     }
 
-    // Ищем команду или создаем новую
     const requestedTeamName = joinSessionDto.teamName?.trim()
       ? joinSessionDto.teamName.trim()
       : undefined;
@@ -338,7 +334,6 @@ export class SessionsService {
       }
 
       team = this.teamsRepository.create({
-        // Если teamName не передан — создаем новую команду (Команда 1, 2, 3...).
         name: requestedTeamName ?? `Команда ${session.teams.length + 1}`,
         sessionId: session.id,
         players: [],
@@ -450,8 +445,6 @@ export class SessionsService {
     }
 
     if (session.game?.type === 'quiz') {
-      // В викторине пользователь отвечает отдельно на каждый вопрос.
-      // Засчитываем ответ на уровне пользователя (а очки начисляются команде).
       const player = session.teams
         .flatMap((t) => t.players)
         .find((p) => p.userId === userId);
@@ -476,7 +469,6 @@ export class SessionsService {
         throw new NotFoundException('Вопрос не найден');
       }
 
-      // Проверяем, что ответ отправляют на текущий вопрос.
       const quizQuestions = this.getQuizQuestionRefs(session);
       const currentIndex = session.currentQuestionIndex ?? 0;
       const current = quizQuestions[currentIndex];
@@ -502,7 +494,6 @@ export class SessionsService {
       return this.toClientSession(saved);
     }
 
-    // Для "своей игры" мы просто блокируем повторное открытие вопроса.
     const isAnswered = session.answeredQuestions.some(
       (aq) => aq.categoryId === categoryId && aq.questionId === questionId && !aq.userId,
     );
@@ -642,7 +633,6 @@ export class SessionsService {
     session.finishedAt = new Date();
     session.questionStartedAt = null;
 
-    // Увеличиваем счетчик игр
     await this.gamesService.incrementPlays(session.gameId);
 
     const savedFinish = await this.sessionsRepository.save(session);

@@ -34,7 +34,6 @@ export interface UpdateGameDto extends Partial<CreateGameDto> {
   status?: GameStatus;
 }
 
-// Моковые данные для игр
 export const mockGames: Game[] = [
   {
     id: '1',

@@ -1,7 +1,6 @@
 import type { OwnGameCategory, OwnGameQuestion, QuizQuestion} from '../types/template.types';
 import { TEMPLATE_CONSTANTS } from '../types/template.types';
 
-
 export const createEmptyCategory = (index: number): OwnGameCategory => ({
   id: `cat-${Date.now()}-${index}-${Math.random()}`,
   name: `Категория ${index + 1}`,
@@ -34,7 +33,6 @@ export const formatTemplateForSave = (template: any) => {
     createdAt: template.createdAt || new Date().toISOString()
   };
 };
-
 
 import type { CrocodileTerm } from '../types/template.types';
 

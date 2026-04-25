@@ -65,7 +65,6 @@ export const MyGamesPage: React.FC = () => {
 
   useEffect(() => {
     loadGames();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCreateNewGame = () => {
@@ -80,7 +79,6 @@ export const MyGamesPage: React.FC = () => {
     try {
       const game = games.find((item) => item.id === gameId);
       const session = await createSessionApi({ gameId });
-      // Для "Крокодила" сессия однопользовательская: никого не подключаем.
       if (user && game?.type !== 'crocodile') {
         const trimmed = user.name?.trim();
         const playerName = trimmed && trimmed.length >= 2 ? trimmed : 'Хост';

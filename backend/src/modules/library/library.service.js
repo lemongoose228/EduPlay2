@@ -33,7 +33,6 @@ let LibraryService = class LibraryService {
         if (type) {
             queryBuilder.andWhere('game.type = :type', { type });
         }
-        // Сортировка
         switch (sortBy) {
             case 'popular':
                 queryBuilder.orderBy('game.plays', 'DESC');
@@ -47,7 +46,6 @@ let LibraryService = class LibraryService {
             default:
                 queryBuilder.orderBy('game.plays', 'DESC');
         }
-        // Пагинация
         const [items, total] = await queryBuilder
             .skip((page - 1) * limit)
             .take(limit)

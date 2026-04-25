@@ -1,6 +1,5 @@
 import { config } from '../config';
 
-/** Полный URL для `<img src>`: внешние ссылки, blob/data или файлы с API */
 export function resolveAvatarSrc(
   avatar: string | null | undefined,
 ): string | undefined {

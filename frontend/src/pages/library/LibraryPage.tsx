@@ -153,7 +153,6 @@ export const LibraryPage: React.FC = () => {
     try {
       const game = games.find((item) => item.id === gameId);
       const session = await createSessionApi({ gameId });
-      // «Крокодил» — только локально у преподавателя, без join по коду.
       if (user && game?.type !== 'crocodile') {
         const trimmed = user.name?.trim();
         const playerName = trimmed && trimmed.length >= 2 ? trimmed : 'Хост';

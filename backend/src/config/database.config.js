@@ -8,9 +8,8 @@ exports.default = (0, config_1.registerAs)('database', () => ({
     username: process.env.DB_USERNAME || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
     database: process.env.DB_DATABASE || 'quiz_game',
-    entities: ['dist/**/*.entity{.ts,.js}'],
+    entities: ['dist*.entity{.ts,.js}'],
     migrations: ['dist/database/migrations/*{.ts,.js}'],
-    // Всегда включаем автоматическое создание/обновление схемы
     synchronize: true,
     logging: process.env.NODE_ENV !== 'production',
 }));

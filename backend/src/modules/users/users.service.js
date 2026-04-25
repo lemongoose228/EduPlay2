@@ -106,7 +106,6 @@ let UsersService = class UsersService {
             await fs_1.promises.unlink(abs);
         }
         catch {
-            // файл уже удалён или отсутствует
         }
     }
 };

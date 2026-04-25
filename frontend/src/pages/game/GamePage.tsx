@@ -69,7 +69,7 @@ interface GameSession {
     scored?: boolean;
   }>;
   inviteCode: string;
-  /** null/undefined: считать по game.type === 'quiz' */
+  
   multiplayer?: boolean | null;
   settings: {
     maxTeams: number;
@@ -213,7 +213,6 @@ export const GamePage: React.FC = () => {
       const socket = await waitForSessionsSocketConnected(2000);
       socket.emit('quiz:start', { sessionId: session.id });
 
-      // Даем WebSocket короткое окно на синхронизацию состояния.
       await new Promise((resolve) => window.setTimeout(resolve, 1200));
       const latest = await getSessionApi(session.id);
       if (latest.status === 'active') {
@@ -221,7 +220,6 @@ export const GamePage: React.FC = () => {
         return;
       }
 
-      // Fallback на REST, если WS событие не дало старта.
       const updated = await startSessionApi(session.id);
       setSession(updated);
     } catch (e) {
@@ -352,7 +350,6 @@ export const GamePage: React.FC = () => {
 
   useEffect(() => {
     if (!session || session.game.type !== 'quiz') return;
-    // При переключении вопроса сбрасываем черновик ответа.
     setQuizAnswerDraft('');
     quizQuestionStartedAtRef.current = null;
   }, [session?.id, session?.currentQuestionIndex, session?.status, session?.game.type]);
@@ -407,7 +404,6 @@ export const GamePage: React.FC = () => {
   const handleCloseQuestion = () => {
     if (!selectedQuestion || !session) return;
 
-    // Фиксируем закрытие на сервере (дубли запрещены на уровне backend)
     answerQuestionApi(session.id, selectedQuestion.category.id, selectedQuestion.question.id)
       .then((updated) => setSession(updated))
       .catch((e) => {

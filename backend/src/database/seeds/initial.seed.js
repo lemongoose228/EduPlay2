@@ -44,14 +44,12 @@ async function runSeed(connection) {
     const gameRepository = connection.getRepository(game_entity_1.Game);
     const categoryRepository = connection.getRepository(category_entity_1.Category);
     const questionRepository = connection.getRepository(question_entity_1.Question);
-    // Создаем тестового пользователя
     const hashedPassword = await bcrypt.hash('Password123', 10);
     const user = await userRepository.save({
         email: 'test@example.com',
         password: hashedPassword,
         name: 'Тестовый Пользователь',
     });
-    // Создаем тестовую игру "Своя игра"
     const game1 = await gameRepository.save({
         title: 'История России',
         description: 'Проверьте свои знания истории России',
@@ -64,7 +62,6 @@ async function runSeed(connection) {
             allowNegativeScores: true,
         },
     });
-    // Создаем категории и вопросы
     const categories = [
         {
             name: 'Древняя Русь',
@@ -97,7 +94,6 @@ async function runSeed(connection) {
         }));
         await questionRepository.save(questions);
     }
-    // Создаем тестовую игру "Викторина"
     const game2 = await gameRepository.save({
         title: 'География мира',
         description: 'Увлекательная викторина о странах и столицах',

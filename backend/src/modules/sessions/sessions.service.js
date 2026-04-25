@@ -108,7 +108,7 @@ let SessionsService = class SessionsService {
     }
     async create(userId, createSessionDto) {
         const game = await this.gamesService.findOne(createSessionDto.gameId, userId);
-        // Сессии можно создавать для любых игр, к которым есть доступ (в т.ч. черновики автора)
+        
         let inviteCode;
         let existingSession;
         do {
@@ -124,7 +124,7 @@ let SessionsService = class SessionsService {
             settings: {
                 maxTeams: createSessionDto.settings?.maxTeams || 8,
                 maxPlayersPerTeam: createSessionDto.settings?.maxPlayersPerTeam || 4,
-                // Берем настройки из игры (для викторины важно), но приоритет у параметров сессии.
+                
                 timePerQuestion: createSessionDto.settings?.timePerQuestion ??
                     (game.settings?.timePerQuestion ?? 30),
                 timePerTerm: createSessionDto.settings?.timePerTerm ??
@@ -152,7 +152,7 @@ let SessionsService = class SessionsService {
         if (session.game?.type === 'crocodile') {
             throw new common_1.ForbiddenException('Сессия "Крокодил" запускается только локально у преподавателя');
         }
-        // Для "своей игры" участником может быть только организатор (1 игрок).
+        
         if (session.game?.type === 'own') {
             if (session.hostId !== userId) {
                 throw new common_1.ForbiddenException('В "своей игре" присоединяться по коду может только организатор');
@@ -162,7 +162,7 @@ let SessionsService = class SessionsService {
                 throw new common_1.BadRequestException('Организатор уже участвует в этой сессии');
             }
         }
-        // Ищем команду или создаем новую
+        
         const requestedTeamName = joinSessionDto.teamName?.trim()
             ? joinSessionDto.teamName.trim()
             : undefined;
@@ -172,7 +172,7 @@ let SessionsService = class SessionsService {
                 throw new common_1.BadRequestException('Достигнуто максимальное количество команд');
             }
             team = this.teamsRepository.create({
-                // Если teamName не передан — создаем новую команду (Команда 1, 2, 3...).
+                
                 name: requestedTeamName ?? `Команда ${session.teams.length + 1}`,
                 sessionId: session.id,
                 players: [],
@@ -254,8 +254,6 @@ let SessionsService = class SessionsService {
             throw new common_1.BadRequestException('Игра не активна');
         }
         if (session.game?.type === 'quiz') {
-            // В викторине пользователь отвечает отдельно на каждый вопрос.
-            // Засчитываем ответ на уровне пользователя (а очки начисляются команде).
             const player = session.teams
                 .flatMap((t) => t.players)
                 .find((p) => p.userId === userId);
@@ -272,7 +270,6 @@ let SessionsService = class SessionsService {
             if (!question) {
                 throw new common_1.NotFoundException('Вопрос не найден');
             }
-            // Проверяем, что ответ отправляют на текущий вопрос.
             const quizQuestions = session.game.categories.flatMap((c) => c.questions.map((q) => ({
                 categoryId: c.id,
                 questionId: q.id,
@@ -296,7 +293,6 @@ let SessionsService = class SessionsService {
             });
             return this.sessionsRepository.save(session);
         }
-        // Для "своей игры" мы просто блокируем повторное открытие вопроса.
         const isAnswered = session.answeredQuestions.some((aq) => aq.categoryId === categoryId && aq.questionId === questionId && !aq.userId);
         if (isAnswered) {
             throw new common_1.BadRequestException('На этот вопрос уже отвечали');
@@ -312,7 +308,6 @@ let SessionsService = class SessionsService {
         if (session.game?.type !== 'quiz') {
             throw new common_1.BadRequestException('Режим викторины не активен');
         }
-        // Проверяем, что сейчас раскрывают текущий вопрос.
         const quizQuestions = session.game.categories.flatMap((c) => c.questions.map((q) => ({
             categoryId: c.id,
             questionId: q.id,
@@ -328,8 +323,6 @@ let SessionsService = class SessionsService {
         if (!question) {
             throw new common_1.NotFoundException('Вопрос не найден');
         }
-        // Начисляем очки тем пользователям, которые ответили правильно.
-        // Очки выдаём команде: value начисляется за каждого корректно ответившего игрока.
         const toScore = session.answeredQuestions.filter((aq) => aq.categoryId === categoryId &&
             aq.questionId === questionId &&
             aq.userId &&
@@ -346,7 +339,6 @@ let SessionsService = class SessionsService {
                 return aq;
             return { ...aq, scored: true };
         });
-        // Применяем очки на уровне teams (только для тех, кто ещё не получал очки).
         for (const sub of toScore) {
             const team = session.teams.find((t) => t.id === sub.teamId);
             if (!team)
@@ -354,7 +346,6 @@ let SessionsService = class SessionsService {
             team.score += question.value;
         }
         session.answeredQuestions = updatedAnswered;
-        // Переходим к следующему вопросу / финишу.
         const total = quizQuestions.length;
         const nextIndex = currentIndex + 1;
         if (nextIndex >= total) {
@@ -396,7 +387,6 @@ let SessionsService = class SessionsService {
         }
         session.status = 'finished';
         session.finishedAt = new Date();
-        // Увеличиваем счетчик игр
         await this.gamesService.incrementPlays(session.gameId);
         return this.sessionsRepository.save(session);
     }

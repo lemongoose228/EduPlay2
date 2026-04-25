@@ -50,7 +50,6 @@ export interface SessionResult {
   finishedAt: string;
 }
 
-// Моковые данные для сессий
 export const mockSessions: GameSession[] = [
   {
     id: '1',

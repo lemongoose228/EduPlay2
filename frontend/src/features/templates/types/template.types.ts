@@ -1,4 +1,3 @@
-// Типы для "Своя игра"
 export interface OwnGameQuestion {
   value: number;
   question: string;
@@ -21,7 +20,6 @@ export interface OwnGameTemplate {
   updatedAt?: string;
 }
 
-// Типы для "Викторина"
 export interface QuizQuestion {
   id: string;
   question: string;
@@ -40,16 +38,13 @@ export interface QuizTemplate {
   updatedAt?: string;
 }
 
-// Общий тип для всех шаблонов
 export type GameTemplate = OwnGameTemplate | QuizTemplate | CrocodileTemplate;
 
-// Типы для валидации
 export interface ValidationError {
   field: string;
   message: string;
 }
 
-// Константы для шаблонов
 export const TEMPLATE_CONSTANTS = {
   MAX_CATEGORIES: 6,
   MIN_CATEGORIES: 1,
@@ -65,8 +60,6 @@ export const TEMPLATE_CONSTANTS = {
   MIN_TERMS: 3
 };
 
-
-// Типы для игры "Крокодил"
 export interface CrocodileTerm {
   id: string;
   term: string;

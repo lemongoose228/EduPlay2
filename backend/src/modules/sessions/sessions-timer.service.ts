@@ -53,7 +53,6 @@ export class SessionsTimerService implements OnModuleDestroy {
 
     this.isSubscriptionInitialized = true;
     this.subscriberClient = this.redisClient.duplicate({
-      // Dedicated subscriber connection: avoid ready-check commands in subscriber mode.
       enableReadyCheck: false,
       maxRetriesPerRequest: null,
     });

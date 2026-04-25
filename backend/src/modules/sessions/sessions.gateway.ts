@@ -56,8 +56,6 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
     const user = (client.data?.user ??
       (client.handshake as any)?.user ??
       (client.request as any)?.user) as User | undefined;
-    // На этапе подключения user может еще не быть проставлен guard-ом.
-    // Не разрываем соединение преждевременно — проверка авторизации идет в message handlers.
     if (user?.id) {
       this.userSockets.set(user.id, client.id);
     }
@@ -229,9 +227,7 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
   ) {
     try {
       const currentUser = this.getUserOrThrow(client, user);
-      // #region agent log
       fetch('http://127.0.0.1:7371/ingest/ba8791ae-2c1d-4028-b905-067af634ec4d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b35aeb'},body:JSON.stringify({sessionId:'b35aeb',runId:'run1',hypothesisId:'H2',location:'backend/src/modules/sessions/sessions.gateway.ts:handleQuizReveal:start',message:'quiz reveal handler entered',data:{sessionId:data.sessionId,categoryId:data.categoryId,questionId:data.questionId,userId:currentUser.id},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       const reveal = await this.sessionsService.getQuizRevealInfoForCurrentQuestion(
         data.sessionId,
       );
@@ -258,14 +254,10 @@ export class SessionsGateway implements OnGatewayConnection, OnGatewayDisconnect
           session.settings?.timePerQuestion ?? 30,
         );
       }
-      // #region agent log
       fetch('http://127.0.0.1:7371/ingest/ba8791ae-2c1d-4028-b905-067af634ec4d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b35aeb'},body:JSON.stringify({sessionId:'b35aeb',runId:'run1',hypothesisId:'H2',location:'backend/src/modules/sessions/sessions.gateway.ts:handleQuizReveal:success',message:'quiz reveal handler succeeded',data:{sessionId:data.sessionId,nextQuestionIndex:session.currentQuestionIndex ?? null,status:session.status},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       return { ok: true };
     } catch (error) {
-      // #region agent log
       fetch('http://127.0.0.1:7371/ingest/ba8791ae-2c1d-4028-b905-067af634ec4d',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b35aeb'},body:JSON.stringify({sessionId:'b35aeb',runId:'run1',hypothesisId:'H2',location:'backend/src/modules/sessions/sessions.gateway.ts:handleQuizReveal:error',message:'quiz reveal handler failed',data:{sessionId:data.sessionId,error:error instanceof Error ? error.message : String(error)},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       this.emitSessionError(client, error);
       return { ok: false };
     }

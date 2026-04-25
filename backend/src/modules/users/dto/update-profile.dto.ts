@@ -13,7 +13,7 @@ export class UpdateProfileDto {
   @MaxLength(100, { message: 'Имя не длиннее 100 символов' })
   name!: string;
 
-  /** URL (http/https) пресета или путь к загруженному файлу `/uploads/avatars/...` */
+  
   @IsOptional()
   @ValidateIf((_, v) => v !== null && v !== undefined && v !== '')
   @IsString()

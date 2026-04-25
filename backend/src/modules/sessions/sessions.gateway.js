@@ -26,7 +26,6 @@ let SessionsGateway = class SessionsGateway {
     }
     handleDisconnect(client) {
         console.log(`Client disconnected: ${client.id}`);
-        // Удаляем пользователя из маппинга
         for (const [userId, socketId] of this.userSockets.entries()) {
             if (socketId === client.id) {
                 this.userSockets.delete(userId);
