@@ -16,7 +16,7 @@ import { selectAuthUser } from '../../features/auth/model/selectors';
 interface Session {
   id: string;
   gameTitle: string;
-  gameType: 'own' | 'quiz' | 'crocodile';
+  gameType: 'own' | 'quiz' | 'crocodile' | 'wheel';
   
   multiplayer: boolean;
   status: 'waiting' | 'active' | 'finished';

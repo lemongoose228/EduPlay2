@@ -17,6 +17,7 @@ import {
   updateScoreApi,
 } from '../../features/sessions/api/sessionsApi';
 import { CrocodileGamePage } from './CrocodileGamePage';
+import { WheelGamePage } from './WheelGamePage';
 import {
   getSessionsSocket,
   waitForSessionsSocketConnected,
@@ -47,7 +48,7 @@ interface GameSession {
   id: string;
   game: {
     title: string;
-    type: 'own' | 'quiz' | 'crocodile';
+    type: 'own' | 'quiz' | 'crocodile' | 'wheel';
     categories: Category[];
     settings?: {
       timePerQuestion?: number;
@@ -515,6 +516,37 @@ export const GamePage: React.FC = () => {
             });
         }}
       />
+    );
+  }
+
+  if (session.game.type === 'wheel' && session.status === 'active') {
+    return (
+      <div className="game-page active">
+        <WheelGamePage
+          title={session.game.title}
+          categories={session.game.categories}
+          teams={session.teams}
+          answeredKeys={answeredSet}
+          isHost={isHost}
+          onSuccess={async (categoryId, questionId) => {
+            const soloTeam = session.teams[0];
+            if (soloTeam) {
+              const scored = await updateScoreApi(session.id, { teamId: soloTeam.id, points: 1 });
+              setSession(scored);
+            }
+            const answered = await answerQuestionApi(session.id, categoryId, questionId);
+            setSession(answered);
+          }}
+          onFail={async (_categoryId, _questionId) => {
+            const fresh = await getSessionApi(session.id);
+            setSession(fresh);
+          }}
+          onFinish={async () => {
+            const updated = await finishSessionApi(session.id);
+            setSession(updated);
+          }}
+        />
+      </div>
     );
   }
 

@@ -20,6 +20,27 @@ export interface OwnGameTemplate {
   updatedAt?: string;
 }
 
+export interface WheelQuestion {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+export interface WheelCategory {
+  id: string;
+  name: string;
+  questions: WheelQuestion[];
+}
+
+export interface WheelTemplate {
+  id?: string;
+  name: string;
+  type: 'wheel';
+  categories: WheelCategory[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface QuizQuestion {
   id: string;
   question: string;
@@ -38,7 +59,7 @@ export interface QuizTemplate {
   updatedAt?: string;
 }
 
-export type GameTemplate = OwnGameTemplate | QuizTemplate | CrocodileTemplate;
+export type GameTemplate = OwnGameTemplate | QuizTemplate | CrocodileTemplate | WheelTemplate;
 
 export interface ValidationError {
   field: string;

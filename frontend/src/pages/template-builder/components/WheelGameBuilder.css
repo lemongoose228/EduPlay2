@@ -1,0 +1,24 @@
+.wheel-game-builder .wheel-questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wheel-game-builder .wheel-question-item {
+  border: 1px solid #2f2f43;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.wheel-game-builder .wheel-question-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.wheel-game-builder .wheel-question-fields {
+  display: grid;
+  gap: 8px;
+}

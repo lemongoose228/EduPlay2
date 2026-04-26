@@ -176,6 +176,23 @@ export class SessionsService {
     );
   }
 
+  private hasUnansweredQuestions(session: Session, categoryId?: string): boolean {
+    return session.game.categories.some((category) => {
+      if (categoryId && category.id !== categoryId) {
+        return false;
+      }
+      return category.questions.some(
+        (question) =>
+          !session.answeredQuestions.some(
+            (answered) =>
+              answered.categoryId === category.id &&
+              answered.questionId === question.id &&
+              !answered.userId,
+          ),
+      );
+    });
+  }
+
   private getQuizRevealInfo(
     session: Session,
     categoryId: string,
@@ -287,6 +304,16 @@ export class SessionsService {
       crocodileState: game.type === 'crocodile' ? null : undefined,
     });
 
+    if (game.type === 'wheel') {
+      session.teams = [
+        this.teamsRepository.create({
+          name: 'Ученик',
+          score: 0,
+          players: [],
+        }),
+      ];
+    }
+
     return this.sessionsRepository.save(session);
   }
 
@@ -304,8 +331,10 @@ export class SessionsService {
       throw new BadRequestException('Нельзя присоединиться к уже начатой игре');
     }
 
-    if (session.game?.type === 'crocodile') {
-      throw new ForbiddenException('Сессия "Крокодил" запускается только локально у преподавателя');
+    if (session.game?.type === 'crocodile' || session.game?.type === 'wheel') {
+      throw new ForbiddenException(
+        'Эта игровая сессия запускается только локально у преподавателя',
+      );
     }
 
     if (!this.isMultiplayerSession(session) && session.hostId !== userId) {
@@ -394,7 +423,7 @@ export class SessionsService {
       session.crocodileState = this.buildInitialCrocodileState(session);
     } else {
       session.currentQuestionIndex = 0;
-      session.questionStartedAt = new Date();
+      session.questionStartedAt = session.game?.type === 'quiz' ? new Date() : null;
     }
 
     const saved = await this.sessionsRepository.save(session);
@@ -494,6 +523,14 @@ export class SessionsService {
       return this.toClientSession(saved);
     }
 
+    const questionExists = session.game.categories.some(
+      (category) =>
+        category.id === categoryId && category.questions.some((question) => question.id === questionId),
+    );
+    if (!questionExists) {
+      throw new NotFoundException('Вопрос не найден');
+    }
+
     const isAnswered = session.answeredQuestions.some(
       (aq) => aq.categoryId === categoryId && aq.questionId === questionId && !aq.userId,
     );
@@ -503,6 +540,13 @@ export class SessionsService {
     }
 
     session.answeredQuestions.push({ categoryId, questionId });
+
+    if (session.game?.type === 'wheel' && !this.hasUnansweredQuestions(session)) {
+      session.status = 'finished';
+      session.finishedAt = new Date();
+      session.questionStartedAt = null;
+      await this.gamesService.incrementPlays(session.gameId);
+    }
 
     const savedOwn = await this.sessionsRepository.save(session);
     return this.toClientSession(savedOwn);
@@ -602,6 +646,10 @@ export class SessionsService {
     const team = session.teams.find(t => t.id === updateScoreDto.teamId);
     if (!team) {
       throw new NotFoundException('Команда не найдена');
+    }
+
+    if (session.game?.type === 'wheel' && updateScoreDto.points !== 1) {
+      throw new BadRequestException('Для "Колеса Фортуны" за верный ответ можно начислить только 1 балл');
     }
 
     team.score += updateScoreDto.points;

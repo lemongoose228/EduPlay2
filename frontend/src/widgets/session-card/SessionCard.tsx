@@ -5,7 +5,7 @@ import './SessionCard.css';
 interface SessionCardProps {
   id: string;
   gameTitle: string;
-  gameType: 'own' | 'quiz' | 'crocodile';
+  gameType: 'own' | 'quiz' | 'crocodile' | 'wheel';
   status: 'waiting' | 'active' | 'finished';
   teams: number;
   maxTeams?: number;
@@ -56,12 +56,14 @@ export const SessionCard: React.FC<SessionCardProps> = ({
   const getTypeIcon = () => {
     if (gameType === 'own') return '🎮';
     if (gameType === 'quiz') return '❓';
+    if (gameType === 'wheel') return '🎡';
     return '🐊';
   };
 
   const getTypeText = () => {
     if (gameType === 'own') return 'Своя игра';
     if (gameType === 'quiz') return 'Викторина';
+    if (gameType === 'wheel') return 'Колесо Фортуны';
     return 'Крокодил';
   };
 

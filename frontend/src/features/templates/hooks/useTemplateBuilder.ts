@@ -94,7 +94,7 @@ export const useTemplateBuilder = <T extends GameTemplate>(initialData?: T) => {
     setIsSaving(true);
     try {
       console.log('Saving template:', data);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Имитация задержки
+      await new Promise(resolve => setTimeout(resolve, 1000)); 
       return true;
     } catch (error) {
       console.error('Error saving template:', error);

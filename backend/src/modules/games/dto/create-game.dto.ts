@@ -14,6 +14,7 @@ export enum GameType {
   Own = 'own',
   Quiz = 'quiz',
   Crocodile = 'crocodile',
+  Wheel = 'wheel',
 }
 
 class QuestionDto {

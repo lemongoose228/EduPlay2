@@ -7,7 +7,7 @@ type ApiEnvelope<T> = {
   timestamp: string;
 };
 
-export type GameType = 'own' | 'quiz';
+export type GameType = 'own' | 'quiz' | 'crocodile' | 'wheel';
 export type GameStatus = 'draft' | 'published' | 'archived';
 
 export type CreateGameDto = {
@@ -24,6 +24,7 @@ export type CreateGameDto = {
   }>;
   settings?: {
     timePerQuestion?: number;
+    timePerTerm?: number;
     allowNegativeScores?: boolean;
   };
 };

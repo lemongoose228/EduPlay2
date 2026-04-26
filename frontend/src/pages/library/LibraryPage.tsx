@@ -14,7 +14,7 @@ import './LibraryPage.css';
 interface PublicGame {
   id: string;
   title: string;
-  type: 'own' | 'quiz' | 'crocodile';
+  type: 'own' | 'quiz' | 'crocodile' | 'wheel';
   description?: string;
   author: string;
   plays: number;
@@ -25,7 +25,7 @@ interface PublicGame {
 export const LibraryPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
-  const [selectedType, setSelectedType] = useState<'all' | 'own' | 'quiz' | 'crocodile'>('all');
+  const [selectedType, setSelectedType] = useState<'all' | 'own' | 'quiz' | 'crocodile' | 'wheel'>('all');
   const [sortBy, setSortBy] = useState<'popular' | 'likes' | 'newest'>('popular');
   const [activeTab, setActiveTab] = useState<'all' | 'favorites'>('all');
   const user = useAppSelector(selectAuthUser);
@@ -153,7 +153,7 @@ export const LibraryPage: React.FC = () => {
     try {
       const game = games.find((item) => item.id === gameId);
       const session = await createSessionApi({ gameId });
-      if (user && game?.type !== 'crocodile') {
+      if (user && game?.type !== 'crocodile' && game?.type !== 'wheel') {
         const trimmed = user.name?.trim();
         const playerName = trimmed && trimmed.length >= 2 ? trimmed : 'Хост';
         try {
@@ -230,6 +230,12 @@ export const LibraryPage: React.FC = () => {
               onClick={() => setSelectedType('crocodile')}
             >
               🐊 Крокодил
+            </button>
+            <button
+              className={`filter-btn ${selectedType === 'wheel' ? 'active' : ''}`}
+              onClick={() => setSelectedType('wheel')}
+            >
+              🎡 Колесо Фортуны
             </button>
           </div>
 

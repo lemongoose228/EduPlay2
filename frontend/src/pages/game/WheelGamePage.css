@@ -1,0 +1,529 @@
+/* Стили для страницы Колесо Фортуны в едином стиле сайта */
+
+.wheel-page {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 24px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #7d88bb 0%, #b6a4c8 100%);
+  position: relative;
+  overflow-x: hidden;
+}
+
+.wheel-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="3" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="70" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="90" cy="85" r="2" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.wheel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  padding: 20px 32px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.wheel-header-left {
+  flex: 1;
+}
+
+.wheel-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.wheel-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 4px 0 0;
+}
+
+/* Основной макет */
+.wheel-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 32px;
+  align-items: start;
+}
+
+/* Левая часть - колесо */
+.wheel-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  border-radius: 40px;
+  padding: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.wheel-pointer-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.wheel-pointer {
+  width: 0;
+  height: 0;
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-top: 40px solid #ff6b4e;
+  position: relative;
+  z-index: 10;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  animation: pointerPulse 2s infinite;
+}
+
+.wheel-pointer-center {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #fff 0%, #e0e0e0 100%);
+  border-radius: 50%;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 11;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border: 2px solid #ff6b4e;
+}
+
+@keyframes pointerPulse {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.wheel-container {
+  position: relative;
+  width: 380px;
+  height: 380px;
+  margin: 0 auto;
+}
+
+.wheel-circle {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+  transition: transform 4s cubic-bezier(0.25, 0.1, 0.15, 1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.2);
+  border: 4px solid rgba(255, 255, 255, 0.3);
+}
+
+.wheel-circle.spinning {
+  transition: transform 4s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+
+.wheel-disk {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.wheel-disk-glow {
+  z-index: 2;
+  pointer-events: none;
+  animation: sectorGlowPulse 0.55s ease-in-out infinite alternate;
+}
+
+@keyframes sectorGlowPulse {
+  from {
+    opacity: 0.75;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.wheel-labels {
+  --wheel-n: 4;
+  --wheel-label-r: 36%;
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.wheel-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center center;
+}
+
+/* Текст вдоль биссектрисы: от центра к ободу (по часовой стрелке вращения колеса) */
+.wheel-label-text {
+  display: block;
+  max-width: min(9.5rem, 38%);
+  font-size: clamp(0.62rem, calc(2.65rem / max(2, var(--wheel-n))), 0.8125rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-align: center;
+  color: #1e293b;
+  text-shadow:
+    0 0 1px rgba(255, 255, 255, 0.95),
+    0 1px 2px rgba(255, 255, 255, 0.75),
+    0 1px 3px rgba(15, 23, 42, 0.12);
+  word-break: break-word;
+  hyphens: auto;
+  transform: rotate(90deg);
+  transform-origin: center center;
+}
+
+.wheel-empty {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  color: white;
+  font-size: 16px;
+  text-align: center;
+  padding: 20px;
+}
+
+/* Кнопка вращения */
+.spin-button {
+  min-width: 200px;
+  padding: 14px 32px;
+  font-size: 18px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #6B4EFF 0%, #4B2EC0 100%);
+  border: none;
+  border-radius: 50px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 24px rgba(107, 78, 255, 0.3);
+}
+
+.spin-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(107, 78, 255, 0.4);
+}
+
+.spin-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.spin-button-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+}
+
+.spin-icon {
+  font-size: 24px;
+}
+
+/* Правая часть */
+.wheel-side {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Карточка счёта */
+.wheel-score-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.95) 100%);
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.wheel-score-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid rgba(107, 78, 255, 0.2);
+}
+
+.wheel-score-icon {
+  font-size: 28px;
+}
+
+.wheel-score-header h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.wheel-score-value {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 16px;
+}
+
+.team-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.team-score {
+  font-size: 32px;
+  font-weight: 800;
+  color: #6B4EFF;
+}
+
+/* Карточка вопроса */
+.wheel-question-card {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  animation: slideInRight 0.4s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.wheel-question-theme {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #6B4EFF;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid rgba(107, 78, 255, 0.2);
+}
+
+.theme-icon {
+  font-size: 24px;
+}
+
+.wheel-question-value {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  padding: 10px 12px;
+  background: linear-gradient(135deg, #f0f0ff 0%, #e8e8ff 100%);
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.wheel-question-value strong {
+  color: #6B4EFF;
+  font-size: 16px;
+}
+
+.wheel-question-text {
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 16px;
+  font-weight: 500;
+}
+
+.wheel-question-answer {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  padding: 16px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  border-left: 4px solid #4caf50;
+}
+
+.wheel-question-answer strong {
+  color: #2e7d32;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.wheel-question-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.answer-toggle {
+  width: 100%;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.action-buttons button {
+  flex: 1;
+}
+
+/* Подсказки и сообщения */
+.wheel-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.hint-icon {
+  font-size: 32px;
+}
+
+.hint-text {
+  flex: 1;
+}
+
+.hint-text strong {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: #6B4EFF;
+}
+
+.hint-text p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.wheel-hint.warning {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-left: 4px solid #ff9800;
+}
+
+.wheel-done {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border-left: 4px solid #4caf50;
+}
+
+/* Адаптация под мобильные устройства */
+@media (max-width: 1024px) {
+  .wheel-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .wheel-board {
+    order: 1;
+  }
+
+  .wheel-side {
+    order: 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .wheel-page {
+    padding: 16px;
+    gap: 20px;
+  }
+
+  .wheel-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .wheel-title {
+    font-size: 24px;
+  }
+
+  .wheel-container {
+    width: 280px;
+    height: 280px;
+  }
+
+  .wheel-labels {
+    --wheel-label-r: 30%;
+  }
+
+  .wheel-label-text {
+    max-width: min(7rem, 44%);
+    font-size: clamp(0.55rem, calc(2.1rem / max(2, var(--wheel-n))), 0.72rem);
+  }
+
+  .spin-button {
+    min-width: 160px;
+    padding: 12px 24px;
+    font-size: 16px;
+  }
+
+  .wheel-question-text {
+    font-size: 16px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .action-buttons button {
+    width: 100%;
+  }
+}
+

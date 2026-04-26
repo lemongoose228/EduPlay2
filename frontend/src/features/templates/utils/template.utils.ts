@@ -1,4 +1,10 @@
-import type { OwnGameCategory, OwnGameQuestion, QuizQuestion} from '../types/template.types';
+import type {
+  OwnGameCategory,
+  OwnGameQuestion,
+  QuizQuestion,
+  WheelCategory,
+  WheelQuestion,
+} from '../types/template.types';
 import { TEMPLATE_CONSTANTS } from '../types/template.types';
 
 export const createEmptyCategory = (index: number): OwnGameCategory => ({
@@ -16,6 +22,18 @@ export const createEmptyQuizQuestion = (): QuizQuestion => ({
   question: '',
   answer: '',
   points: 100
+});
+
+export const createEmptyWheelQuestion = (): WheelQuestion => ({
+  id: `wheel-q-${Date.now()}-${Math.random()}`,
+  question: '',
+  answer: '',
+});
+
+export const createEmptyWheelCategory = (index: number): WheelCategory => ({
+  id: `wheel-cat-${Date.now()}-${index}-${Math.random()}`,
+  name: `Тема ${index + 1}`,
+  questions: [createEmptyWheelQuestion()],
 });
 
 export const calculateTotalQuestions = (categories: OwnGameCategory[]): number => {

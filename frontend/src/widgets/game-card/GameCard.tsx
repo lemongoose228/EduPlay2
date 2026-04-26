@@ -5,7 +5,7 @@ import './GameCard.css';
 interface GameCardProps {
   id: string;
   title: string;
-  type: 'own' | 'quiz' | 'crocodile';
+  type: 'own' | 'quiz' | 'crocodile' | 'wheel';
   description?: string;
   questionsCount?: number;
   createdAt?: string;
@@ -45,12 +45,14 @@ export const GameCard: React.FC<GameCardProps> = ({
   const getTypeIcon = () => {
     if (type === 'own') return '🎮';
     if (type === 'quiz') return '❓';
+    if (type === 'wheel') return '🎡';
     return '🐊';
   };
 
   const getTypeText = () => {
     if (type === 'own') return 'Своя игра';
     if (type === 'quiz') return 'Викторина';
+    if (type === 'wheel') return 'Колесо Фортуны';
     return 'Крокодил';
   };
 

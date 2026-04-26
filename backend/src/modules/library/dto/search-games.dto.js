@@ -26,7 +26,7 @@ __decorate([
 ], SearchGamesDto.prototype, "search", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsEnum)(['own', 'quiz', 'crocodile']),
+    (0, class_validator_1.IsEnum)(['own', 'quiz', 'crocodile', 'wheel']),
     __metadata("design:type", String)
 ], SearchGamesDto.prototype, "type", void 0);
 __decorate([

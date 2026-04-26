@@ -9,7 +9,7 @@ type ApiEnvelope<T> = {
 
 export type SearchGamesDto = {
   search?: string;
-  type?: 'own' | 'quiz' | 'crocodile';
+  type?: 'own' | 'quiz' | 'crocodile' | 'wheel';
   sortBy?: 'popular' | 'likes' | 'newest';
   page?: number;
   limit?: number;

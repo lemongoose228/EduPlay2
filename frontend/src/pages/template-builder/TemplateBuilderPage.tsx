@@ -4,6 +4,7 @@ import { BuilderLayout } from './components/BuilderLayout';
 import { OwnGameBuilder } from './components/OwnGameBuilder';
 import { QuizGameBuilder } from './components/QuizGameBuilder';
 import { CrocodileGameBuilder } from './components/CrocodileGameBuilder';
+import { WheelGameBuilder } from './components/WheelGameBuilder';
 import type {
   GameTemplate,
   OwnGameTemplate,
@@ -11,6 +12,7 @@ import type {
   QuizQuestion,
   OwnGameCategory,
   CrocodileTemplate,
+  WheelTemplate,
 } from '../../features/templates/types/template.types';
 import './TemplateBuilderPage.css';
 import { createGameApi, getGameApi, updateGameApi } from '../../features/games/api/gamesApi';
@@ -19,14 +21,22 @@ export const TemplateBuilderPage: React.FC = () => {
   const { templateId } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
 
-  const isTemplateMode = useMemo(() => templateId === 'custom' || templateId === 'quiz' || templateId === 'crocodile', [templateId]);
+  const isTemplateMode = useMemo(
+    () =>
+      templateId === 'custom' ||
+      templateId === 'quiz' ||
+      templateId === 'crocodile' ||
+      templateId === 'wheel',
+    [templateId],
+  );
   const editingGameId = useMemo(() => (isTemplateMode ? null : templateId || null), [isTemplateMode, templateId]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [initialData, setInitialData] = useState<GameTemplate | undefined>(undefined);
-  const [gameKind, setGameKind] = useState<'own' | 'quiz' | 'crocodile'>(() => {
+  const [gameKind, setGameKind] = useState<'own' | 'quiz' | 'crocodile' | 'wheel'>(() => {
     if (templateId === 'custom') return 'own';
     if (templateId === 'crocodile') return 'crocodile';
+    if (templateId === 'wheel') return 'wheel';
     return 'quiz';
   });
 
@@ -38,7 +48,14 @@ export const TemplateBuilderPage: React.FC = () => {
       setIsLoading(true);
       try {
         const game = await getGameApi(editingGameId);
-        const kind = game.type === 'quiz' ? 'quiz' : game.type === 'crocodile' ? 'crocodile' : 'own';
+        const kind =
+          game.type === 'quiz'
+            ? 'quiz'
+            : game.type === 'crocodile'
+              ? 'crocodile'
+              : game.type === 'wheel'
+                ? 'wheel'
+                : 'own';
 
         if (cancelled) return;
 
@@ -95,6 +112,23 @@ export const TemplateBuilderPage: React.FC = () => {
             updatedAt: game.updatedAt,
           };
           setInitialData(crocodile);
+        } else if (kind === 'wheel') {
+          const wheel: WheelTemplate = {
+            type: 'wheel',
+            name: game.title,
+            categories: (game.categories || []).map((cat: any) => ({
+              id: cat.id,
+              name: cat.name,
+              questions: (cat.questions || []).map((q: any) => ({
+                id: q.id,
+                question: q.question,
+                answer: q.answer,
+              })),
+            })),
+            createdAt: game.createdAt,
+            updatedAt: game.updatedAt,
+          };
+          setInitialData(wheel);
         }
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -145,6 +179,22 @@ export const TemplateBuilderPage: React.FC = () => {
       };
     }
 
+    if (gameData.type === 'wheel') {
+      return {
+        title: gameData.name,
+        description: undefined,
+        type: 'wheel' as const,
+        categories: gameData.categories.map((category) => ({
+          name: category.name,
+          questions: category.questions.map((question) => ({
+            question: question.question,
+            answer: question.answer,
+            value: 1,
+          })),
+        })),
+      };
+    }
+
     return {
       title: gameData.name,
       description: undefined,
@@ -192,6 +242,9 @@ export const TemplateBuilderPage: React.FC = () => {
       if (templateId === 'crocodile') {
         return <CrocodileGameBuilder initialData={initialData as CrocodileTemplate | undefined} onSave={handleSave} onCancel={handleCancel} />;
       }
+      if (templateId === 'wheel') {
+        return <WheelGameBuilder initialData={initialData as WheelTemplate | undefined} onSave={handleSave} onCancel={handleCancel} />;
+      }
       return <QuizGameBuilder initialData={initialData as QuizTemplate | undefined} onSave={handleSave} onCancel={handleCancel} />;
     }
 
@@ -213,6 +266,16 @@ export const TemplateBuilderPage: React.FC = () => {
       return (
         <CrocodileGameBuilder
           initialData={initialData as CrocodileTemplate | undefined}
+          onSave={handleSave}
+          onCancel={handleCancel}
+        />
+      );
+    }
+
+    if (gameKind === 'wheel') {
+      return (
+        <WheelGameBuilder
+          initialData={initialData as WheelTemplate | undefined}
           onSave={handleSave}
           onCancel={handleCancel}
         />
