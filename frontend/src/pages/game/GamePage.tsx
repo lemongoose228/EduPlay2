@@ -22,6 +22,7 @@ import {
   getSessionsSocket,
   waitForSessionsSocketConnected,
 } from '../../features/sessions/api/sessionsSocket';
+import { FaCheckCircle, FaTimesCircle, FaTrophy, FaStar } from 'react-icons/fa';
 
 interface Question {
   id: string;
@@ -552,6 +553,18 @@ export const GamePage: React.FC = () => {
 
   const maxOwnRows = Math.max(...session.game.categories.map((c) => c.questions.length), 0);
 
+  // Функция для получения оценки
+  const getWinGrade = (teamsList: Team[]) => {
+    const sortedTeams = [...teamsList].sort((a, b) => b.score - a.score);
+    const winner = sortedTeams[0];
+    const winnerScore = winner?.score || 0;
+    
+    if (winnerScore >= 500) return { text: 'Чемпионы! 🏆', emoji: '🏆', color: '#ffd700' };
+    if (winnerScore >= 300) return { text: 'Отличная игра! 🌟', emoji: '🌟', color: '#e2ca69' };
+    if (winnerScore >= 150) return { text: 'Хороший результат! 👍', emoji: '👍', color: '#7fc8c0' };
+    return { text: 'В следующий раз получится лучше! 💪', emoji: '💪', color: '#e72a6e' };
+  };
+
   if (session.status === 'waiting') {
     return (
       <div className="game-page lobby">
@@ -608,31 +621,79 @@ export const GamePage: React.FC = () => {
     );
   }
 
+  // Стилизованная страница завершения игры (как у крокодила)
   if (session.status === 'finished') {
-    return (
-      <div className="game-page finished">
-        <div className="game-header">
-          <div className="game-info">
-            <span className="game-title-header">{session.game.title}</span>
-            {showInviteCode ? <span className="game-code">Код: {session.inviteCode}</span> : null}
-          </div>
-          {isHost && <span className="game-finished-note">Игра завершена</span>}
-        </div>
+    const sortedTeams = [...session.teams].sort((a, b) => b.score - a.score);
+    const winner = sortedTeams[0];
+    const grade = getWinGrade(session.teams);
+    
+    // Собираем вопросы и ответы для отображения
+    const answeredQuestionsList = session.answeredQuestions || [];
+    const guessedQuestions = answeredQuestionsList.filter(aq => aq.isCorrect === true);
+    const missedQuestions = answeredQuestionsList.filter(aq => aq.isCorrect === false);
+    
+    // Группируем по категориям для отображения
+    const guessedItems = guessedQuestions.map(aq => {
+      const category = session.game.categories.find(c => c.id === aq.categoryId);
+      const question = category?.questions.find(q => q.id === aq.questionId);
+      return {
+        categoryName: category?.name || 'Неизвестно',
+        questionText: question?.question || 'Вопрос',
+        answer: question?.answer || 'Ответ',
+      };
+    });
+    
+    const missedItems = missedQuestions.map(aq => {
+      const category = session.game.categories.find(c => c.id === aq.categoryId);
+      const question = category?.questions.find(q => q.id === aq.questionId);
+      return {
+        categoryName: category?.name || 'Неизвестно',
+        questionText: question?.question || 'Вопрос',
+        answer: question?.answer || 'Ответ',
+      };
+    });
 
-        <div className="game-content">
-          <div className="teams-scoreboard">
-            <h3>Игра завершена</h3>
-            <div className="scoreboard-list">
-              {session.teams.map((team) => (
-                <div key={team.id} className="scoreboard-row">
-                  <div className="team-info">
-                    <span className="team-name">{team.name}</span>
-                    <span className="team-score">{team.score}</span>
+    const getRankBadgeClass = (index: number) => {
+      if (index === 0) return 'gold';
+      if (index === 1) return 'silver';
+      if (index === 2) return 'bronze';
+      return '';
+    };
+
+    return (
+      <div className="game-page game-finished">
+        <div className="game-results-container">
+          <h1 className="results-title">Игра завершена!</h1>
+          
+          
+
+          {/* Таблица лидеров */}
+          <div className="leaderboard-section">
+            <h3>
+              <FaTrophy style={{ color: '#ffd700' }} />
+              Итоговая таблица
+            </h3>
+            <div className="leaderboard-list">
+              {sortedTeams.map((team, index) => (
+                <div key={team.id} className="leaderboard-row">
+                  <div className={`rank-badge ${getRankBadgeClass(index)}`}>
+                    {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                  </div>
+                  <div className="leaderboard-team-info">
+                    <span className="team-name-result">{team.name}</span>
+                    <span className="team-score-result">{team.score}</span>
                   </div>
                 </div>
               ))}
+              {sortedTeams.length === 0 && (
+                <div className="empty-terms">Нет данных о командах</div>
+              )}
             </div>
           </div>
+
+          
+
+          
         </div>
       </div>
     );

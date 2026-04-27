@@ -145,6 +145,286 @@
   background: linear-gradient(135deg, #7d88bb 0%, #b6a4c8 100%);
 }
 
+/* Страница завершения игры - стиль как у крокодила */
+.game-page.game-finished {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  min-height: 100vh;
+}
+
+.game-results-container {
+  max-width: 1000px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 32px;
+  padding: 40px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: slideIn 0.5s ease;
+}
+
+.results-title {
+  font-size: 36px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.results-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 40px;
+  background: linear-gradient(135deg, #f2e8ff 0%, #fdeef4 100%);
+  border: 1px solid #e8d7fa;
+  border-radius: 28px;
+  padding: 20px;
+}
+
+
+
+.results-summary .summary-value {
+  display: block;
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+
+
+.results-summary .summary-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b6b76;
+  letter-spacing: 0.3px;
+}
+
+/* Таблица лидеров */
+.leaderboard-section {
+  background: rgba(248, 250, 252, 0.8);
+  border-radius: 28px;
+  padding: 24px;
+  margin-bottom: 32px;
+  border: 1px solid rgba(224, 200, 247, 0.5);
+}
+
+.leaderboard-section h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #ddd4f5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #5a4f8c;
+}
+
+.leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  background: white;
+  border-radius: 20px;
+  transition: all 0.2s ease;
+  border: 1px solid #f0eef3;
+}
+
+.leaderboard-row:hover {
+  transform: translateX(4px);
+  border-color: #ddd4f5;
+  box-shadow: 0 4px 12px rgba(120, 116, 178, 0.08);
+}
+
+.rank-badge {
+  width: 36px;
+  height: 36px;
+  background: #f5f2fa;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: #5e5b7a;
+  flex-shrink: 0;
+}
+
+.rank-badge.gold {
+  background: linear-gradient(135deg, #ffd700, #ffb347);
+  color: white;
+}
+.rank-badge.silver {
+  background: linear-gradient(135deg, #c0c0c0, #a8a8a8);
+  color: white;
+}
+.rank-badge.bronze {
+  background: linear-gradient(135deg, #cd7f32, #b87333);
+  color: white;
+}
+
+.leaderboard-team-info {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.team-name-result {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c2c36;
+}
+
+.team-score-result {
+  font-size: 24px;
+  font-weight: 800;
+  color: #7874b2;
+}
+
+.results-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.results-section {
+  background: rgba(248, 250, 252, 0.8);
+  border-radius: 28px;
+  padding: 24px;
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(224, 200, 247, 0.5);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+}
+
+.results-section h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-icon {
+  font-size: 18px;
+}
+
+.results-section.guessed h3 {
+  color: #389e0d;
+  border-bottom-color: #95de64;
+}
+
+.results-section.not-guessed h3 {
+  color: #cf1322;
+  border-bottom-color: #ffa39e;
+}
+
+.terms-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.term-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+  border: 1px solid #f0eef3;
+}
+
+.term-item:hover {
+  transform: translateX(4px);
+  border-color: #ddd4f5;
+  box-shadow: 0 4px 12px rgba(120, 116, 178, 0.08);
+}
+
+.term-number {
+  width: 28px;
+  height: 28px;
+  background: #e9ecef;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.term-item.guessed .term-number {
+  background: #e8f5e9;
+  color: #52c41a;
+}
+
+.term-item.not-guessed .term-number {
+  background: #ffe0e0;
+  color: #ff4d4f;
+}
+
+.term-name {
+  flex: 1;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.term-status-icon {
+  font-size: 16px;
+}
+
+.status-success {
+  color: #52c41a;
+}
+
+.status-error {
+  color: #ff4d4f;
+}
+
+.empty-terms {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-light);
+  font-size: 14px;
+}
+
+.empty-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+
+.results-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Остальные стили ... */
 .game-header {
   display: flex;
   justify-content: space-between;
@@ -937,5 +1217,29 @@
   
   .game-title {
     font-size: 32px;
+  }
+
+  /* Адаптация результатов */
+  .results-summary {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .results-details {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .leaderboard-row {
+    flex-wrap: wrap;
+  }
+
+  .leaderboard-team-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .game-results-container {
+    padding: 24px;
   }
 }
