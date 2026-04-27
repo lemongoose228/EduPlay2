@@ -1,0 +1,168 @@
+PROJECT ARCHITECTURE (ACTUAL)
+=============================
+
+Root
+----
+diplom/
+|-- backend/                 # NestJS API + WebSocket + TypeORM + Redis
+|-- frontend/                # React + TypeScript client
+|-- package.json             # root dependencies/scripts
+`-- package-lock.json
+
+
+Backend (NestJS)
+----------------
+backend/src/
+|-- main.ts
+|-- app.module.ts
+|-- config/
+|   `-- database.config.ts
+|-- common/
+|   |-- decorators/
+|   |   |-- current-user.decorator.ts
+|   |   `-- current-ws-user.decorator.ts
+|   `-- guards/
+|       |-- jwt-auth.guard.ts
+|       `-- ws-jwt-auth.guard.ts
+|-- redis/
+|   `-- redis.module.ts
+`-- modules/
+    |-- auth/
+    |   |-- auth.module.ts
+    |   |-- auth.controller.ts
+    |   |-- auth.service.ts
+    |   |-- dto/
+    |   |   |-- login.dto.ts
+    |   |   `-- register.dto.ts
+    |   `-- strategies/
+    |       `-- jwt.strategy.ts
+    |
+    |-- users/
+    |   |-- users.module.ts
+    |   |-- users.controller.ts
+    |   |-- users.service.ts
+    |   |-- dto/
+    |   |   `-- update-profile.dto.ts
+    |   `-- entities/
+    |       `-- user.entity.ts
+    |
+    |-- games/
+    |   |-- games.module.ts
+    |   |-- games.controller.ts
+    |   |-- games.service.ts
+    |   |-- dto/
+    |   |   |-- create-game.dto.ts
+    |   |   |-- update-game.dto.ts
+    |   |   `-- publish-game.dto.ts
+    |   `-- entities/
+    |       |-- game.entity.ts
+    |       |-- category.entity.ts
+    |       |-- question.entity.ts
+    |       `-- game-like.entity.ts
+    |
+    |-- sessions/
+    |   |-- sessions.module.ts
+    |   |-- sessions.controller.ts
+    |   |-- sessions.service.ts
+    |   |-- sessions.gateway.ts               # real-time game events
+    |   |-- sessions-timer.service.ts         # Redis TTL-based quiz timers
+    |   |-- sessions-timer.listener.ts        # subscribes to expired timer events
+    |   |-- dto/
+    |   |   |-- create-session.dto.ts
+    |   |   |-- join-session.dto.ts
+    |   |   |-- add-team.dto.ts
+    |   |   |-- submit-answer.dto.ts
+    |   |   |-- update-score.dto.ts
+    |   |   |-- mark-crocodile-term.dto.ts
+    |   |   `-- ws-session.dto.ts
+    |   `-- entities/
+    |       |-- session.entity.ts
+    |       |-- team.entity.ts
+    |       `-- player.entity.ts
+    |
+    `-- library/
+        |-- library.module.ts
+        |-- library.controller.ts
+        |-- library.service.ts
+        `-- dto/
+            `-- search-games.dto.ts
+
+
+Frontend (React)
+----------------
+frontend/src/
+|-- app/
+|   |-- App.tsx
+|   |-- providers/
+|   |   `-- index.tsx
+|   |-- router/
+|   |   `-- AppRouter.tsx
+|   `-- store/
+|       |-- store.ts                         # Redux store (auth slice)
+|       `-- hooks.ts
+|
+|-- features/
+|   |-- auth/
+|   |   |-- api/authApi.ts
+|   |   |-- model/authSlice.ts
+|   |   |-- model/selectors.ts
+|   |   `-- ui/AuthPage.tsx
+|   |
+|   |-- games/
+|   |   |-- api/gamesApi.ts
+|   |   `-- types/game.types.ts
+|   |
+|   |-- sessions/
+|   |   |-- api/sessionsApi.ts               # REST calls for session lifecycle
+|   |   |-- api/sessionsSocket.ts            # Socket.IO connection layer
+|   |   `-- types/session.types.ts
+|   |
+|   `-- templates/
+|       |-- hooks/useTemplateBuilder.ts
+|       |-- types/template.types.ts
+|       `-- utils/template.utils.ts
+|
+|-- pages/
+|   |-- create-game/CreateGamePage.tsx
+|   |-- my-games/MyGamesPage.tsx
+|   |-- library/LibraryPage.tsx
+|   |-- game-sessions/GameSessionsPage.tsx
+|   |-- template-builder/TemplateBuilderPage.tsx
+|   |-- settings/SettingsPage.tsx
+|   `-- game/
+|       |-- GamePage.tsx
+|       |-- WheelGamePage.tsx
+|       `-- CrocodileGamePage.tsx
+|
+|-- widgets/
+|   |-- menu/Menu.tsx
+|   |-- game-card/GameCard.tsx
+|   |-- template-card/TemplateCard.tsx
+|   `-- session-card/SessionCard.tsx
+|
+`-- shared/
+    |-- api/axios.instance.ts
+    |-- config/index.ts
+    |-- hooks/
+    |   |-- useLocalStorage.ts
+    |   `-- useDebounce.ts
+    |-- lib/
+    |   |-- constants.ts
+    |   |-- helpers.ts
+    |   `-- resolveAvatarSrc.ts
+    |-- types/global.types.ts
+    `-- ui/
+        |-- Button/
+        |-- Input/
+        |-- Modal/
+        |-- Card/
+        `-- Table/
+
+
+Runtime interaction
+-------------------
+1) Frontend works with backend via REST (axios) for CRUD and session actions.
+2) Frontend connects to `/sessions` namespace via Socket.IO for live game events.
+3) Backend `SessionsGateway` validates WS JWT and broadcasts state changes.
+4) Quiz timers are stored in Redis keys with TTL.
+5) On key expiration, `SessionsTimerListener` triggers reveal/transition logic and emits updates to clients.

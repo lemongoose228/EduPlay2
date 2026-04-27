@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { FaCheckCircle, FaTimesCircle, FaStar } from 'react-icons/fa';
 import { Button } from '../../shared/ui/Button/Button';
 import './CrocodileGamePage.css';
 
@@ -50,6 +50,8 @@ export const CrocodileGamePage: React.FC<CrocodileGamePageProps> = ({
 }) => {
   const [timeLeft, setTimeLeft] = useState(gameData.timePerTerm);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [hoveredTermId, setHoveredTermId] = useState<string | null>(null);
+  const [hoveredStatCard, setHoveredStatCard] = useState<string | null>(null);
   const autoMissTermRef = useRef<string | null>(null);
 
   const termsMap = useMemo(
@@ -252,48 +254,133 @@ export const CrocodileGamePage: React.FC<CrocodileGamePageProps> = ({
       })
       .filter(Boolean) as Array<Term & { result: 'guessed' | 'missed' }>;
 
+    // Группировка терминов по результатам
+    const guessedTerms = orderedTerms.filter(term => term.result === 'guessed');
+    const missedTerms = orderedTerms.filter(term => term.result === 'missed');
+
+    // Функция для получения оценки на основе процента
+    const getGrade = (percent: number) => {
+      if (percent >= 90) return { text: 'Отлично!', emoji: '🌟', color: '#ffd700' };
+      if (percent >= 70) return { text: 'Хорошо!', emoji: '👍', color: '#52c41a' };
+      if (percent >= 50) return { text: 'Неплохо', emoji: '📚', color: '#faad14' };
+      if (percent >= 30) return { text: 'Можно лучше', emoji: '💪', color: '#ff7a45' };
+      return { text: 'Попробуйте еще раз', emoji: '🎯', color: '#ff4d4f' };
+    };
+
+    const grade = getGrade(percentage);
+
     return (
       <div className="crocodile-page finished">
         <div className="crocodile-results-container">
           <h1 className="results-title">Игра завершена!</h1>
           
           <div className="results-summary">
-            <div className="summary-card">
+            <div 
+              className={`summary-card ${hoveredStatCard === 'guessed' ? 'hovered' : ''}`}
+              onMouseEnter={() => setHoveredStatCard('guessed')}
+              onMouseLeave={() => setHoveredStatCard(null)}
+            >
               <span className="summary-value">{totalGuessed}</span>
               <span className="summary-label">Угадано</span>
             </div>
-            <div className="summary-card">
+            <div 
+              className={`summary-card ${hoveredStatCard === 'missed' ? 'hovered' : ''}`}
+              onMouseEnter={() => setHoveredStatCard('missed')}
+              onMouseLeave={() => setHoveredStatCard(null)}
+            >
               <span className="summary-value">{totalNotGuessed}</span>
               <span className="summary-label">Не угадано</span>
             </div>
-            <div className="summary-card">
-              <span className="summary-value">{percentage}%</span>
+            <div 
+              className={`summary-card percentage-card ${hoveredStatCard === 'percentage' ? 'hovered' : ''}`}
+              onMouseEnter={() => setHoveredStatCard('percentage')}
+              onMouseLeave={() => setHoveredStatCard(null)}
+            >
+              <span className="summary-value" style={{ color: grade.color }}>{percentage}%</span>
               <span className="summary-label">Точность</span>
             </div>
           </div>
 
           <div className="results-details">
-            <div className="results-section">
-              <h3>Результаты по терминам</h3>
+            {/* Секция угаданных терминов */}
+            <div className={`results-section guessed ${hoveredTermId === 'guessed-section' ? 'hovered' : ''}`}
+                 onMouseEnter={() => setHoveredTermId('guessed-section')}
+                 onMouseLeave={() => setHoveredTermId(null)}>
+              <h3>
+                <FaCheckCircle className="section-icon" /> 
+                Угаданные термины 
+                <span className="section-count">{guessedTerms.length}</span>
+              </h3>
               <div className="terms-list">
-                {orderedTerms.map((term, index) => (
-                  <div
-                    key={term.id}
-                    className={`term-item ${term.result === 'guessed' ? 'guessed' : 'not-guessed'}`}
-                  >
-                    <span className="term-number">{index + 1}</span>
-                    <span className="term-name">{term.term}</span>
-                    <span className="term-status-icon">
-                      {term.result === 'guessed' ? <FaCheckCircle /> : <FaTimesCircle />}
-                    </span>
+                {guessedTerms.length > 0 ? (
+                  guessedTerms.map((term, index) => (
+                    <div
+                      key={term.id}
+                      className={`term-item guessed ${hoveredTermId === term.id ? 'hovered' : ''}`}
+                      onMouseEnter={() => setHoveredTermId(term.id)}
+                      onMouseLeave={() => setHoveredTermId(null)}
+                    >
+                      <span className="term-number">{index + 1}</span>
+                      <span className="term-name">{term.term}</span>
+                      <span className="term-status-icon">
+                        <FaCheckCircle className="status-success" />
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="empty-terms">
+                    <FaTimesCircle className="empty-icon" />
+                    <p>Нет угаданных терминов</p>
                   </div>
-                ))}
-                {orderedTerms.length === 0 && (
-                  <div className="empty-terms">Нет результатов</div>
+                )}
+              </div>
+            </div>
+
+            {/* Секция неугаданных терминов */}
+            <div className={`results-section not-guessed ${hoveredTermId === 'missed-section' ? 'hovered' : ''}`}
+                 onMouseEnter={() => setHoveredTermId('missed-section')}
+                 onMouseLeave={() => setHoveredTermId(null)}>
+              <h3>
+                <FaTimesCircle className="section-icon" /> 
+                Не угаданные термины 
+                <span className="section-count">{missedTerms.length}</span>
+              </h3>
+              <div className="terms-list">
+                {missedTerms.length > 0 ? (
+                  missedTerms.map((term, index) => (
+                    <div
+                      key={term.id}
+                      className={`term-item not-guessed ${hoveredTermId === term.id ? 'hovered' : ''}`}
+                      onMouseEnter={() => setHoveredTermId(term.id)}
+                      onMouseLeave={() => setHoveredTermId(null)}
+                    >
+                      <span className="term-number">{index + 1}</span>
+                      <span className="term-name">{term.term}</span>
+                      <span className="term-status-icon">
+                        <FaTimesCircle className="status-error" />
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="empty-terms success-empty">
+                    <FaCheckCircle className="empty-icon success" />
+                    <p>Все термины угаданы!</p>
+                  </div>
                 )}
               </div>
             </div>
           </div>
+
+          {/* Блок с подсказками для повторения */}
+          {missedTerms.length > 0 && (
+            <div className="practice-tip">
+              <FaStar className="tip-icon" />
+              <div className="tip-content">
+                <h4>Рекомендуем повторить:</h4>
+                <p>{missedTerms.map(t => t.term).join(' • ')}</p>
+              </div>
+            </div>
+          )}
 
           <div className="results-actions">
             <Button variant="primary" onClick={() => window.location.reload()}>
