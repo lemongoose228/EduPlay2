@@ -1,5 +1,7 @@
+// WheelGamePage.tsx
 import React, { useMemo, useState, useRef } from 'react';
 import { Button } from '../../shared/ui/Button/Button';
+import { FaCheck, FaTimes } from 'react-icons/fa';
 import './WheelGamePage.css';
 
 /** Согласованная пастельная палитра (ровная яркость, соседние сектора различимы) */
@@ -130,18 +132,17 @@ export const WheelGamePage: React.FC<WheelGamePageProps> = ({
 
     setSelectedSectorIndex(selectedIndex);
 
-    // Рассчитываем финальный угол остановки
+    // Рассчитываем точный угол остановки по центру выбранного сектора
     const sectorAngle = 360 / availableCategories.length;
     const targetCenterAngle = selectedIndex * sectorAngle + sectorAngle / 2;
-    const normalizedTarget = 360 - targetCenterAngle;
-    
-    // Добавляем случайное смещение для эффекта натуральности
-    const randomOffset = (Math.random() - 0.5) * 4;
-    const finalAngle = normalizedTarget + randomOffset;
-    
+    const targetRotationWithinCircle = (360 - targetCenterAngle) % 360;
+    const currentRotationWithinCircle = ((rotationDeg % 360) + 360) % 360;
+    const deltaToTarget =
+      (targetRotationWithinCircle - currentRotationWithinCircle + 360) % 360;
+
     // 5-7 полных оборотов для эффекта
     const fullRotations = 5 + Math.floor(Math.random() * 3);
-    const nextRotation = rotationDeg + fullRotations * 360 + finalAngle;
+    const nextRotation = rotationDeg + fullRotations * 360 + deltaToTarget;
 
     setIsSpinning(true);
     setRotationDeg(nextRotation);
@@ -222,26 +223,6 @@ export const WheelGamePage: React.FC<WheelGamePageProps> = ({
                       style={{ background: wheelHighlightBackground }}
                     />
                   )}
-                  <div
-                    className="wheel-labels"
-                    style={{ ['--wheel-n' as string]: String(nCategories) } as React.CSSProperties}
-                    aria-hidden
-                  >
-                    {availableCategories.map((category, index) => {
-                      const midDeg = index * sectorAngle + sectorAngle / 2;
-                      return (
-                        <div
-                          key={category.id}
-                          className="wheel-label"
-                          style={{
-                            transform: `rotate(${midDeg}deg) translateY(calc(-1 * var(--wheel-label-r, 36%)))`,
-                          }}
-                        >
-                          <span className="wheel-label-text">{category.name}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
                 </>
               ) : (
                 <div className="wheel-empty">
@@ -250,6 +231,22 @@ export const WheelGamePage: React.FC<WheelGamePageProps> = ({
               )}
             </div>
           </div>
+          {availableCategories.length > 0 && (
+            <div className="wheel-legend" aria-label="Легенда тем колеса">
+              {availableCategories.map((category, index) => (
+                <div className="wheel-legend-item" key={category.id}>
+                  <span
+                    className="wheel-legend-color"
+                    style={{
+                      backgroundColor: WHEEL_SECTOR_COLORS[index % WHEEL_SECTOR_COLORS.length],
+                    }}
+                    aria-hidden
+                  />
+                  <span className="wheel-legend-name">{category.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           <Button
             variant="primary"
@@ -320,15 +317,17 @@ export const WheelGamePage: React.FC<WheelGamePageProps> = ({
                     variant="success"
                     onClick={() => void resolveAnswer('success')}
                     disabled={!isHost || isResolving}
+                    icon={<FaCheck />}
                   >
-                    ✅ Верно
+                    Верно
                   </Button>
                   <Button
                     variant="danger"
                     onClick={() => void resolveAnswer('fail')}
                     disabled={!isHost || isResolving}
+                    icon={<FaTimes />}
                   >
-                    ❌ Неверно
+                    Неверно
                   </Button>
                 </div>
               </div>
