@@ -27,6 +27,70 @@
   margin: 0;
 }
 
+.join-section {
+  background: white;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  margin-bottom: 24px;
+  overflow: hidden;
+  animation: slideIn 0.5s ease 0.05s both;
+}
+
+.join-toggle {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+}
+
+.join-toggle:hover {
+  background: #f8f9ff;
+}
+
+.join-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: left;
+}
+
+.join-chevron {
+  font-size: 20px;
+  color: var(--text-secondary);
+  transition: transform 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.join-toggle.open .join-chevron {
+  transform: rotate(180deg);
+}
+
+.join-content {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.25s ease;
+}
+
+.join-content.open {
+  max-height: 420px;
+  opacity: 1;
+}
+
+.join-form {
+  padding: 0 20px 20px;
+  display: grid;
+  gap: 14px;
+}
+
 .sessions-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -241,6 +305,14 @@
 @media (max-width: 768px) {
   .game-sessions-page {
     padding: 20px;
+  }
+
+  .join-toggle {
+    padding: 16px;
+  }
+
+  .join-form {
+    padding: 0 16px 16px;
   }
 
   .sessions-stats {

@@ -314,7 +314,9 @@ export class SessionsService {
       ];
     }
 
-    return this.sessionsRepository.save(session);
+    const savedSession = await this.sessionsRepository.save(session);
+    await this.gamesService.incrementPlays(game.id);
+    return savedSession;
   }
 
   async join(userId: string, joinSessionDto: JoinSessionDto): Promise<Session> {

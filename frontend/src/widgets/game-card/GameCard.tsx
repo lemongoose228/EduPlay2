@@ -1,5 +1,7 @@
 import React from 'react';
 import { Button } from '../../shared/ui/Button/Button';
+import { resolveAvatarSrc } from '../../shared/lib/resolveAvatarSrc';
+import { FaHeart } from 'react-icons/fa';
 import './GameCard.css';
 
 interface GameCardProps {
@@ -11,9 +13,11 @@ interface GameCardProps {
   createdAt?: string;
   isPublished?: boolean;
   author?: string;
+  authorAvatar?: string;
   plays?: number;
   likes?: number;
   rating?: number;
+  isLibraryCard?: boolean;
   isLiked?: boolean;
   onClick?: () => void;
   onEdit?: () => void;
@@ -31,9 +35,11 @@ export const GameCard: React.FC<GameCardProps> = ({
   createdAt,
   isPublished,
   author,
+  authorAvatar,
   plays,
   likes,
   rating,
+  isLibraryCard = false,
   isLiked,
   onClick,
   onEdit,
@@ -56,6 +62,9 @@ export const GameCard: React.FC<GameCardProps> = ({
     return 'Крокодил';
   };
 
+  const resolvedAuthorAvatar = resolveAvatarSrc(authorAvatar);
+  const authorInitial = author?.trim().charAt(0).toUpperCase();
+
   return (
     <div className="game-card" onClick={onClick}>
       <div className="game-card-header">
@@ -63,6 +72,12 @@ export const GameCard: React.FC<GameCardProps> = ({
           <span className="type-icon">{getTypeIcon()}</span>
           <span>{getTypeText()}</span>
         </div>
+        {isLibraryCard && likes !== undefined && (
+          <div className="library-likes-badge" aria-label={`Лайков: ${likes}`}>
+            <FaHeart />
+            <span>{likes}</span>
+          </div>
+        )}
         {isPublished !== undefined && (
           <span className={`game-card-status ${isPublished ? 'published' : 'draft'}`}>
             {isPublished ? 'Опубликовано' : 'Черновик'}
@@ -75,7 +90,7 @@ export const GameCard: React.FC<GameCardProps> = ({
         {description && <p className="game-card-description">{description}</p>}
         
         <div className="game-card-meta">
-          {questionsCount && (
+          {!isLibraryCard && questionsCount && (
             <div className="game-card-meta-item">
               <span className="meta-icon">📋</span>
               <span>{questionsCount} вопросов</span>
@@ -89,15 +104,21 @@ export const GameCard: React.FC<GameCardProps> = ({
           )}
           {author && (
             <div className="game-card-meta-item">
-              <span className="meta-icon">👤</span>
+              <span className="author-avatar">
+                {resolvedAuthorAvatar ? (
+                  <img src={resolvedAuthorAvatar} alt={author} />
+                ) : (
+                  authorInitial || '👤'
+                )}
+              </span>
               <span>{author}</span>
             </div>
           )}
         </div>
 
-        {(plays !== undefined || likes !== undefined || rating !== undefined) && (
-          <div className="game-card-stats">
-            {plays !== undefined && (
+        {!isLibraryCard && (plays !== undefined || likes !== undefined || rating !== undefined) && (
+          <div className={`game-card-stats ${isLibraryCard ? 'library-stats' : ''}`}>
+            {!isLibraryCard && plays !== undefined && (
               <div className="game-card-stat">
                 <span className="stat-icon">👥</span>
                 <span>{plays}</span>
@@ -105,11 +126,13 @@ export const GameCard: React.FC<GameCardProps> = ({
             )}
             {likes !== undefined && (
               <div className="game-card-stat">
-                <span className="stat-icon">♥</span>
+                <span className="stat-icon">
+                  <FaHeart />
+                </span>
                 <span>{likes}</span>
               </div>
             )}
-            {likes === undefined && rating !== undefined && (
+            {!isLibraryCard && likes === undefined && rating !== undefined && (
               <div className="game-card-stat">
                 <span className="stat-icon">⭐</span>
                 <span>{rating.toFixed(1)}</span>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { IoChevronDown } from 'react-icons/io5';
 import { SessionCard } from '../../widgets/session-card/SessionCard';
 import { Button } from '../../shared/ui/Button/Button';
 import { Modal } from '../../shared/ui/Modal/Modal';
@@ -66,6 +67,7 @@ export const GameSessionsPage: React.FC = () => {
 
   const [joinInviteCode, setJoinInviteCode] = useState('');
   const [joinName, setJoinName] = useState('');
+  const [isJoinOpen, setIsJoinOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -133,23 +135,39 @@ export const GameSessionsPage: React.FC = () => {
       </div>
 
       <div className="join-section">
-        <h3 className="join-title">Присоединиться по коду</h3>
-        <div className="join-form">
-          <Input
-            label="Код приглашения"
-            value={joinInviteCode}
-            onChange={(e) => setJoinInviteCode(e.target.value)}
-            placeholder="Например: ABC123"
-          />
-          <Input
-            label="Имя игрока или название команды"
-            value={joinName}
-            onChange={(e) => setJoinName(e.target.value)}
-            placeholder="Например: Алексей или Команда 1"
-          />
-          <Button onClick={handleJoinByCode} disabled={!joinInviteCode.trim()}>
-            Присоединиться
-          </Button>
+        <button
+          type="button"
+          className={`join-toggle ${isJoinOpen ? 'open' : ''}`}
+          onClick={() => setIsJoinOpen((prev) => !prev)}
+          aria-expanded={isJoinOpen}
+          aria-controls="join-by-code-content"
+        >
+          <span className="join-title">Присоединиться по коду</span>
+          <span className="join-chevron" aria-hidden="true">
+            <IoChevronDown />
+          </span>
+        </button>
+        <div
+          id="join-by-code-content"
+          className={`join-content ${isJoinOpen ? 'open' : ''}`}
+        >
+          <div className="join-form">
+            <Input
+              label="Код приглашения"
+              value={joinInviteCode}
+              onChange={(e) => setJoinInviteCode(e.target.value)}
+              placeholder="Например: ABC123"
+            />
+            <Input
+              label="Имя игрока или название команды"
+              value={joinName}
+              onChange={(e) => setJoinName(e.target.value)}
+              placeholder="Например: Алексей или Команда 1"
+            />
+            <Button onClick={handleJoinByCode} disabled={!joinInviteCode.trim()}>
+              Присоединиться
+            </Button>
+          </div>
         </div>
       </div>
 

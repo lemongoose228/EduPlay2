@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Game } from '../games/entities/game.entity';
 import { SearchGamesDto } from './dto/search-games.dto';
 
@@ -31,17 +31,12 @@ export class LibraryService {
     }
 
     switch (sortBy) {
-      case 'popular':
-        queryBuilder.orderBy('game.plays', 'DESC');
-        break;
       case 'likes':
         queryBuilder.orderBy('game.likes', 'DESC');
         break;
       case 'newest':
         queryBuilder.orderBy('game.createdAt', 'DESC');
         break;
-      default:
-        queryBuilder.orderBy('game.plays', 'DESC');
     }
 
     const [items, total] = await queryBuilder
@@ -49,8 +44,13 @@ export class LibraryService {
       .take(limit)
       .getManyAndCount();
 
+    const itemsWithUsage = items.map((item) => ({
+      ...item,
+      usageCount: item.plays ?? 0,
+    }));
+
     return {
-      items,
+      items: itemsWithUsage,
       total,
       page,
       limit,
@@ -59,29 +59,44 @@ export class LibraryService {
   }
 
   async getPopular(limit: number = 10) {
-    return this.gamesRepository.find({
+    const items = await this.gamesRepository.find({
       where: { status: 'published' },
       relations: ['author'],
       order: { plays: 'DESC' },
       take: limit,
     });
+
+    return items.map((item) => ({
+      ...item,
+      usageCount: item.plays ?? 0,
+    }));
   }
 
   async getTopRated(limit: number = 10) {
-    return this.gamesRepository.find({
+    const items = await this.gamesRepository.find({
       where: { status: 'published' },
       relations: ['author'],
       order: { likes: 'DESC' },
       take: limit,
     });
+
+    return items.map((item) => ({
+      ...item,
+      usageCount: item.plays ?? 0,
+    }));
   }
 
   async getRecent(limit: number = 10) {
-    return this.gamesRepository.find({
+    const items = await this.gamesRepository.find({
       where: { status: 'published' },
       relations: ['author'],
       order: { createdAt: 'DESC' },
       take: limit,
     });
+
+    return items.map((item) => ({
+      ...item,
+      usageCount: item.plays ?? 0,
+    }));
   }
 }

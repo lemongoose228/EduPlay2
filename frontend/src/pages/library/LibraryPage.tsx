@@ -8,7 +8,7 @@ import { useAppSelector } from '../../app/store/hooks';
 import { selectAuthUser } from '../../features/auth/model/selectors';
 import { createSessionApi, joinSessionApi } from '../../features/sessions/api/sessionsApi';
 import { likeGameApi, unlikeGameApi, getLikedGameIdsApi } from '../../features/games/api/gamesApi';
-import { searchLibraryApi } from '../../features/library/api/libraryApi';
+import { searchLibraryApi, type LibraryGameDto } from '../../features/library/api/libraryApi';
 import './LibraryPage.css';
 
 interface PublicGame {
@@ -17,16 +17,15 @@ interface PublicGame {
   type: 'own' | 'quiz' | 'crocodile' | 'wheel';
   description?: string;
   author: string;
-  plays: number;
+  authorAvatar?: string;
   likes: number;
-  questionsCount: number;
 }
 
 export const LibraryPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [selectedType, setSelectedType] = useState<'all' | 'own' | 'quiz' | 'crocodile' | 'wheel'>('all');
-  const [sortBy, setSortBy] = useState<'popular' | 'likes' | 'newest'>('popular');
+  const [sortBy, setSortBy] = useState<'' | 'likes' | 'newest'>('');
   const [activeTab, setActiveTab] = useState<'all' | 'favorites'>('all');
   const user = useAppSelector(selectAuthUser);
 
@@ -37,7 +36,7 @@ export const LibraryPage: React.FC = () => {
 
   const navigate = useNavigate();
 
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<LibraryGameDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -60,11 +59,7 @@ export const LibraryPage: React.FC = () => {
   }, [user?.id]);
 
   const games = useMemo(() => {
-    return items.map((game: any) => {
-      const questionsCount = (game.categories || []).reduce(
-        (sum: number, cat: any) => sum + (cat.questions?.length ?? 0),
-        0,
-      );
+    return items.map((game) => {
       const likes = likesByGame[game.id] ?? game.likes ?? 0;
 
       return {
@@ -73,9 +68,8 @@ export const LibraryPage: React.FC = () => {
         type: game.type,
         description: game.description,
         author: game.author?.name ?? '',
-        plays: game.plays ?? 0,
+        authorAvatar: game.author?.avatar ?? undefined,
         likes,
-        questionsCount,
       } as PublicGame;
     });
   }, [items, likesByGame]);
@@ -101,7 +95,7 @@ export const LibraryPage: React.FC = () => {
         const data = await searchLibraryApi({
           search: debouncedSearch || undefined,
           type: selectedType === 'all' ? undefined : selectedType,
-          sortBy,
+          sortBy: sortBy || undefined,
           page: 1,
           limit: 12,
         });
@@ -110,7 +104,9 @@ export const LibraryPage: React.FC = () => {
         setItems(data?.items ?? []);
       } catch (e) {
         console.error(e);
-        if (!cancelled) setItems([]);
+        if (!cancelled) {
+          alert('Не удалось загрузить библиотеку. Попробуйте снова.');
+        }
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -124,7 +120,7 @@ export const LibraryPage: React.FC = () => {
 
   useEffect(() => {
     const map: Record<string, number> = {};
-    items.forEach((g: any) => {
+    items.forEach((g) => {
       map[g.id] = g.likes ?? 0;
     });
     setLikesByGame((prev) => ({ ...prev, ...map }));
@@ -240,12 +236,12 @@ export const LibraryPage: React.FC = () => {
           </div>
 
           <div className="sort-select">
-            <select 
-              value={sortBy} 
-              onChange={(e) => setSortBy(e.target.value as any)}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as '' | 'likes' | 'newest')}
               className="sort-dropdown"
             >
-              <option value="popular">По популярности</option>
+              <option value="">Сортировка</option>
               <option value="likes">По лайкам</option>
               <option value="newest">Сначала новые</option>
             </select>
@@ -264,9 +260,9 @@ export const LibraryPage: React.FC = () => {
               title={game.title}
               type={game.type}
               description={game.description}
-              questionsCount={game.questionsCount}
+              isLibraryCard
               author={game.author}
-              plays={game.plays}
+              authorAvatar={game.authorAvatar}
               likes={game.likes}
               isLiked={likedIds.includes(game.id)}
               onLikeToggle={user ? () => handleToggleLike(game.id) : undefined}
@@ -289,7 +285,7 @@ export const LibraryPage: React.FC = () => {
               setSearchTerm('');
               setSelectedType('all');
               setActiveTab('all');
-              setSortBy('popular');
+              setSortBy('');
             }}
           >
             Сбросить

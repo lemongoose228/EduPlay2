@@ -10,28 +10,52 @@ type ApiEnvelope<T> = {
 export type SearchGamesDto = {
   search?: string;
   type?: 'own' | 'quiz' | 'crocodile' | 'wheel';
-  sortBy?: 'popular' | 'likes' | 'newest';
+  sortBy?: 'likes' | 'newest';
   page?: number;
   limit?: number;
 };
 
+export interface LibraryAuthorDto {
+  name: string;
+  avatar?: string | null;
+}
+
+export interface LibraryGameDto {
+  id: string;
+  title: string;
+  type: 'own' | 'quiz' | 'crocodile' | 'wheel';
+  description?: string;
+  author?: LibraryAuthorDto;
+  likes?: number;
+  plays?: number;
+  usageCount?: number;
+}
+
+export interface SearchLibraryResponseDto {
+  items: LibraryGameDto[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export async function searchLibraryApi(dto: SearchGamesDto) {
-  const res: AxiosResponse<ApiEnvelope<any>> = await axiosInstance.get('/library/search', { params: dto });
+  const res: AxiosResponse<ApiEnvelope<SearchLibraryResponseDto>> = await axiosInstance.get('/library/search', { params: dto });
   return res.data.data;
 }
 
 export async function getPopularApi() {
-  const res: AxiosResponse<ApiEnvelope<any>> = await axiosInstance.get('/library/popular');
+  const res: AxiosResponse<ApiEnvelope<LibraryGameDto[]>> = await axiosInstance.get('/library/popular');
   return res.data.data ?? res.data;
 }
 
 export async function getTopRatedApi() {
-  const res: AxiosResponse<ApiEnvelope<any>> = await axiosInstance.get('/library/top-rated');
+  const res: AxiosResponse<ApiEnvelope<LibraryGameDto[]>> = await axiosInstance.get('/library/top-rated');
   return res.data.data ?? res.data;
 }
 
 export async function getRecentApi() {
-  const res: AxiosResponse<ApiEnvelope<any>> = await axiosInstance.get('/library/recent');
+  const res: AxiosResponse<ApiEnvelope<LibraryGameDto[]>> = await axiosInstance.get('/library/recent');
   return res.data.data ?? res.data;
 }
 
