@@ -22,7 +22,7 @@ import {
   getSessionsSocket,
   waitForSessionsSocketConnected,
 } from '../../features/sessions/api/sessionsSocket';
-import { FaCheckCircle, FaTimesCircle, FaTrophy, FaStar } from 'react-icons/fa';
+import { FaTrophy, FaDownload } from 'react-icons/fa';
 
 interface Question {
   id: string;
@@ -553,17 +553,12 @@ export const GamePage: React.FC = () => {
 
   const maxOwnRows = Math.max(...session.game.categories.map((c) => c.questions.length), 0);
 
-  // Функция для получения оценки
-  const getWinGrade = (teamsList: Team[]) => {
-    const sortedTeams = [...teamsList].sort((a, b) => b.score - a.score);
-    const winner = sortedTeams[0];
-    const winnerScore = winner?.score || 0;
-    
-    if (winnerScore >= 500) return { text: 'Чемпионы! 🏆', emoji: '🏆', color: '#ffd700' };
-    if (winnerScore >= 300) return { text: 'Отличная игра! 🌟', emoji: '🌟', color: '#e2ca69' };
-    if (winnerScore >= 150) return { text: 'Хороший результат! 👍', emoji: '👍', color: '#7fc8c0' };
-    return { text: 'В следующий раз получится лучше! 💪', emoji: '💪', color: '#e72a6e' };
-  };
+  const sanitizeFileNamePart = (value: string) =>
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9а-яё]+/gi, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
 
   if (session.status === 'waiting') {
     return (
@@ -624,40 +619,52 @@ export const GamePage: React.FC = () => {
   // Стилизованная страница завершения игры (как у крокодила)
   if (session.status === 'finished') {
     const sortedTeams = [...session.teams].sort((a, b) => b.score - a.score);
-    const winner = sortedTeams[0];
-    const grade = getWinGrade(session.teams);
-    
-    // Собираем вопросы и ответы для отображения
-    const answeredQuestionsList = session.answeredQuestions || [];
-    const guessedQuestions = answeredQuestionsList.filter(aq => aq.isCorrect === true);
-    const missedQuestions = answeredQuestionsList.filter(aq => aq.isCorrect === false);
-    
-    // Группируем по категориям для отображения
-    const guessedItems = guessedQuestions.map(aq => {
-      const category = session.game.categories.find(c => c.id === aq.categoryId);
-      const question = category?.questions.find(q => q.id === aq.questionId);
-      return {
-        categoryName: category?.name || 'Неизвестно',
-        questionText: question?.question || 'Вопрос',
-        answer: question?.answer || 'Ответ',
-      };
-    });
-    
-    const missedItems = missedQuestions.map(aq => {
-      const category = session.game.categories.find(c => c.id === aq.categoryId);
-      const question = category?.questions.find(q => q.id === aq.questionId);
-      return {
-        categoryName: category?.name || 'Неизвестно',
-        questionText: question?.question || 'Вопрос',
-        answer: question?.answer || 'Ответ',
-      };
-    });
 
     const getRankBadgeClass = (index: number) => {
       if (index === 0) return 'gold';
       if (index === 1) return 'silver';
       if (index === 2) return 'bronze';
       return '';
+    };
+
+    const handleExportResults = () => {
+      const finishedAtRaw = session.finishedAt ?? new Date().toISOString();
+      const finishedAt = new Date(finishedAtRaw);
+      const finishedAtText = Number.isNaN(finishedAt.getTime())
+        ? finishedAtRaw
+        : finishedAt.toLocaleString('ru-RU');
+      const startedAtText = session.startedAt
+        ? new Date(session.startedAt).toLocaleString('ru-RU')
+        : 'Не указано';
+
+      const rows = sortedTeams.length
+        ? sortedTeams.map((team, index) => `${index + 1}. ${team.name} — ${team.score} очков`)
+        : ['Нет данных о командах'];
+
+      const report = [
+        'Результаты игровой сессии',
+        '',
+        `Игра: ${session.game.title}`,
+        `Тип игры: ${session.game.type}`,
+        `ID сессии: ${session.id}`,
+        `Старт: ${startedAtText}`,
+        `Завершение: ${finishedAtText}`,
+        '',
+        'Итоговая таблица:',
+        ...rows,
+      ].join('\n');
+
+      const titlePart = sanitizeFileNamePart(session.game.title) || 'game';
+      const fileName = `results-${titlePart}-${session.id.slice(0, 8)}.txt`;
+      const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     };
 
     return (
@@ -691,7 +698,16 @@ export const GamePage: React.FC = () => {
             </div>
           </div>
 
-          
+          <div className="results-export">
+            <Button
+              variant="outline"
+              className="results-export-button"
+              icon={<FaDownload />}
+              onClick={handleExportResults}
+            >
+              Сохранить результаты (.txt)
+            </Button>
+          </div>
 
           
         </div>

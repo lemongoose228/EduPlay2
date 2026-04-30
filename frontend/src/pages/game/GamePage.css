@@ -297,6 +297,32 @@
   color: #7874b2;
 }
 
+.results-export {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.results-export-button {
+  min-width: 280px;
+  border-width: 1px;
+  border-color: #a695d6;
+  color: #6c58aa;
+  background: #ffffff;
+  box-shadow: 0 6px 16px rgba(120, 116, 178, 0.12);
+}
+
+.results-export-button .btn-icon {
+  font-size: 16px;
+}
+
+.results-export-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7d88bb 0%, #b6a4c8 100%);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(120, 116, 178, 0.25);
+}
+
 .results-details {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1241,5 +1267,10 @@
 
   .game-results-container {
     padding: 24px;
+  }
+
+  .results-export-button {
+    width: 100%;
+    min-width: 0;
   }
 }
