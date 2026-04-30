@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '../../shared/ui/Button/Button';
 import { resolveAvatarSrc } from '../../shared/lib/resolveAvatarSrc';
+import { GAME_TYPE_ICON_MAP } from '../../shared/lib/gameTypeIcons';
 import { FaHeart } from 'react-icons/fa';
 import './GameCard.css';
 
@@ -49,10 +50,7 @@ export const GameCard: React.FC<GameCardProps> = ({
   onLikeToggle
 }) => {
   const getTypeIcon = () => {
-    if (type === 'own') return '🎮';
-    if (type === 'quiz') return '❓';
-    if (type === 'wheel') return '🎡';
-    return '🐊';
+    return GAME_TYPE_ICON_MAP[type];
   };
 
   const getTypeText = () => {
@@ -69,7 +67,11 @@ export const GameCard: React.FC<GameCardProps> = ({
     <div className="game-card" onClick={onClick}>
       <div className="game-card-header">
         <div className="game-card-type">
-          <span className="type-icon">{getTypeIcon()}</span>
+          <img
+            className={`type-icon ${type === 'own' ? 'type-icon-own' : ''}`}
+            src={getTypeIcon()}
+            alt={getTypeText()}
+          />
           <span>{getTypeText()}</span>
         </div>
         {isLibraryCard && likes !== undefined && (

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TemplateCard } from '../../widgets/template-card/TemplateCard';
+import { GAME_TYPE_ICON_MAP } from '../../shared/lib/gameTypeIcons';
 import './CreateGamePage.css';
 
 interface Template {
@@ -19,28 +20,28 @@ export const CreateGamePage: React.FC = () => {
       id: 'custom',
       title: 'Своя игра',
       description: 'Создайте собственную игру с настраиваемой сеткой вопросов. Вы можете регулировать количество категорий и вопросов, добавлять вопросы и ответы, устанавливать стоимость вопросов.',
-      icon: '🎮',
+      icon: GAME_TYPE_ICON_MAP.own,
       color: '#ff9e8b'
     },
     {
       id: 'quiz',
       title: 'Викторина',
       description: 'Классическая викторина с вопросами и ответами. Идеально подходит для быстрых игр и проверки знаний в различных темах. Можно настроить время на вопрос.',
-      icon: '❓',
+      icon: GAME_TYPE_ICON_MAP.quiz,
       color: '#4EFF6B'
     },
     {
       id: 'crocodile',
       title: 'Крокодил',
       description: 'Игра с терминами, которые нужно объяснять без слов. Создайте набор терминов, настройте таймер и проверьте, сколько терминов смогут угадать участники.',
-      icon: '🐊',
+      icon: GAME_TYPE_ICON_MAP.crocodile,
       color: '#dd8bf9'
     },
     {
       id: 'wheel',
       title: 'Колесо Фортуны',
       description: 'Добавьте темы и задания. Ученик крутит колесо, получает выпавшую тему и отвечает на задания, пока темы не закончатся.',
-      icon: '🎡',
+      icon: GAME_TYPE_ICON_MAP.wheel,
       color: '#f2bf27'
     }
   ];

@@ -6,6 +6,7 @@ import { Button } from '../../shared/ui/Button/Button';
 import { useDebounce } from '../../shared/hooks/useDebounce';
 import { useAppSelector } from '../../app/store/hooks';
 import { selectAuthUser } from '../../features/auth/model/selectors';
+import { GAME_TYPE_ICON_MAP } from '../../shared/lib/gameTypeIcons';
 import { createSessionApi, joinSessionApi } from '../../features/sessions/api/sessionsApi';
 import { likeGameApi, unlikeGameApi, getLikedGameIdsApi } from '../../features/games/api/gamesApi';
 import { searchLibraryApi, type LibraryGameDto } from '../../features/library/api/libraryApi';
@@ -213,25 +214,37 @@ export const LibraryPage: React.FC = () => {
               className={`filter-btn ${selectedType === 'own' ? 'active' : ''}`}
               onClick={() => setSelectedType('own')}
             >
-              🎮 Своя игра
+              <span className="filter-label">
+                <img className="filter-type-icon filter-type-icon-own" src={GAME_TYPE_ICON_MAP.own} alt="Своя игра" />
+                Своя игра
+              </span>
             </button>
             <button
               className={`filter-btn ${selectedType === 'quiz' ? 'active' : ''}`}
               onClick={() => setSelectedType('quiz')}
             >
-              ❓ Викторина
+              <span className="filter-label">
+                <img className="filter-type-icon" src={GAME_TYPE_ICON_MAP.quiz} alt="Викторина" />
+                Викторина
+              </span>
             </button>
             <button
               className={`filter-btn ${selectedType === 'crocodile' ? 'active' : ''}`}
               onClick={() => setSelectedType('crocodile')}
             >
-              🐊 Крокодил
+              <span className="filter-label">
+                <img className="filter-type-icon" src={GAME_TYPE_ICON_MAP.crocodile} alt="Крокодил" />
+                Крокодил
+              </span>
             </button>
             <button
               className={`filter-btn ${selectedType === 'wheel' ? 'active' : ''}`}
               onClick={() => setSelectedType('wheel')}
             >
-              🎡 Колесо Фортуны
+              <span className="filter-label">
+                <img className="filter-type-icon" src={GAME_TYPE_ICON_MAP.wheel} alt="Колесо Фортуны" />
+                Колесо Фортуны
+              </span>
             </button>
           </div>
 

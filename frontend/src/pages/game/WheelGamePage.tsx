@@ -2,6 +2,7 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { Button } from '../../shared/ui/Button/Button';
 import { FaCheck, FaTimes } from 'react-icons/fa';
+import wheelIcon from '../../assets/wheel_icon.png';
 import './WheelGamePage.css';
 
 /** Согласованная пастельная палитра (ровная яркость, соседние сектора различимы) */
@@ -262,7 +263,7 @@ export const WheelGamePage: React.FC<WheelGamePageProps> = ({
               </span>
             ) : (
               <span className="spin-button-content">
-                <span className="spin-icon">🎡</span>
+                <img className="spin-icon" src={wheelIcon} alt="Колесо Фортуны" />
                 Крутить колесо
               </span>
             )}
@@ -336,7 +337,7 @@ export const WheelGamePage: React.FC<WheelGamePageProps> = ({
 
           {!activeQuestion && !isSpinning && availableCategories.length > 0 && (
             <div className="wheel-hint">
-              <span className="hint-icon">🎡</span>
+              <img className="hint-icon" src={wheelIcon} alt="Колесо Фортуны" />
               <div className="hint-text">
                 <strong>Как играть?</strong>
                 <p>Нажмите «Крутить колесо», чтобы выбрать тему. Ответьте на вопрос и получите балл!</p>

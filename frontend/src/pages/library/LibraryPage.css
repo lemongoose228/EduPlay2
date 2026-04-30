@@ -95,6 +95,24 @@
   transition: all 0.3s ease;
 }
 
+.filter-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-type-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.filter-type-icon-own {
+  width: 19px;
+  height: 19px;
+}
+
 .filter-btn:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);

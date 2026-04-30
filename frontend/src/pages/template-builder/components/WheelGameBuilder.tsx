@@ -7,6 +7,7 @@ import {
 import { Button } from '../../../shared/ui/Button/Button';
 import { Card } from '../../../shared/ui/Card/Card';
 import { Input } from '../../../shared/ui/Input/Input';
+import wheelIcon from '../../../assets/wheel_icon.png';
 import './WheelGameBuilder.css';
 
 interface WheelGameBuilderProps {
@@ -215,7 +216,7 @@ export const WheelGameBuilder: React.FC<WheelGameBuilderProps> = ({
 
       <div className="builder-footer">
         <div className="questions-info">
-          <span className="info-icon">🎡</span>
+          <img className="info-icon" src={wheelIcon} alt="Колесо Фортуны" />
           <span>
             Тем: <strong>{categories.length}</strong>
           </span>

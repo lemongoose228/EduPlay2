@@ -22,7 +22,7 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({
   return (
     <div className="template-card" style={{ '--template-color': color } as React.CSSProperties}>
       <div className="template-card-header">
-        <span className="template-icon">{icon}</span>
+        <img className={`template-icon ${id === 'custom' ? 'template-icon-own' : ''}`} src={icon} alt={title} />
         <h3 className="template-title">{title}</h3>
       </div>
       <div className="template-card-content">

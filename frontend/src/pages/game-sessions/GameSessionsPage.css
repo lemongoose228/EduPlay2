@@ -178,9 +178,19 @@
 }
 
 .empty-icon {
-  font-size: 64px;
+  width: 64px;
+  height: 64px;
   margin-bottom: 20px;
   opacity: 0.5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .empty-state h3 {
