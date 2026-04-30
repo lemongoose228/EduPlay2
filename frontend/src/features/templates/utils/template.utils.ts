@@ -2,6 +2,8 @@ import type {
   OwnGameCategory,
   OwnGameQuestion,
   QuizQuestion,
+  StationConnectionTemplate,
+  StationNodeTemplate,
   WheelCategory,
   WheelQuestion,
 } from '../types/template.types';
@@ -74,4 +76,17 @@ export const shuffleArray = <T>(array: T[]): T[] => {
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
+};
+
+export const createEmptyStationNode = (index: number): StationNodeTemplate => ({
+  id: `station-${Date.now()}-${index}-${Math.random()}`,
+  name: `Станция ${index + 1}`,
+  task: '',
+  shape: 'circle',
+  color: '#6b8cff',
+});
+
+export const buildStationConnections = (nodes: StationNodeTemplate[]): StationConnectionTemplate[] => {
+  if (nodes.length <= 1) return [];
+  return nodes.slice(0, -1).map((node, idx) => ({ from: node.id, to: nodes[idx + 1].id }));
 };

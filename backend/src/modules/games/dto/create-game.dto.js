@@ -18,6 +18,7 @@ var GameType;
     GameType["Quiz"] = "quiz";
     GameType["Crocodile"] = "crocodile";
     GameType["Wheel"] = "wheel";
+    GameType["Station"] = "station";
 })(GameType || (exports.GameType = GameType = {}));
 class QuestionDto {
 }

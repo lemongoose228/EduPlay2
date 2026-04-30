@@ -1,0 +1,100 @@
+.station-game-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.station-basic-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.station-route-badge {
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: linear-gradient(135deg, rgba(107, 78, 255, 0.08), rgba(107, 191, 255, 0.1));
+  padding: 10px 12px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.station-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.station-item {
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--card-bg);
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
+}
+
+.station-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.station-footer-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.station-style-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.station-style-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.station-style-field select {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #fff;
+  color: var(--text-primary);
+}
+
+.station-color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.station-color-row input[type='color'] {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.station-color-row code {
+  background: rgba(17, 24, 39, 0.06);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .station-style-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -8,7 +8,7 @@ import './GameCard.css';
 interface GameCardProps {
   id: string;
   title: string;
-  type: 'own' | 'quiz' | 'crocodile' | 'wheel';
+  type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
   description?: string;
   questionsCount?: number;
   createdAt?: string;
@@ -57,6 +57,7 @@ export const GameCard: React.FC<GameCardProps> = ({
     if (type === 'own') return 'Своя игра';
     if (type === 'quiz') return 'Викторина';
     if (type === 'wheel') return 'Колесо Фортуны';
+    if (type === 'station') return 'Станции';
     return 'Крокодил';
   };
 

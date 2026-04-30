@@ -2,6 +2,7 @@ import type {
   CrocodileTemplate,
   OwnGameTemplate,
   QuizTemplate,
+  StationTemplate,
   WheelTemplate,
 } from '../../templates/types/template.types';
 
@@ -22,9 +23,9 @@ export interface Game {
   templateId: string;
   title: string;
   description: string;
-  type: 'own' | 'quiz' | 'crocodile' | 'wheel';
+  type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
   status: GameStatus;
-  data: OwnGameTemplate | QuizTemplate | CrocodileTemplate | WheelTemplate;
+  data: OwnGameTemplate | QuizTemplate | CrocodileTemplate | WheelTemplate | StationTemplate;
   metadata: GameMetadata;
 }
 
@@ -32,7 +33,7 @@ export interface CreateGameDto {
   templateId: string;
   title: string;
   description: string;
-  data: OwnGameTemplate | QuizTemplate | CrocodileTemplate | WheelTemplate;
+  data: OwnGameTemplate | QuizTemplate | CrocodileTemplate | WheelTemplate | StationTemplate;
 }
 
 export interface UpdateGameDto extends Partial<CreateGameDto> {

@@ -96,7 +96,6 @@ export const WheelGamePage: React.FC<WheelGamePageProps> = ({
   }, [selectedCategory, answeredKeys]);
 
   const nCategories = availableCategories.length;
-  const sectorAngle = nCategories > 0 ? 360 / nCategories : 0;
 
   const wheelDiskBackground = useMemo(() => {
     if (nCategories === 0) return 'transparent';

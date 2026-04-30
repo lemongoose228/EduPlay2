@@ -5,6 +5,7 @@ import { OwnGameBuilder } from './components/OwnGameBuilder';
 import { QuizGameBuilder } from './components/QuizGameBuilder';
 import { CrocodileGameBuilder } from './components/CrocodileGameBuilder';
 import { WheelGameBuilder } from './components/WheelGameBuilder';
+import { StationGameBuilder } from './components/StationGameBuilder';
 import type {
   GameTemplate,
   OwnGameTemplate,
@@ -12,10 +13,47 @@ import type {
   QuizQuestion,
   OwnGameCategory,
   CrocodileTemplate,
+  StationNodeTemplate,
+  StationTemplate,
   WheelTemplate,
 } from '../../features/templates/types/template.types';
 import './TemplateBuilderPage.css';
 import { createGameApi, getGameApi, updateGameApi } from '../../features/games/api/gamesApi';
+
+const STATION_META_PREFIX = '__station_meta__:';
+
+const encodeStationAnswer = (payload: { name: string; shape: string; color: string }) =>
+  `${STATION_META_PREFIX}${JSON.stringify(payload)}`;
+
+const decodeStationAnswer = (raw: string | null | undefined) => {
+  const source = raw ?? '';
+  if (!source.startsWith(STATION_META_PREFIX)) {
+    return {
+      name: source || 'Станция',
+      shape: 'circle' as const,
+      color: '#6b8cff',
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(source.slice(STATION_META_PREFIX.length)) as {
+      name?: string;
+      shape?: 'circle' | 'star' | 'heart' | 'triangle' | 'square';
+      color?: string;
+    };
+    return {
+      name: parsed.name?.trim() || 'Станция',
+      shape: parsed.shape ?? 'circle',
+      color: parsed.color ?? '#6b8cff',
+    };
+  } catch {
+    return {
+      name: 'Станция',
+      shape: 'circle' as const,
+      color: '#6b8cff',
+    };
+  }
+};
 
 export const TemplateBuilderPage: React.FC = () => {
   const { templateId } = useParams<{ templateId: string }>();
@@ -26,17 +64,19 @@ export const TemplateBuilderPage: React.FC = () => {
       templateId === 'custom' ||
       templateId === 'quiz' ||
       templateId === 'crocodile' ||
-      templateId === 'wheel',
+      templateId === 'wheel' ||
+      templateId === 'station',
     [templateId],
   );
   const editingGameId = useMemo(() => (isTemplateMode ? null : templateId || null), [isTemplateMode, templateId]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [initialData, setInitialData] = useState<GameTemplate | undefined>(undefined);
-  const [gameKind, setGameKind] = useState<'own' | 'quiz' | 'crocodile' | 'wheel'>(() => {
+  const [gameKind, setGameKind] = useState<'own' | 'quiz' | 'crocodile' | 'wheel' | 'station'>(() => {
     if (templateId === 'custom') return 'own';
     if (templateId === 'crocodile') return 'crocodile';
     if (templateId === 'wheel') return 'wheel';
+    if (templateId === 'station') return 'station';
     return 'quiz';
   });
 
@@ -55,6 +95,8 @@ export const TemplateBuilderPage: React.FC = () => {
               ? 'crocodile'
               : game.type === 'wheel'
                 ? 'wheel'
+                : game.type === 'station'
+                  ? 'station'
                 : 'own';
 
         if (cancelled) return;
@@ -129,6 +171,25 @@ export const TemplateBuilderPage: React.FC = () => {
             updatedAt: game.updatedAt,
           };
           setInitialData(wheel);
+        } else if (kind === 'station') {
+          const stationNodes: StationNodeTemplate[] = (game.categories?.[0]?.questions || []).map((q: any) => ({
+            ...decodeStationAnswer(q.answer),
+            id: q.id,
+            task: q.question,
+          }));
+          const station: StationTemplate = {
+            type: 'station',
+            name: game.title,
+            layout: 'line',
+            stations: stationNodes,
+            connections: stationNodes.slice(0, -1).map((node, idx) => ({
+              from: node.id,
+              to: stationNodes[idx + 1].id,
+            })),
+            createdAt: game.createdAt,
+            updatedAt: game.updatedAt,
+          };
+          setInitialData(station);
         }
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -195,6 +256,28 @@ export const TemplateBuilderPage: React.FC = () => {
       };
     }
 
+    if (gameData.type === 'station') {
+      return {
+        title: gameData.name,
+        description: undefined,
+        type: 'station' as const,
+        categories: [
+          {
+            name: 'line',
+            questions: gameData.stations.map((station) => ({
+              question: station.task,
+              answer: encodeStationAnswer({
+                name: station.name,
+                shape: station.shape,
+                color: station.color,
+              }),
+              value: 1,
+            })),
+          },
+        ],
+      };
+    }
+
     return {
       title: gameData.name,
       description: undefined,
@@ -245,6 +328,9 @@ export const TemplateBuilderPage: React.FC = () => {
       if (templateId === 'wheel') {
         return <WheelGameBuilder initialData={initialData as WheelTemplate | undefined} onSave={handleSave} onCancel={handleCancel} />;
       }
+      if (templateId === 'station') {
+        return <StationGameBuilder initialData={initialData as StationTemplate | undefined} onSave={handleSave} onCancel={handleCancel} />;
+      }
       return <QuizGameBuilder initialData={initialData as QuizTemplate | undefined} onSave={handleSave} onCancel={handleCancel} />;
     }
 
@@ -276,6 +362,16 @@ export const TemplateBuilderPage: React.FC = () => {
       return (
         <WheelGameBuilder
           initialData={initialData as WheelTemplate | undefined}
+          onSave={handleSave}
+          onCancel={handleCancel}
+        />
+      );
+    }
+
+    if (gameKind === 'station') {
+      return (
+        <StationGameBuilder
+          initialData={initialData as StationTemplate | undefined}
           onSave={handleSave}
           onCancel={handleCancel}
         />

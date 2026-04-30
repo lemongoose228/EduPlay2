@@ -13,7 +13,7 @@ import { selectAuthUser } from '../../features/auth/model/selectors';
 interface Game {
   id: string;
   title: string;
-  type: 'own' | 'quiz' | 'crocodile' | 'wheel';
+  type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
   description?: string;
   questionsCount: number;
   createdAt: string;
@@ -79,7 +79,7 @@ export const MyGamesPage: React.FC = () => {
     try {
       const game = games.find((item) => item.id === gameId);
       const session = await createSessionApi({ gameId });
-      if (user && game?.type !== 'crocodile' && game?.type !== 'wheel') {
+      if (user && game?.type !== 'crocodile' && game?.type !== 'wheel' && game?.type !== 'station') {
         const trimmed = user.name?.trim();
         const playerName = trimmed && trimmed.length >= 2 ? trimmed : 'Хост';
         try {

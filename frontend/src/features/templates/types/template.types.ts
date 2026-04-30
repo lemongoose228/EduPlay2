@@ -59,7 +59,36 @@ export interface QuizTemplate {
   updatedAt?: string;
 }
 
-export type GameTemplate = OwnGameTemplate | QuizTemplate | CrocodileTemplate | WheelTemplate;
+export interface StationNodeTemplate {
+  id: string;
+  name: string;
+  task: string;
+  shape: 'circle' | 'star' | 'heart' | 'triangle' | 'square';
+  color: string;
+}
+
+export interface StationConnectionTemplate {
+  from: string;
+  to: string;
+}
+
+export interface StationTemplate {
+  id?: string;
+  name: string;
+  type: 'station';
+  layout: 'line';
+  stations: StationNodeTemplate[];
+  connections: StationConnectionTemplate[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type GameTemplate =
+  | OwnGameTemplate
+  | QuizTemplate
+  | CrocodileTemplate
+  | WheelTemplate
+  | StationTemplate;
 
 export interface ValidationError {
   field: string;
@@ -78,7 +107,9 @@ export const TEMPLATE_CONSTANTS = {
   MIN_TIME_PER_TERM: 10,
   MAX_TIME_PER_TERM: 60,
   MAX_TERMS: 50,
-  MIN_TERMS: 3
+  MIN_TERMS: 3,
+  MIN_STATIONS: 3,
+  MAX_STATIONS: 20
 };
 
 export interface CrocodileTerm {

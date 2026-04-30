@@ -10,7 +10,7 @@ import {
 import { User } from '../../users/entities/user.entity';
 import { Category } from './category.entity';
 
-export type GameType = 'own' | 'quiz' | 'crocodile' | 'wheel';
+export type GameType = 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
 export type GameStatus = 'draft' | 'published' | 'archived';
 
 @Entity('games')
@@ -26,7 +26,7 @@ export class Game {
 
   @Column({
     type: 'enum',
-    enum: ['own', 'quiz', 'crocodile', 'wheel'],
+    enum: ['own', 'quiz', 'crocodile', 'wheel', 'station'],
     default: 'own',
   })
   type: GameType;

@@ -304,10 +304,10 @@ export class SessionsService {
       crocodileState: game.type === 'crocodile' ? null : undefined,
     });
 
-    if (game.type === 'wheel') {
+    if (game.type === 'wheel' || game.type === 'station') {
       session.teams = [
         this.teamsRepository.create({
-          name: 'Ученик',
+          name: game.type === 'station' ? 'Преподаватель' : 'Ученик',
           score: 0,
           players: [],
         }),
@@ -333,7 +333,11 @@ export class SessionsService {
       throw new BadRequestException('Нельзя присоединиться к уже начатой игре');
     }
 
-    if (session.game?.type === 'crocodile' || session.game?.type === 'wheel') {
+    if (
+      session.game?.type === 'crocodile' ||
+      session.game?.type === 'wheel' ||
+      session.game?.type === 'station'
+    ) {
       throw new ForbiddenException(
         'Эта игровая сессия запускается только локально у преподавателя',
       );

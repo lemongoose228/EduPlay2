@@ -15,7 +15,7 @@ import './LibraryPage.css';
 interface PublicGame {
   id: string;
   title: string;
-  type: 'own' | 'quiz' | 'crocodile' | 'wheel';
+  type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
   description?: string;
   author: string;
   authorAvatar?: string;
@@ -25,7 +25,7 @@ interface PublicGame {
 export const LibraryPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
-  const [selectedType, setSelectedType] = useState<'all' | 'own' | 'quiz' | 'crocodile' | 'wheel'>('all');
+  const [selectedType, setSelectedType] = useState<'all' | 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station'>('all');
   const [sortBy, setSortBy] = useState<'' | 'likes' | 'newest'>('');
   const [activeTab, setActiveTab] = useState<'all' | 'favorites'>('all');
   const user = useAppSelector(selectAuthUser);
@@ -150,7 +150,7 @@ export const LibraryPage: React.FC = () => {
     try {
       const game = games.find((item) => item.id === gameId);
       const session = await createSessionApi({ gameId });
-      if (user && game?.type !== 'crocodile' && game?.type !== 'wheel') {
+      if (user && game?.type !== 'crocodile' && game?.type !== 'wheel' && game?.type !== 'station') {
         const trimmed = user.name?.trim();
         const playerName = trimmed && trimmed.length >= 2 ? trimmed : 'Хост';
         try {
@@ -244,6 +244,15 @@ export const LibraryPage: React.FC = () => {
               <span className="filter-label">
                 <img className="filter-type-icon" src={GAME_TYPE_ICON_MAP.wheel} alt="Колесо Фортуны" />
                 Колесо Фортуны
+              </span>
+            </button>
+            <button
+              className={`filter-btn ${selectedType === 'station' ? 'active' : ''}`}
+              onClick={() => setSelectedType('station')}
+            >
+              <span className="filter-label">
+                <img className="filter-type-icon" src={GAME_TYPE_ICON_MAP.station} alt="Станции" />
+                Станции
               </span>
             </button>
           </div>

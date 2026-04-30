@@ -6,7 +6,7 @@ import './SessionCard.css';
 interface SessionCardProps {
   id: string;
   gameTitle: string;
-  gameType: 'own' | 'quiz' | 'crocodile' | 'wheel';
+  gameType: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
   status: 'waiting' | 'active' | 'finished';
   teams: number;
   maxTeams?: number;
@@ -62,6 +62,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
     if (gameType === 'own') return 'Своя игра';
     if (gameType === 'quiz') return 'Викторина';
     if (gameType === 'wheel') return 'Колесо Фортуны';
+    if (gameType === 'station') return 'Станции';
     return 'Крокодил';
   };
 

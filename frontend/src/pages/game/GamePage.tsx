@@ -18,6 +18,7 @@ import {
 } from '../../features/sessions/api/sessionsApi';
 import { CrocodileGamePage } from './CrocodileGamePage';
 import { WheelGamePage } from './WheelGamePage';
+import { StationGamePage } from './StationGamePage';
 import {
   getSessionsSocket,
   waitForSessionsSocketConnected,
@@ -49,7 +50,7 @@ interface GameSession {
   id: string;
   game: {
     title: string;
-    type: 'own' | 'quiz' | 'crocodile' | 'wheel';
+    type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
     categories: Category[];
     settings?: {
       timePerQuestion?: number;
@@ -551,6 +552,23 @@ export const GamePage: React.FC = () => {
     );
   }
 
+  if (session.game.type === 'station' && session.status !== 'finished') {
+    return (
+      <StationGamePage
+        session={session}
+        isHost={isHost}
+        onStart={async () => {
+          const updated = await startSessionApi(session.id);
+          setSession(updated);
+        }}
+        onFinish={async () => {
+          const updated = await finishSessionApi(session.id);
+          setSession(updated);
+        }}
+      />
+    );
+  }
+
   const maxOwnRows = Math.max(...session.game.categories.map((c) => c.questions.length), 0);
 
   const sanitizeFileNamePart = (value: string) =>
@@ -618,6 +636,84 @@ export const GamePage: React.FC = () => {
 
   // Стилизованная страница завершения игры (как у крокодила)
   if (session.status === 'finished') {
+    if (session.game.type === 'station') {
+      const getStationStatsStorageKey = (id: string) => `station-stats:${id}`;
+      let stationStats: {
+        completedStations: number;
+        totalStations: number;
+        attempts: number;
+        errors: number;
+        elapsedSec: number;
+      } | null = null;
+
+      try {
+        const raw = sessionStorage.getItem(getStationStatsStorageKey(session.id));
+        if (raw) {
+          stationStats = JSON.parse(raw);
+        }
+      } catch {
+        stationStats = null;
+      }
+
+      const totalStations = session.game.categories[0]?.questions?.length ?? 0;
+      const completedStations = stationStats?.completedStations ?? 0;
+      const attempts = stationStats?.attempts ?? 0;
+      const errors = stationStats?.errors ?? 0;
+      const elapsedSec =
+        stationStats?.elapsedSec ??
+        (session.startedAt && session.finishedAt
+          ? Math.max(
+              0,
+              Math.floor(
+                (new Date(session.finishedAt).getTime() - new Date(session.startedAt).getTime()) / 1000,
+              ),
+            )
+          : 0);
+      const minutes = Math.floor(elapsedSec / 60)
+        .toString()
+        .padStart(2, '0');
+      const seconds = (elapsedSec % 60).toString().padStart(2, '0');
+
+      return (
+        <div className="game-page game-finished">
+          <div className="game-results-container">
+            <h1 className="results-title">Игра завершена!</h1>
+            <div className="leaderboard-section">
+              <h3>Статистика прохождения станций</h3>
+              <div className="leaderboard-list">
+                <div className="leaderboard-row">
+                  <div className="leaderboard-team-info">
+                    <span className="team-name-result">Пройдено станций</span>
+                    <span className="team-score-result">
+                      {completedStations} / {totalStations}
+                    </span>
+                  </div>
+                </div>
+                <div className="leaderboard-row">
+                  <div className="leaderboard-team-info">
+                    <span className="team-name-result">Время игры</span>
+                    <span className="team-score-result">{minutes}:{seconds}</span>
+                  </div>
+                </div>
+                <div className="leaderboard-row">
+                  <div className="leaderboard-team-info">
+                    <span className="team-name-result">Попыток</span>
+                    <span className="team-score-result">{attempts}</span>
+                  </div>
+                </div>
+                <div className="leaderboard-row">
+                  <div className="leaderboard-team-info">
+                    <span className="team-name-result">Ошибок</span>
+                    <span className="team-score-result">{errors}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     const sortedTeams = [...session.teams].sort((a, b) => b.score - a.score);
 
     const getRankBadgeClass = (index: number) => {

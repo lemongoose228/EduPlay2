@@ -43,6 +43,13 @@ export const CreateGamePage: React.FC = () => {
       description: 'Добавьте темы и задания. Ученик крутит колесо, получает выпавшую тему и отвечает на задания, пока темы не закончатся.',
       icon: GAME_TYPE_ICON_MAP.wheel,
       color: '#f2bf27'
+    },
+    {
+      id: 'station',
+      title: 'Station Game',
+      description: 'Маршрут по станциям с заданиями. Учитель отмечает прохождение станций и видит прогресс в реальном времени.',
+      icon: GAME_TYPE_ICON_MAP.station,
+      color: '#6ee7b7'
     }
   ];
 

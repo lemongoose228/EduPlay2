@@ -7,7 +7,7 @@ type ApiEnvelope<T> = {
   timestamp: string;
 };
 
-export type GameType = 'own' | 'quiz' | 'crocodile' | 'wheel';
+export type GameType = 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
 export type GameStatus = 'draft' | 'published' | 'archived';
 
 export type CreateGameDto = {

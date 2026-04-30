@@ -7,8 +7,8 @@ export class SearchGamesDto {
   search?: string;
 
   @IsOptional()
-  @IsEnum(['own', 'quiz', 'crocodile', 'wheel'])
-  type?: 'own' | 'quiz' | 'crocodile' | 'wheel';
+  @IsEnum(['own', 'quiz', 'crocodile', 'wheel', 'station'])
+  type?: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
 
   @IsOptional()
   @IsEnum(['likes', 'newest'])
