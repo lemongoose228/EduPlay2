@@ -112,7 +112,7 @@ export const StationGameBuilder: React.FC<StationGameBuilderProps> = ({
       <div className="builder-header">
         <div>
           <h2 className="builder-title">Конструктор "Station Game"</h2>
-          <p className="builder-subtitle">Вертикальный маршрут по станциям с кастомным стилем</p>
+          <p className="builder-subtitle">Вертикальный зигзаг с путём между станциями и кастомным стилем узлов</p>
         </div>
         <div className="header-actions">
           <Button variant="secondary" onClick={onCancel}>
@@ -130,7 +130,7 @@ export const StationGameBuilder: React.FC<StationGameBuilderProps> = ({
             onChange={(e) => setGameName(e.target.value)}
             placeholder="Введите название игры"
           />
-          <div className="station-route-badge">Маршрут: последовательная вертикальная линия</div>
+          <div className="station-route-badge">Маршрут: вертикальная линия со связями «змейкой» (как в Duolingo)</div>
         </div>
       </Card>
 

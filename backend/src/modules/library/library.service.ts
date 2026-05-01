@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { Game } from '../games/entities/game.entity';
 import { SearchGamesDto } from './dto/search-games.dto';
 
@@ -17,12 +17,24 @@ export class LibraryService {
     const queryBuilder = this.gamesRepository
       .createQueryBuilder('game')
       .leftJoinAndSelect('game.author', 'author')
-      .where('game.status = :status', { status: 'published' });
+      .where('game.status = :status', { status: 'published' })
+      .andWhere('game.isBlocked = :isBlocked', { isBlocked: false });
 
     if (search) {
+      const s = search.trim();
+      const isDigitsOnly = /^\d+$/.test(s);
       queryBuilder.andWhere(
-        '(game.title ILIKE :search OR game.description ILIKE :search OR author.name ILIKE :search)',
-        { search: `%${search}%` },
+        new Brackets((qb) => {
+          qb.where('game.title ILIKE :textSearch', { textSearch: `%${s}%` })
+            .orWhere('game.description ILIKE :textSearch', { textSearch: `%${s}%` })
+            .orWhere('author.name ILIKE :textSearch', { textSearch: `%${s}%` });
+          if (isDigitsOnly) {
+            qb.orWhere('author.publicId = :pubUser', { pubUser: s }).orWhere(
+              'game.publicId = :pubGame',
+              { pubGame: s },
+            );
+          }
+        }),
       );
     }
 
@@ -60,7 +72,7 @@ export class LibraryService {
 
   async getPopular(limit: number = 10) {
     const items = await this.gamesRepository.find({
-      where: { status: 'published' },
+      where: { status: 'published', isBlocked: false },
       relations: ['author'],
       order: { plays: 'DESC' },
       take: limit,
@@ -74,7 +86,7 @@ export class LibraryService {
 
   async getTopRated(limit: number = 10) {
     const items = await this.gamesRepository.find({
-      where: { status: 'published' },
+      where: { status: 'published', isBlocked: false },
       relations: ['author'],
       order: { likes: 'DESC' },
       take: limit,
@@ -88,7 +100,7 @@ export class LibraryService {
 
   async getRecent(limit: number = 10) {
     const items = await this.gamesRepository.find({
-      where: { status: 'published' },
+      where: { status: 'published', isBlocked: false },
       relations: ['author'],
       order: { createdAt: 'DESC' },
       take: limit,

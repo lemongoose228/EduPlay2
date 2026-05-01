@@ -52,6 +52,10 @@ export class GamesService {
       throw new NotFoundException('Игра не найдена');
     }
 
+    if (game.isBlocked) {
+      throw new ForbiddenException('Игра заблокирована');
+    }
+
     if (game.status !== 'published' && userId !== game.authorId) {
       throw new ForbiddenException('Нет доступа к этой игре');
     }
@@ -115,6 +119,9 @@ async remove(id: string, userId: string): Promise<void> {
     if (game.status !== 'published') {
       throw new BadRequestException('Можно лайкать только опубликованные игры');
     }
+    if (game.isBlocked) {
+      throw new BadRequestException('Нельзя лайкать заблокированную игру');
+    }
     const existing = await this.gameLikesRepository.findOne({
       where: { userId, gameId },
     });
@@ -149,5 +156,47 @@ async remove(id: string, userId: string): Promise<void> {
 
   async incrementPlays(id: string): Promise<void> {
     await this.gamesRepository.increment({ id }, 'plays', 1);
+  }
+
+  /** Принимает UUID или числовой publicId из UI. */
+  async resolveIdToUuid(raw: string): Promise<string> {
+    const t = raw.trim();
+    if (!t) {
+      throw new NotFoundException('Игра не найдена');
+    }
+    if (/^\d+$/.test(t)) {
+      const byPublic = await this.gamesRepository.findOne({
+        where: { publicId: t },
+      });
+      if (!byPublic) {
+        throw new NotFoundException('Игра не найдена');
+      }
+      return byPublic.id;
+    }
+    const game = await this.gamesRepository.findOne({ where: { id: t } });
+    if (!game) {
+      throw new NotFoundException('Игра не найдена');
+    }
+    return t;
+  }
+
+  async setBlocked(
+    gameId: string,
+    blockedByUserId: string,
+    isBlocked: boolean,
+    reason?: string | null,
+  ): Promise<Game> {
+    const internalId = await this.resolveIdToUuid(gameId);
+    const game = await this.gamesRepository.findOne({ where: { id: internalId } });
+    if (!game) {
+      throw new NotFoundException('Игра не найдена');
+    }
+
+    game.isBlocked = isBlocked;
+    game.blockedAt = isBlocked ? new Date() : null;
+    game.blockedReason = isBlocked ? reason?.trim() || null : null;
+    game.blockedByUserId = isBlocked ? blockedByUserId : null;
+
+    return this.gamesRepository.save(game);
   }
 }

@@ -175,6 +175,7 @@
   display: flex;
   gap: 24px;
   flex: 1;
+  min-height: 0;
 }
 
 .station-left-column {
@@ -182,6 +183,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-height: 0;
 }
 
 .station-right-column {
@@ -189,195 +191,191 @@
   min-width: 320px;
 }
 
-/* Progress line */
-.station-progress-line {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(4px);
-  border-radius: 20px;
-  padding: 16px 20px;
+/* Vertical path (Duolingo-style) */
+.station-path-panel {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 16px 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
-.progress-track {
+.station-path-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 4px;
+  gap: 12px;
+  padding: 0 8px 4px;
 }
 
-.progress-step {
-  display: flex;
-  align-items: center;
-  flex: 1;
-}
-
-.progress-dot {
-  width: 32px;
-  height: 32px;
+.station-path-nav-btn {
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
-  color: #4a4f57;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-  border: 2px solid transparent;
-}
-
-.progress-dot.active {
-  background: linear-gradient(135deg, #6B4EFF, #a855f7);
-  color: white;
-  box-shadow: 0 0 0 3px rgba(107, 78, 255, 0.3);
-  transform: scale(1.1);
-}
-
-.progress-dot.success {
-  background: #22c55e;
-  color: white;
-  border-color: rgba(34, 197, 94, 0.5);
-}
-
-.progress-dot.failed {
-  background: #ef4444;
-  color: white;
-  border-color: rgba(239, 68, 68, 0.5);
-}
-
-.progress-dot.pending {
-  background: rgba(255, 255, 255, 0.6);
-  color: #9ca3af;
-}
-
-.progress-line {
-  flex: 1;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.3);
-  margin: 0 6px;
-  border-radius: 3px;
-  transition: all 0.3s ease;
-}
-
-.progress-line.passed {
-  background: linear-gradient(90deg, #6B4EFF, #a855f7);
-}
-
-/* Carousel Container */
-.station-carousel-container {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(4px);
-  border-radius: 32px;
-  padding: 32px 20px;
-}
-
-/* Carousel */
-.station-carousel {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-}
-
-.carousel-nav {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.92);
   border: none;
-  font-size: 20px;
+  font-size: 18px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6B4EFF;
+  color: #6b4eff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
 }
 
-.carousel-nav:hover:not(.disabled) {
-  transform: scale(1.1);
-  background: #6B4EFF;
-  color: white;
+.station-path-nav-btn:hover:not(.disabled) {
+  transform: scale(1.06);
+  background: #6b4eff;
+  color: #fff;
 }
 
-.carousel-nav.disabled {
+.station-path-nav-btn.disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.carousel-stations {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 40px;
+.station-path-nav-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #3d4260;
+  letter-spacing: 0.02em;
+}
+
+.station-path-scroll {
   flex: 1;
-  min-height: 220px;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-radius: 20px;
+  padding: 8px 10px 12px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(107, 78, 255, 0.35) transparent;
 }
 
-.carousel-station {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+.station-path-scroll::-webkit-scrollbar {
+  width: 6px;
 }
 
-.carousel-station.prev,
-.carousel-station.next {
-  opacity: 0.5;
-  transform: scale(0.8);
+.station-path-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 6px;
 }
 
-.carousel-station.current {
+.station-path-inner {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  min-height: 100%;
+}
+
+.station-path-inner--transitioning .station-path-node-wrap--active .station-node-shape-main,
+.station-path-inner--transitioning .station-path-node-wrap--active .station-node-shape {
+  animation: stationPathShapePulse 0.28s ease;
+}
+
+@keyframes stationPathShapePulse {
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.station-path-svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.station-path-segment {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.35s ease, stroke-width 0.35s ease, opacity 0.35s ease;
+}
+
+.station-path-segment--todo {
+  stroke: rgba(255, 255, 255, 0.42);
+  stroke-width: 5;
+}
+
+.station-path-segment--done {
+  stroke-width: 6;
+  filter: drop-shadow(0 2px 6px rgba(107, 78, 255, 0.4));
+}
+
+.station-path-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.station-path-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+
+.station-path-node-wrap {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 20px;
+  transition: opacity 0.25s ease, transform 0.25s ease, filter 0.25s ease;
+  font: inherit;
+  text-align: center;
+}
+
+.station-path-node-wrap:not(:disabled):hover {
+  filter: brightness(1.05);
+}
+
+.station-path-node-wrap:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.95);
+  outline-offset: 4px;
+}
+
+.station-path-node-wrap--active {
+  transform-origin: center center;
+}
+
+.station-path-node-wrap--active:not(:disabled) {
+  cursor: default;
+}
+
+.station-path-node-wrap--locked {
+  cursor: default;
+}
+
+.station-path-node-wrap:disabled:not(.station-path-node-wrap--active) {
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+
+.station-path-node-wrap--locked:disabled {
+  opacity: 0.72;
+}
+
+.station-path-node-wrap--active:disabled {
   opacity: 1;
-  transform: scale(1);
-}
-
-/* Animation classes */
-.carousel-station.exiting {
-  animation: slideOutLeft 0.3s ease forwards;
-}
-
-.carousel-station.exiting-left {
-  animation: slideOutLeft 0.3s ease forwards;
-}
-
-.carousel-station.exiting-right {
-  animation: slideOutRight 0.3s ease forwards;
-}
-
-.carousel-station.entering {
-  animation: slideInFromRight 0.3s ease forwards;
-}
-
-@keyframes slideOutLeft {
-  from {
-    transform: translateX(0) scale(1);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(-60px) scale(0.7);
-    opacity: 0;
-  }
-}
-
-@keyframes slideOutRight {
-  from {
-    transform: translateX(0) scale(1);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(60px) scale(0.7);
-    opacity: 0;
-  }
-}
-
-@keyframes slideInFromRight {
-  from {
-    transform: translateX(60px) scale(0.7);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0) scale(0.8);
-    opacity: 0.5;
-  }
 }
 
 /* Station Nodes */
@@ -394,6 +392,7 @@
   align-items: center;
   gap: 6px;
   transition: all 0.3s ease;
+  transform-origin: center center;
 }
 
 .station-node-name {
@@ -425,6 +424,7 @@
   align-items: center;
   gap: 8px;
   transition: all 0.3s ease;
+  transform-origin: center center;
 }
 
 .station-node-name-main {
@@ -731,14 +731,14 @@
     justify-content: center;
   }
 
-  .carousel-stations {
-    gap: 16px;
+  .station-path-panel {
+    padding: 12px 8px 16px;
   }
 
-  .carousel-nav {
-    width: 36px;
-    height: 36px;
-    font-size: 18px;
+  .station-path-nav-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
   }
 
   .station-node-name {
@@ -762,11 +762,5 @@
 
   .task-actions {
     flex-direction: column;
-  }
-  
-  .progress-dot {
-    width: 24px;
-    height: 24px;
-    font-size: 10px;
   }
 }

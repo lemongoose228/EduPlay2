@@ -16,12 +16,15 @@ export type SearchGamesDto = {
 };
 
 export interface LibraryAuthorDto {
+  id: string;
+  publicId?: string;
   name: string;
   avatar?: string | null;
 }
 
 export interface LibraryGameDto {
   id: string;
+  publicId?: string;
   title: string;
   type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
   description?: string;

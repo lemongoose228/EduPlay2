@@ -10,9 +10,13 @@ import { AuthPage } from '../../features/auth/ui/AuthPage';
 import { useAppSelector } from '../store/hooks';
 import { selectIsAuthenticated } from '../../features/auth/model/selectors';
 import { SettingsPage } from '../../pages/settings/SettingsPage';
+import { AdminPanelPage } from '../../pages/admin/AdminPanelPage';
+import { selectAuthUser } from '../../features/auth/model/selectors';
 
 export const AppRouter: React.FC = () => {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const authUser = useAppSelector(selectAuthUser);
+  const isAdmin = authUser?.role === 'admin' || authUser?.role === 'super_admin';
 
   return (
     <Routes>
@@ -47,6 +51,12 @@ export const AppRouter: React.FC = () => {
       <Route
         path="/settings"
         element={isAuthenticated ? <SettingsPage /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/admin"
+        element={
+          isAuthenticated && isAdmin ? <AdminPanelPage /> : <Navigate to="/create-game" replace />
+        }
       />
     </Routes>
   );

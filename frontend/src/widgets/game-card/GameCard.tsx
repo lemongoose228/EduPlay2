@@ -2,11 +2,13 @@ import React from 'react';
 import { Button } from '../../shared/ui/Button/Button';
 import { resolveAvatarSrc } from '../../shared/lib/resolveAvatarSrc';
 import { GAME_TYPE_ICON_MAP } from '../../shared/lib/gameTypeIcons';
-import { FaHeart } from 'react-icons/fa';
+import { FaHeart, FaFlag } from 'react-icons/fa';
 import './GameCard.css';
 
 interface GameCardProps {
   id: string;
+  /** Числовой публичный ID для отображения в библиотеке */
+  publicId?: string;
   title: string;
   type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
   description?: string;
@@ -26,9 +28,12 @@ interface GameCardProps {
   onPlay?: () => void;
   onDelete?: () => void;
   onLikeToggle?: () => void;
+  onReport?: () => void;
 }
 
 export const GameCard: React.FC<GameCardProps> = ({
+  id,
+  publicId,
   title,
   type,
   description,
@@ -47,7 +52,8 @@ export const GameCard: React.FC<GameCardProps> = ({
   onPublish,
   onPlay,
   onDelete,
-  onLikeToggle
+  onLikeToggle,
+  onReport,
 }) => {
   const getTypeIcon = () => {
     return GAME_TYPE_ICON_MAP[type];
@@ -63,6 +69,7 @@ export const GameCard: React.FC<GameCardProps> = ({
 
   const resolvedAuthorAvatar = resolveAvatarSrc(authorAvatar);
   const authorInitial = author?.trim().charAt(0).toUpperCase();
+  const displayGameId = publicId?.trim() || id;
 
   return (
     <div className="game-card" onClick={onClick}>
@@ -75,12 +82,28 @@ export const GameCard: React.FC<GameCardProps> = ({
           />
           <span>{getTypeText()}</span>
         </div>
-        {isLibraryCard && likes !== undefined && (
-          <div className="library-likes-badge" aria-label={`Лайков: ${likes}`}>
-            <FaHeart />
-            <span>{likes}</span>
-          </div>
-        )}
+        <div className="game-card-header-actions">
+          {isLibraryCard && onReport && (
+            <button
+              type="button"
+              className="game-card-report-icon"
+              aria-label="Пожаловаться"
+              title="Пожаловаться"
+              onClick={(e) => {
+                e.stopPropagation();
+                onReport();
+              }}
+            >
+              <FaFlag size={14} />
+            </button>
+          )}
+          {isLibraryCard && likes !== undefined && (
+            <div className="library-likes-badge" aria-label={`Лайков: ${likes}`}>
+              <FaHeart />
+              <span>{likes}</span>
+            </div>
+          )}
+        </div>
         {isPublished !== undefined && (
           <span className={`game-card-status ${isPublished ? 'published' : 'draft'}`}>
             {isPublished ? 'Опубликовано' : 'Черновик'}
@@ -93,6 +116,12 @@ export const GameCard: React.FC<GameCardProps> = ({
         {description && <p className="game-card-description">{description}</p>}
         
         <div className="game-card-meta">
+          {isLibraryCard && (
+            <div className="game-card-meta-item">
+              <span className="meta-icon">🆔</span>
+              <span>ID игры: {displayGameId}</span>
+            </div>
+          )}
           {!isLibraryCard && questionsCount && (
             <div className="game-card-meta-item">
               <span className="meta-icon">📋</span>

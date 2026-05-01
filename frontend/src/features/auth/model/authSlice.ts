@@ -7,6 +7,31 @@ import {
   uploadProfileAvatarApi,
   type AuthUser,
 } from '../api/authApi';
+import { parseRoleFromJwt } from '../../../shared/lib/parseJwtRole';
+
+function normalizeAuthUserSession(
+  partial: AuthUser,
+  token: string | null,
+  previous: AuthUser | null,
+): AuthUser {
+  const fromJwt = parseRoleFromJwt(token);
+  const role = partial.role ?? previous?.role ?? fromJwt ?? 'user';
+  return {
+    ...partial,
+    role,
+    isBlocked: partial.isBlocked ?? previous?.isBlocked ?? false,
+  };
+}
+
+/** После login/register не берём role из предыдущего user в сторе. */
+function normalizeAuthUserFresh(partial: AuthUser, token: string | null): AuthUser {
+  const role = partial.role ?? parseRoleFromJwt(token) ?? 'user';
+  return {
+    ...partial,
+    role,
+    isBlocked: partial.isBlocked ?? false,
+  };
+}
 
 export interface AuthState {
   token: string | null;
@@ -134,9 +159,12 @@ const authSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.user = action.payload.user;
         state.token = action.payload.token;
         localStorage.setItem('token', action.payload.token);
+        state.user = normalizeAuthUserFresh(
+          action.payload.user,
+          action.payload.token,
+        );
       })
       .addCase(login.rejected, (state, action) => {
         state.status = 'failed';
@@ -148,9 +176,12 @@ const authSlice = createSlice({
       })
       .addCase(register.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.user = action.payload.user;
         state.token = action.payload.token;
         localStorage.setItem('token', action.payload.token);
+        state.user = normalizeAuthUserFresh(
+          action.payload.user,
+          action.payload.token,
+        );
       })
       .addCase(register.rejected, (state, action) => {
         state.status = 'failed';
@@ -162,7 +193,11 @@ const authSlice = createSlice({
       })
       .addCase(fetchProfile.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.user = action.payload;
+        state.user = normalizeAuthUserSession(
+          action.payload,
+          state.token,
+          state.user,
+        );
       })
       .addCase(fetchProfile.rejected, (state, action) => {
         state.status = 'failed';
@@ -172,7 +207,11 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(updateProfile.fulfilled, (state, action) => {
-        state.user = action.payload;
+        state.user = normalizeAuthUserSession(
+          action.payload,
+          state.token,
+          state.user,
+        );
         state.error = null;
       })
       .addCase(updateProfile.rejected, (state, action) => {

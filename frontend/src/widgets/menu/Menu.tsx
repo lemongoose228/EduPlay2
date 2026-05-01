@@ -46,6 +46,9 @@ export const Menu: React.FC = () => {
     { path: '/library', label: 'Библиотека игр', icon: LibImg },
     { path: '/game-sessions', label: 'Игровые сессии', icon: SessionsImg },
   ];
+  if (user?.role === 'admin' || user?.role === 'super_admin') {
+    menuItems.push({ path: '/admin', label: 'Панель администратора', icon: SessionsImg });
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

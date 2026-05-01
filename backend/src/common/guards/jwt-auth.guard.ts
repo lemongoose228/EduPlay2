@@ -1,4 +1,9 @@
-import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  ExecutionContext,
+  UnauthorizedException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
@@ -16,6 +21,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   ): TUser {
     if (err || !user) {
       throw err || new UnauthorizedException('Необходима авторизация');
+    }
+    if (user?.isBlocked) {
+      throw new ForbiddenException('Ваш аккаунт заблокирован');
     }
     return user as TUser;
   }

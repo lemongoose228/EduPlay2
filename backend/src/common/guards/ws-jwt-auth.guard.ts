@@ -1,5 +1,6 @@
 import {
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -31,6 +32,9 @@ export class WsJwtAuthGuard extends AuthGuard('jwt') {
   ): TUser {
     if (err || !user) {
       throw err || new UnauthorizedException('Необходима авторизация');
+    }
+    if (user?.isBlocked) {
+      throw new ForbiddenException('Ваш аккаунт заблокирован');
     }
 
     const client = context.switchToWs().getClient<Socket>();

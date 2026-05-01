@@ -10,14 +10,17 @@ import { GAME_TYPE_ICON_MAP } from '../../shared/lib/gameTypeIcons';
 import { createSessionApi, joinSessionApi } from '../../features/sessions/api/sessionsApi';
 import { likeGameApi, unlikeGameApi, getLikedGameIdsApi } from '../../features/games/api/gamesApi';
 import { searchLibraryApi, type LibraryGameDto } from '../../features/library/api/libraryApi';
+import { createReportApi } from '../../features/reports/api/reportsApi';
 import './LibraryPage.css';
 
 interface PublicGame {
   id: string;
+  publicId: string;
   title: string;
   type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
   description?: string;
   author: string;
+  authorId: string;
   authorAvatar?: string;
   likes: number;
 }
@@ -65,10 +68,12 @@ export const LibraryPage: React.FC = () => {
 
       return {
         id: game.id,
+        publicId: game.publicId ?? '',
         title: game.title,
         type: game.type,
         description: game.description,
         author: game.author?.name ?? '',
+        authorId: game.author?.id ?? '',
         authorAvatar: game.author?.avatar ?? undefined,
         likes,
       } as PublicGame;
@@ -118,6 +123,21 @@ export const LibraryPage: React.FC = () => {
       cancelled = true;
     };
   }, [debouncedSearch, selectedType, sortBy]);
+
+  const handleReportGame = async (gameId: string) => {
+    const reason = window.prompt('Опишите причину жалобы');
+    if (!reason || reason.trim().length < 5) {
+      alert('Причина жалобы должна быть минимум 5 символов');
+      return;
+    }
+    try {
+      await createReportApi({ gameId, reason: reason.trim() });
+      alert('Жалоба отправлена');
+    } catch (e) {
+      console.error(e);
+      alert('Не удалось отправить жалобу');
+    }
+  };
 
   useEffect(() => {
     const map: Record<string, number> = {};
@@ -195,7 +215,7 @@ export const LibraryPage: React.FC = () => {
       <div className="library-controls">
         <div className="search-section">
           <Input
-            placeholder="Поиск игр по названию, описанию или автору..."
+            placeholder="Название, автор, числовой ID игры или пользователя..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             leftIcon="🔍"
@@ -279,6 +299,7 @@ export const LibraryPage: React.FC = () => {
             <GameCard
               key={game.id}
               id={game.id}
+              publicId={game.publicId}
               title={game.title}
               type={game.type}
               description={game.description}
@@ -288,6 +309,7 @@ export const LibraryPage: React.FC = () => {
               likes={game.likes}
               isLiked={likedIds.includes(game.id)}
               onLikeToggle={user ? () => handleToggleLike(game.id) : undefined}
+              onReport={user && game.authorId !== user.id ? () => handleReportGame(game.id) : undefined}
               onPlay={() => handlePlayGame(game.id)}
             />
           ))}

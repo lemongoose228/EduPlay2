@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IoChevronDown } from 'react-icons/io5';
+import { IoCalendarOutline, IoChevronDown } from 'react-icons/io5';
 import { SessionCard } from '../../widgets/session-card/SessionCard';
 import { Button } from '../../shared/ui/Button/Button';
 import { Modal } from '../../shared/ui/Modal/Modal';
 import { Input } from '../../shared/ui/Input/Input';
-import { GAME_TYPE_ICON_MAP } from '../../shared/lib/gameTypeIcons';
 import './GameSessionsPage.css';
 import {
   deleteSessionApi,
@@ -277,8 +276,8 @@ export const GameSessionsPage: React.FC = () => {
         </div>
       ) : (
         <div className="empty-state">
-          <div className="empty-icon">
-            <img src={GAME_TYPE_ICON_MAP.own} alt="Своя игра" />
+          <div className="empty-icon" aria-hidden>
+            <IoCalendarOutline />
           </div>
           <h3>Сессии не найдены</h3>
           <p>Создайте новую игру или присоединитесь к существующей</p>

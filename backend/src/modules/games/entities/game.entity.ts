@@ -18,6 +18,10 @@ export class Game {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  /** Заполняется автоматически (sequence); nullable нужен, чтобы synchronize не ломался на старых строках. */
+  @Column({ type: 'bigint', unique: true, nullable: true })
+  publicId: string | null;
+
   @Column()
   title: string;
 
@@ -37,6 +41,18 @@ export class Game {
     default: 'draft',
   })
   status: GameStatus;
+
+  @Column({ default: false })
+  isBlocked: boolean;
+
+  @Column({ type: 'timestamp', nullable: true })
+  blockedAt: Date | null;
+
+  @Column({ type: 'text', nullable: true })
+  blockedReason: string | null;
+
+  @Column({ type: 'uuid', nullable: true })
+  blockedByUserId: string | null;
 
   @Column({ default: 0 })
   plays: number;

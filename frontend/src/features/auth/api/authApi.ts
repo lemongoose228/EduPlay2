@@ -2,9 +2,14 @@ import { axiosInstance } from '../../../shared/api';
 
 export interface AuthUser {
   id: string;
+  /** Числовой публичный ID (после миграции БД). */
+  publicId?: string;
   email: string;
   name: string;
   avatar?: string | null;
+  role: 'user' | 'admin' | 'super_admin';
+  isBlocked: boolean;
+  blockedReason?: string | null;
 }
 
 interface ApiEnvelope<T> {

@@ -25,6 +25,32 @@
   align-items: flex-start;
 }
 
+.game-card-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.game-card-report-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.game-card-report-icon:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
 .game-card-type {
   display: flex;
   align-items: center;

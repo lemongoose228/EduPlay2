@@ -34,11 +34,13 @@ export const AuthPage: React.FC = () => {
 
   const isLoading = status === 'loading';
 
+  const normalizedLogin = email.trim().toLowerCase();
+  const isValidLogin = normalizedLogin === 'admin' || /^\S+@\S+\.\S+$/.test(email.trim());
   const emailError =
     touched.email && !email.trim()
-      ? 'Введите email'
-      : touched.email && !/^\S+@\S+\.\S+$/.test(email)
-        ? 'Некорректный email'
+      ? 'Введите email или логин'
+      : touched.email && !isValidLogin
+        ? 'Введите корректный email или логин admin'
         : undefined;
 
   const passwordError =
@@ -133,8 +135,8 @@ export const AuthPage: React.FC = () => {
             )}
 
             <Input
-              label="Email"
-              placeholder="user@example.com"
+              label="Email или логин"
+              placeholder="user@example.com или admin"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onBlur={() => setTouched((t) => ({ ...t, email: true }))}

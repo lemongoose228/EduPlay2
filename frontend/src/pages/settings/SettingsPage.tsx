@@ -227,6 +227,13 @@ export const SettingsPage: React.FC = () => {
               disabled
               helperText="Email нельзя изменить"
             />
+
+            <Input
+              label="Ваш ID"
+              value={user?.publicId ?? user?.id ?? ''}
+              disabled
+              helperText="Числовой ID виден только вам; по нему можно искать ваши игры в библиотеке и использовать в админ-панели"
+            />
           </div>
 
           <div className="settings-actions">

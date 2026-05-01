@@ -9,6 +9,7 @@ import { promises as fs } from 'fs';
 import { join } from 'path';
 import { User } from './entities/user.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UserRole } from './entities/user-role.enum';
 
 const AVATAR_SUBDIR = 'avatars';
 
@@ -37,13 +38,58 @@ export class UsersService {
     return user;
   }
 
+  /** Принимает UUID или числовой publicId из UI. */
+  async resolveIdToUuid(raw: string): Promise<string> {
+    const t = raw.trim();
+    if (!t) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+    if (/^\d+$/.test(t)) {
+      const byPublic = await this.usersRepository.findOne({
+        where: { publicId: t },
+      });
+      if (!byPublic) {
+        throw new NotFoundException('Пользователь не найден');
+      }
+      return byPublic.id;
+    }
+    await this.findById(t);
+    return t;
+  }
+
   async findByEmail(email: string): Promise<User | null> {
     return this.usersRepository.findOne({ where: { email } });
+  }
+
+  async findSuperAdmin(): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: { role: UserRole.SUPER_ADMIN },
+    });
   }
 
   async create(userData: Partial<User>): Promise<User> {
     const user = this.usersRepository.create(userData);
     return this.usersRepository.save(user);
+  }
+
+  async setRole(userId: string, role: UserRole): Promise<Partial<User>> {
+    const user = await this.findById(userId);
+    user.role = role;
+    await this.usersRepository.save(user);
+    return this.getProfile(userId);
+  }
+
+  async setBlocked(
+    userId: string,
+    isBlocked: boolean,
+    reason?: string | null,
+  ): Promise<Partial<User>> {
+    const user = await this.findById(userId);
+    user.isBlocked = isBlocked;
+    user.blockedAt = isBlocked ? new Date() : null;
+    user.blockedReason = isBlocked ? reason?.trim() || null : null;
+    await this.usersRepository.save(user);
+    return this.getProfile(userId);
   }
 
   async updateProfile(id: string, dto: UpdateProfileDto): Promise<Partial<User>> {

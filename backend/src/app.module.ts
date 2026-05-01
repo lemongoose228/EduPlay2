@@ -8,6 +8,9 @@ import { SessionsModule } from './modules/sessions/sessions.module';
 import { LibraryModule } from './modules/library/library.module';
 import databaseConfig from './config/database.config';
 import { RedisModule } from './redis/redis.module';
+import { ReportsModule } from './modules/reports/reports.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { PublicIdSchemaService } from './database/public-id-schema.service';
 
 @Module({
   imports: [
@@ -28,7 +31,10 @@ import { RedisModule } from './redis/redis.module';
     GamesModule,
     SessionsModule,
     LibraryModule,
+    ReportsModule,
+    AdminModule,
     RedisModule,
   ],
+  providers: [PublicIdSchemaService],
 })
 export class AppModule {}
