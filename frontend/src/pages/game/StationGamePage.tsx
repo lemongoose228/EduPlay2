@@ -1,4 +1,16 @@
-import React, { useEffect, useMemo, useState } from 'react';
+// StationGamePage.tsx
+import React, { useEffect, useMemo, useState, useRef } from 'react';
+import {
+  FaBullseye,
+  FaCheck,
+  FaChevronLeft,
+  FaChevronRight,
+  FaClipboardList,
+  FaCrown,
+  FaMapMarkedAlt,
+  FaRegClock,
+  FaTimes,
+} from 'react-icons/fa';
 import { Button } from '../../shared/ui/Button/Button';
 import './StationGamePage.css';
 
@@ -51,7 +63,7 @@ const decodeStationAnswer = (raw: string | null | undefined) => {
     return {
       name: source || 'Станция',
       shape: 'circle' as StationShape,
-      color: '#6b8cff',
+      color: '#6B4EFF',
     };
   }
   try {
@@ -63,10 +75,10 @@ const decodeStationAnswer = (raw: string | null | undefined) => {
     return {
       name: parsed.name?.trim() || 'Станция',
       shape: parsed.shape ?? 'circle',
-      color: parsed.color ?? '#6b8cff',
+      color: parsed.color ?? '#6B4EFF',
     };
   } catch {
-    return { name: 'Станция', shape: 'circle' as StationShape, color: '#6b8cff' };
+    return { name: 'Станция', shape: 'circle' as StationShape, color: '#6B4EFF' };
   }
 };
 
@@ -85,12 +97,14 @@ export const StationGamePage: React.FC<StationGamePageProps> = ({
   onStart,
   onFinish,
 }) => {
-  const [activeStationId, setActiveStationId] = useState<string | null>(null);
   const [stationStatuses, setStationStatuses] = useState<Record<string, StationStatus>>({});
-  const [finishedAtLocal, setFinishedAtLocal] = useState<string | null>(null);
   const [attemptsCount, setAttemptsCount] = useState(0);
   const [errorsCount, setErrorsCount] = useState(0);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionDirection, setTransitionDirection] = useState<'next' | 'prev' | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stationItems: StationItem[] = useMemo(
     () =>
@@ -107,81 +121,133 @@ export const StationGamePage: React.FC<StationGamePageProps> = ({
     [session.game.categories],
   );
 
-  useEffect(() => {
-    if (!stationItems.length) return;
-    const current = stationItems.some((item) => item.id === activeStationId);
-    if (!current) {
-      setActiveStationId(stationItems[0].id);
+  const getActiveStationId = () => {
+    const allResolved = stationItems.length > 0 && 
+      stationItems.every((item) => stationStatuses[item.id] && stationStatuses[item.id] !== 'pending');
+    const retryFailedMode = allResolved && stationItems.some((item) => stationStatuses[item.id] === 'failed');
+    
+    if (retryFailedMode) {
+      const firstFailed = stationItems.find((item) => stationStatuses[item.id] === 'failed');
+      if (firstFailed) return firstFailed.id;
     }
-  }, [stationItems, activeStationId]);
+    
+    const firstPending = stationItems.find((item) => !stationStatuses[item.id] || stationStatuses[item.id] === 'pending');
+    return firstPending?.id || stationItems[0]?.id;
+  };
+
+  const [activeStationId, setActiveStationId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const newActiveId = getActiveStationId();
+    if (newActiveId && newActiveId !== activeStationId) {
+      setActiveStationId(newActiveId);
+    } else if (!activeStationId && newActiveId) {
+      setActiveStationId(newActiveId);
+    }
+  }, [stationStatuses, stationItems]);
 
   const getStationStatsStorageKey = (id: string) => `station-stats:${id}`;
 
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(getStationStatsStorageKey(session.id));
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as { attempts?: number; errors?: number };
-      setAttemptsCount(parsed.attempts ?? 0);
-      setErrorsCount(parsed.errors ?? 0);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { attempts?: number; errors?: number; statuses?: Record<string, StationStatus> };
+        setAttemptsCount(parsed.attempts ?? 0);
+        setErrorsCount(parsed.errors ?? 0);
+        if (parsed.statuses) {
+          setStationStatuses(parsed.statuses);
+        }
+      }
     } catch {
       setAttemptsCount(0);
       setErrorsCount(0);
     }
   }, [session.id]);
 
-  const attemptedCount = useMemo(
-    () => stationItems.filter((item) => stationStatuses[item.id] && stationStatuses[item.id] !== 'pending').length,
-    [stationItems, stationStatuses],
-  );
+  // Timer
+  useEffect(() => {
+    if (session.status !== 'active') return;
+    
+    const startedAtMs = session.startedAt ? new Date(session.startedAt).getTime() : Date.now();
+    
+    const updateTimer = () => {
+      const elapsed = Math.floor((Date.now() - startedAtMs) / 1000);
+      setElapsedSeconds(elapsed);
+    };
+    
+    updateTimer();
+    timerRef.current = setInterval(updateTimer, 1000);
+    
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [session.status, session.startedAt]);
+
   const successCount = useMemo(
     () => stationItems.filter((item) => stationStatuses[item.id] === 'success').length,
     [stationItems, stationStatuses],
   );
+  
   const failedCount = useMemo(
     () => stationItems.filter((item) => stationStatuses[item.id] === 'failed').length,
     [stationItems, stationStatuses],
   );
-  const allResolved = stationItems.length > 0 && stationItems.every((item) => Boolean(stationStatuses[item.id]));
+  
+  const attemptedCount = useMemo(
+    () => stationItems.filter((item) => stationStatuses[item.id] && stationStatuses[item.id] !== 'pending').length,
+    [stationItems, stationStatuses],
+  );
+  
+  const allResolved = stationItems.length > 0 && 
+    stationItems.every((item) => stationStatuses[item.id] && stationStatuses[item.id] !== 'pending');
   const retryFailedMode = allResolved && failedCount > 0;
 
-  const activeStationIndex = useMemo(
-    () => stationItems.findIndex((item) => item.id === activeStationId),
-    [activeStationId, stationItems],
-  );
-  const currentStation = activeStationIndex >= 0 ? stationItems[activeStationIndex] : null;
+  const currentStation = stationItems.find((item) => item.id === activeStationId);
+  const activeStationIndex = stationItems.findIndex((item) => item.id === activeStationId);
+  
+  const prevStation = activeStationIndex > 0 ? stationItems[activeStationIndex - 1] : null;
+  const nextStation = activeStationIndex < stationItems.length - 1 ? stationItems[activeStationIndex + 1] : null;
+
+  const getStationStatus = (stationId: string): StationStatus => {
+    return stationStatuses[stationId] ?? 'pending';
+  };
 
   const canOpenStation = (stationId: string) => {
     const status = stationStatuses[stationId] ?? 'pending';
     if (session.status !== 'active') return false;
-    if (retryFailedMode) return status === 'failed' || stationId === activeStationId;
-    return status === 'pending' || stationId === activeStationId;
+    if (retryFailedMode) return status === 'failed';
+    return status === 'pending';
   };
 
-  const goToStationByOffset = (offset: -1 | 1) => {
-    if (!stationItems.length) return;
-    const currentIndex = Math.max(activeStationIndex, 0);
-    let nextIndex = currentIndex + offset;
-    while (nextIndex >= 0 && nextIndex < stationItems.length) {
-      const candidate = stationItems[nextIndex];
-      if (canOpenStation(candidate.id)) {
-        setActiveStationId(candidate.id);
-        return;
-      }
-      nextIndex += offset;
+  const goToStation = (stationId: string, direction: 'next' | 'prev') => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setTransitionDirection(direction);
+    
+    setTimeout(() => {
+      setActiveStationId(stationId);
+      setTimeout(() => {
+        setIsTransitioning(false);
+        setTransitionDirection(null);
+      }, 50);
+    }, 300);
+  };
+
+  const goToNext = () => {
+    if (nextStation && canOpenStation(nextStation.id)) {
+      goToStation(nextStation.id, 'next');
     }
   };
 
-  const startedAt = session.startedAt ? new Date(session.startedAt).getTime() : null;
-  const finishedAt = finishedAtLocal
-    ? new Date(finishedAtLocal).getTime()
-    : session.finishedAt
-      ? new Date(session.finishedAt).getTime()
-      : null;
-  const elapsedSeconds = startedAt == null ? 0 : Math.floor(((finishedAt ?? Date.now()) - startedAt) / 1000);
+  const goToPrev = () => {
+    if (prevStation && canOpenStation(prevStation.id)) {
+      goToStation(prevStation.id, 'prev');
+    }
+  };
 
   const handleMarkStation = (status: 'success' | 'failed') => {
-    if (!currentStation || isFinishing) return;
+    if (!currentStation || isFinishing || isTransitioning) return;
 
     const nextStatuses = { ...stationStatuses, [currentStation.id]: status };
     const nextAttempts = attemptsCount + 1;
@@ -205,128 +271,367 @@ export const StationGamePage: React.FC<StationGamePageProps> = ({
         errors: nextErrors,
         elapsedSec,
         finishedAt: nowIso,
+        statuses: nextStatuses,
       }),
     );
 
-    const allSuccess = stationItems.length > 0 && stationItems.every((item) => nextStatuses[item.id] === 'success');
+    const allSuccess = stationItems.length > 0 && 
+      stationItems.every((item) => nextStatuses[item.id] === 'success');
+    
     if (allSuccess) {
       setIsFinishing(true);
-      setFinishedAtLocal(nowIso);
       void onFinish().finally(() => setIsFinishing(false));
       return;
     }
 
-    const modeRetry = stationItems.length > 0 && stationItems.every((item) => Boolean(nextStatuses[item.id])) &&
-      stationItems.some((item) => nextStatuses[item.id] === 'failed');
-    const next = modeRetry
-      ? stationItems.find((item) => nextStatuses[item.id] === 'failed' && item.id !== currentStation.id)
-      : stationItems.slice(activeStationIndex + 1).find((item) => !nextStatuses[item.id]);
-    if (next) setActiveStationId(next.id);
+    const newActiveId = getActiveStationId();
+    if (newActiveId && newActiveId !== currentStation.id) {
+      setTimeout(() => {
+        goToStation(newActiveId, activeStationIndex < stationItems.findIndex(s => s.id === newActiveId) ? 'next' : 'prev');
+      }, 400);
+    }
   };
 
-  const canPrev = stationItems.some((item, idx) => idx < activeStationIndex && canOpenStation(item.id));
-  const canNext = stationItems.some((item, idx) => idx > activeStationIndex && canOpenStation(item.id));
+  const handleManualFinish = async () => {
+    if (window.confirm('Завершить игру? Непройденные станции будут отмечены как ошибки.')) {
+      const nowIso = new Date().toISOString();
+      const startedAtMs = session.startedAt ? new Date(session.startedAt).getTime() : Date.now();
+      const elapsedSec = Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000));
+      
+      sessionStorage.setItem(
+        getStationStatsStorageKey(session.id),
+        JSON.stringify({
+          completedStations: successCount,
+          totalStations: stationItems.length,
+          attempts: attemptsCount,
+          errors: errorsCount,
+          elapsedSec,
+          finishedAt: nowIso,
+          statuses: stationStatuses,
+          manuallyFinished: true,
+        }),
+      );
+      
+      setIsFinishing(true);
+      await onFinish();
+      setIsFinishing(false);
+    }
+  };
+
+  const renderShape = (shape: StationShape, color: string, status: StationStatus, size: number = 54) => {
+    const statusClass = status === 'success' ? 'shape-border-status-success' : status === 'failed' ? 'shape-border-status-failed' : '';
+    const style = {
+      backgroundColor: color,
+      width: size,
+      height: size,
+    };
+    
+    if (shape === 'circle') {
+      return <div className={`shape shape-circle ${statusClass}`} style={{ ...style, borderRadius: '50%' }} />;
+    }
+    if (shape === 'square') {
+      return <div className={`shape shape-square ${statusClass}`} style={{ ...style, borderRadius: '12px' }} />;
+    }
+    if (shape === 'triangle') {
+      return (
+        <div 
+          className={`shape shape-triangle ${statusClass}`} 
+          style={{ 
+            ...style, 
+            clipPath: 'polygon(50% 6%, 94% 92%, 6% 92%)',
+          }} 
+        />
+      );
+    }
+    if (shape === 'heart') {
+      return (
+        <div 
+          className={`shape shape-heart ${statusClass}`} 
+          style={{ 
+            ...style, 
+            clipPath: 'polygon(50% 92%, 10% 52%, 8% 30%, 22% 14%, 38% 14%, 50% 28%, 62% 14%, 78% 14%, 92% 30%, 90% 52%)',
+          }} 
+        />
+      );
+    }
+    return (
+      <div 
+        className={`shape shape-star ${statusClass}`} 
+        style={{ 
+          ...style, 
+          clipPath: 'polygon(50% 4%, 61% 34%, 94% 34%, 67% 54%, 78% 88%, 50% 68%, 22% 88%, 33% 54%, 6% 34%, 39% 34%)',
+        }} 
+      />
+    );
+  };
+
+  const canPrev = prevStation && canOpenStation(prevStation.id);
+  const canNext = nextStation && canOpenStation(nextStation.id);
+
+  if (session.status === 'waiting') {
+    return (
+      <div className="station-game-page">
+        <div className="station-game-header glass-card">
+          <div className="station-header-left">
+            <h1 className="station-title">{session.game.title}</h1>
+            <div className="station-stats-badge">
+              <span className="stat-badge success">
+                <FaCheck className="stat-badge-icon" aria-hidden /> 0
+              </span>
+              <span className="stat-badge failed">
+                <FaTimes className="stat-badge-icon" aria-hidden /> 0
+              </span>
+              <span className="stat-badge attempts">
+                <FaBullseye className="stat-badge-icon" aria-hidden /> 0
+              </span>
+            </div>
+          </div>
+          <div className="station-header-actions">
+            <div className="station-timer">
+              <FaRegClock className="station-timer-clock-icon" aria-hidden />
+              <span className="station-timer-label">Время:</span>
+              <strong className="station-timer-value">00:00</strong>
+            </div>
+          </div>
+        </div>
+        <div className="station-lobby glass-card">
+          <div className="lobby-content">
+            <div className="lobby-icon" aria-hidden>
+              <FaMapMarkedAlt />
+            </div>
+            <h2>Маршрут готов</h2>
+            <p>Вас ждёт {stationItems.length} интересных станций</p>
+            {isHost && (
+              <Button variant="primary" size="large" onClick={onStart}>
+                Начать путешествие
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="station-game-page">
+      {/* Header */}
       <div className="station-game-header glass-card">
-        <div>
-          <h1>{session.game.title}</h1>
-          <p>
-            Пройдено: <strong>{successCount}</strong> / {stationItems.length} | Попыток: {attemptedCount}
-          </p>
+        <div className="station-header-left">
+          <h1 className="station-title">{session.game.title}</h1>
+          <div className="station-stats-badge">
+            <span className="stat-badge success">
+              <FaCheck className="stat-badge-icon" aria-hidden /> {successCount}
+            </span>
+            <span className="stat-badge failed">
+              <FaTimes className="stat-badge-icon" aria-hidden /> {failedCount}
+            </span>
+            <span className="stat-badge attempts">
+              <FaBullseye className="stat-badge-icon" aria-hidden /> {attemptedCount}
+            </span>
+          </div>
         </div>
         <div className="station-header-actions">
-          <div className="station-timer">Время: {formatDuration(elapsedSeconds)}</div>
+          <div className="station-timer">
+            <FaRegClock className="station-timer-clock-icon" aria-hidden />
+            <span className="station-timer-label">Время:</span>
+            <strong className="station-timer-value">{formatDuration(elapsedSeconds)}</strong>
+          </div>
           {session.status === 'active' && isHost && (
-            <Button
-              variant="secondary"
-              onClick={async () => {
-                setFinishedAtLocal(new Date().toISOString());
-                await onFinish();
-              }}
-            >
+            <Button variant="secondary" size="small" onClick={handleManualFinish} disabled={isFinishing}>
               Завершить игру
             </Button>
           )}
         </div>
       </div>
 
-      {session.status === 'waiting' ? (
-        <div className="station-lobby glass-card">
-          <p>Маршрут готов. Нажмите «Начать игру», чтобы открыть первую станцию.</p>
-          {isHost && <Button onClick={onStart}>Начать игру</Button>}
-        </div>
-      ) : (
-        <>
-          <div className="station-track glass-card">
-            <div className="station-position">
-              Станция {Math.max(activeStationIndex + 1, 1)} из {stationItems.length}
-            </div>
-            <div className="station-track-row">
-              {stationItems.map((station, idx) => {
-                const status = stationStatuses[station.id] ?? 'pending';
-                const isActive = station.id === activeStationId;
-                const canOpen = canOpenStation(station.id);
-                return (
-                  <React.Fragment key={station.id}>
-                    <button
-                      type="button"
-                      className={`station-track-node ${isActive ? 'is-active' : ''}`}
-                      onClick={() => {
-                        if (canOpen) setActiveStationId(station.id);
-                      }}
-                      disabled={!canOpen}
-                      title={station.name}
-                    >
-                      <div
-                        className={`shape shape-${station.shape} status-${status}`}
-                        style={{ backgroundColor: station.color }}
-                      />
-                      <span>{station.name}</span>
-                    </button>
-                    {idx < stationItems.length - 1 && <div className="station-link" aria-hidden />}
-                  </React.Fragment>
-                );
-              })}
+      {/* Main content: left column (stations) + right column (task) */}
+      <div className="station-main-layout">
+        <div className="station-left-column">
+          {/* Progress line */}
+          <div className="station-progress-line glass-card">
+            <div className="progress-track">
+              {stationItems.map((station, idx) => (
+                <div key={station.id} className="progress-step">
+                  <div 
+                    className={`progress-dot ${
+                      idx === activeStationIndex ? 'active' : 
+                      getStationStatus(station.id) === 'success' ? 'success' :
+                      getStationStatus(station.id) === 'failed' ? 'failed' : 'pending'
+                    }`}
+                    title={station.name}
+                  >
+                    {idx + 1}
+                  </div>
+                  {idx < stationItems.length - 1 && (
+                    <div className={`progress-line ${idx < activeStationIndex ? 'passed' : ''}`} />
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="station-panel glass-card">
-            <h3>Станция {activeStationIndex + 1}</h3>
-            <p>Успешно: {successCount}</p>
-            <p>Не выполнено: {failedCount}</p>
-            <p>Попыток: {attemptsCount}</p>
-            {retryFailedMode && <p>Режим: повторно пройдите станции с ошибками</p>}
+          {/* Carousel */}
+          <div className="station-carousel-container">
+            <div className="station-carousel">
+              <button 
+                className={`carousel-nav carousel-prev ${!canPrev || isTransitioning ? 'disabled' : ''}`}
+                onClick={goToPrev}
+                disabled={!canPrev || isTransitioning}
+              >
+                <FaChevronLeft aria-hidden />
+              </button>
 
-            <div className="station-nav">
-              <Button variant="outline" disabled={!canPrev} onClick={() => goToStationByOffset(-1)}>
-                ← Предыдущая
-              </Button>
-              <Button variant="outline" disabled={!canNext} onClick={() => goToStationByOffset(1)}>
-                Следующая →
-              </Button>
+              <div className="carousel-stations">
+                {/* Previous Station */}
+                <div className={`carousel-station prev ${isTransitioning && transitionDirection === 'next' ? 'exiting-left' : ''} ${isTransitioning && transitionDirection === 'prev' ? 'entering' : ''}`}>
+                  {prevStation && (
+                    <div className="station-node-small">
+                      <div className="station-node-shape">
+                        {renderShape(prevStation.shape, prevStation.color, getStationStatus(prevStation.id), 48)}
+                      </div>
+                      <span className="station-node-name">{prevStation.name}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Current Station */}
+                <div className={`carousel-station current ${isTransitioning ? (transitionDirection === 'next' ? 'exiting' : transitionDirection === 'prev' ? 'exiting-right' : '') : ''}`}>
+                  {currentStation && (
+                    <div className="station-node-main">
+                      <div className="station-node-shape-main">
+                        {renderShape(currentStation.shape, currentStation.color, getStationStatus(currentStation.id), 80)}
+                      </div>
+                      <h3 className="station-node-name-main">{currentStation.name}</h3>
+                      <div className="station-progress-badge">
+                        {activeStationIndex + 1} / {stationItems.length}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Next Station */}
+                <div className={`carousel-station next ${isTransitioning && transitionDirection === 'prev' ? 'exiting-right' : ''} ${isTransitioning && transitionDirection === 'next' ? 'entering' : ''}`}>
+                  {nextStation && (
+                    <div className="station-node-small">
+                      <div className="station-node-shape">
+                        {renderShape(nextStation.shape, nextStation.color, getStationStatus(nextStation.id), 48)}
+                      </div>
+                      <span className="station-node-name">{nextStation.name}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <button 
+                className={`carousel-nav carousel-next ${!canNext || isTransitioning ? 'disabled' : ''}`}
+                onClick={goToNext}
+                disabled={!canNext || isTransitioning}
+              >
+                <FaChevronRight aria-hidden />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Right column - Task Panel */}
+        <div className="station-right-column">
+          <div className="station-task-panel glass-card">
+            <div className="task-panel-header">
+              <span className="task-icon" aria-hidden>
+                <FaClipboardList />
+              </span>
+              <span className="task-label">Задание</span>
+              {retryFailedMode && <span className="retry-badge">Повторное прохождение</span>}
             </div>
 
+            <div className="station-stats-compact">
+              <div className="compact-stat">
+                <span className="compact-stat-label">Выполнено</span>
+                <span className="compact-stat-value">{successCount}</span>
+              </div>
+              <div className="compact-stat">
+                <span className="compact-stat-label">Не выполнено</span>
+                <span className="compact-stat-value">{failedCount}</span>
+              </div>
+              <div className="compact-stat">
+                <span className="compact-stat-label">Попыток</span>
+                <span className="compact-stat-value">{attemptedCount}</span>
+              </div>
+            </div>
+            
             {currentStation ? (
-              <div className="station-task-card">
-                <h4>{currentStation.name}</h4>
-                <p>{currentStation.task}</p>
+              <div className="task-content">
+                <p className="task-text">{currentStation.task}</p>
+                
                 {isHost && session.status === 'active' && (
-                  <div className="station-task-actions">
-                    <Button onClick={() => handleMarkStation('success')}>✓ Выполнено</Button>
-                    <Button variant="danger" onClick={() => handleMarkStation('failed')}>
-                      ✗ Не выполнено
-                    </Button>
+                  <div className="task-actions">
+                    <button 
+                      className="task-btn success-btn"
+                      onClick={() => handleMarkStation('success')}
+                      disabled={isFinishing || isTransitioning || getStationStatus(currentStation.id) === 'success'}
+                    >
+                      <span className="btn-icon" aria-hidden>
+                        <FaCheck />
+                      </span>
+                      Выполнено
+                    </button>
+                    <button 
+                      className="task-btn danger-btn"
+                      onClick={() => handleMarkStation('failed')}
+                      disabled={isFinishing || isTransitioning || getStationStatus(currentStation.id) === 'success'}
+                    >
+                      <span className="btn-icon" aria-hidden>
+                        <FaTimes />
+                      </span>
+                      Не выполнено
+                    </button>
+                  </div>
+                )}
+                
+                {!isHost && session.status === 'active' && (
+                  <div className="waiting-message">
+                    <span className="waiting-icon" aria-hidden>
+                      <FaCrown />
+                    </span>
+                    <p>Ожидайте решения ведущего</p>
+                  </div>
+                )}
+                
+                {getStationStatus(currentStation.id) === 'success' && (
+                  <div
+                    className="waiting-message waiting-message-success"
+                    style={{ background: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)' }}
+                  >
+                    <span className="waiting-icon" aria-hidden>
+                      <FaCheck />
+                    </span>
+                    <p>Задание выполнено!</p>
+                  </div>
+                )}
+                
+                {getStationStatus(currentStation.id) === 'failed' && !retryFailedMode && (
+                  <div
+                    className="waiting-message waiting-message-failed"
+                    style={{ background: 'linear-gradient(135deg, #ffe0e0, #ffcdd2)' }}
+                  >
+                    <span className="waiting-icon" aria-hidden>
+                      <FaTimes />
+                    </span>
+                    <p>Задание не выполнено. Вы сможете пройти его после завершения всех станций.</p>
                   </div>
                 )}
               </div>
             ) : (
-              <p className="station-help">Выберите станцию на карте или стрелками.</p>
+              <div className="task-empty">
+                <span className="empty-icon" aria-hidden>
+                  <FaMapMarkedAlt />
+                </span>
+                <p>Выберите станцию на карте</p>
+              </div>
             )}
           </div>
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 };

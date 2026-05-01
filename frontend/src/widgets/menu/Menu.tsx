@@ -8,6 +8,7 @@ import ConstructorImg from '../../assets/menu/constructor.svg'
 import LibImg from '../../assets/menu/lib.svg'
 import MyGamesImg from '../../assets/menu/mygames.svg'
 import SessionsImg from '../../assets/menu/sessions.svg'
+import { FaCog, FaSignOutAlt } from 'react-icons/fa';
 import { resolveAvatarSrc } from '../../shared/lib/resolveAvatarSrc';
 
 interface MenuItem {
@@ -106,7 +107,9 @@ export const Menu: React.FC = () => {
 
       <div className="menu-footer">
         <NavLink to="/settings" className="menu-item">
-          <span className="menu-item-icon">⚙️</span>
+          <span className="menu-item-icon" aria-hidden>
+            <FaCog size={20} />
+          </span>
           <span className="menu-item-label">Настройки</span>
         </NavLink>
         <button
@@ -117,7 +120,9 @@ export const Menu: React.FC = () => {
             navigate('/login');
           }}
         >
-          <span className="menu-item-icon">🚪</span>
+          <span className="menu-item-icon" aria-hidden>
+            <FaSignOutAlt size={20} />
+          </span>
           <span className="menu-item-label">Выйти</span>
         </button>
       </div>

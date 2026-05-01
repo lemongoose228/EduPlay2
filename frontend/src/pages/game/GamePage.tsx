@@ -23,7 +23,7 @@ import {
   getSessionsSocket,
   waitForSessionsSocketConnected,
 } from '../../features/sessions/api/sessionsSocket';
-import { FaTrophy, FaDownload } from 'react-icons/fa';
+import { FaTrophy, FaDownload, FaChartBar } from 'react-icons/fa';
 
 interface Question {
   id: string;
@@ -644,6 +644,7 @@ export const GamePage: React.FC = () => {
         attempts: number;
         errors: number;
         elapsedSec: number;
+        manuallyFinished?: boolean;
       } | null = null;
 
       try {
@@ -674,12 +675,57 @@ export const GamePage: React.FC = () => {
         .padStart(2, '0');
       const seconds = (elapsedSec % 60).toString().padStart(2, '0');
 
+      const handleExportStationResults = () => {
+        const finishedAtRaw = session.finishedAt ?? new Date().toISOString();
+        const finishedAt = new Date(finishedAtRaw);
+        const finishedAtText = Number.isNaN(finishedAt.getTime())
+          ? finishedAtRaw
+          : finishedAt.toLocaleString('ru-RU');
+        const startedAtText = session.startedAt
+          ? new Date(session.startedAt).toLocaleString('ru-RU')
+          : 'Не указано';
+
+        const report = [
+          'Результаты игровой сессии',
+          '',
+          `Игра: ${session.game.title}`,
+          `Тип игры: станции`,
+          `ID сессии: ${session.id}`,
+          `Старт: ${startedAtText}`,
+          `Завершение: ${finishedAtText}`,
+          '',
+          'Статистика прохождения:',
+          `Пройдено станций: ${completedStations} / ${totalStations}`,
+          `Время игры: ${minutes}:${seconds}`,
+          `Попыток: ${attempts}`,
+          `Ошибок: ${errors}`,
+          stationStats?.manuallyFinished ? 'Примечание: сессия завершена ведущим до прохождения всех станций.' : '',
+        ]
+          .filter((line) => line !== '')
+          .join('\n');
+
+        const titlePart = sanitizeFileNamePart(session.game.title) || 'game';
+        const fileName = `results-${titlePart}-${session.id.slice(0, 8)}.txt`;
+        const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      };
+
       return (
         <div className="game-page game-finished">
           <div className="game-results-container">
             <h1 className="results-title">Игра завершена!</h1>
             <div className="leaderboard-section">
-              <h3>Статистика прохождения станций</h3>
+              <h3>
+                <FaChartBar style={{ color: '#667eea' }} />
+                Статистика прохождения станций
+              </h3>
               <div className="leaderboard-list">
                 <div className="leaderboard-row">
                   <div className="leaderboard-team-info">
@@ -708,6 +754,17 @@ export const GamePage: React.FC = () => {
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div className="results-export">
+              <Button
+                variant="outline"
+                className="results-export-button"
+                icon={<FaDownload />}
+                onClick={handleExportStationResults}
+              >
+                Сохранить результаты (.txt)
+              </Button>
             </div>
           </div>
         </div>

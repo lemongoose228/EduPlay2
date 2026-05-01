@@ -150,9 +150,14 @@
 }
 
 .menu-item-icon {
-  font-size: 20px;
   width: 24px;
-  text-align: center;
+  min-width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: inherit;
 }
 
 .menu-item-label {
