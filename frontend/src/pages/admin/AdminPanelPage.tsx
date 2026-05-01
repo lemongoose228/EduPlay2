@@ -24,6 +24,7 @@ import {
 } from 'react-icons/fa';
 import { Button } from '../../shared/ui/Button/Button';
 import { Input } from '../../shared/ui/Input/Input';
+import { useDialogs } from '../../shared/ui/DialogProvider';
 import './AdminPanelPage.css';
 
 type AdminTab = 'admins' | 'blocking' | 'reports';
@@ -31,6 +32,7 @@ type AdminTab = 'admins' | 'blocking' | 'reports';
 export const AdminPanelPage: React.FC = () => {
   const user = useAppSelector(selectAuthUser);
   const navigate = useNavigate();
+  const { showAlert } = useDialogs();
   const [tab, setTab] = useState<AdminTab>('blocking');
   const [adminUserId, setAdminUserId] = useState('');
   const [blockUserId, setBlockUserId] = useState('');
@@ -58,7 +60,7 @@ export const AdminPanelPage: React.FC = () => {
       setReports(data);
     } catch (e) {
       console.error(e);
-      alert('Не удалось загрузить жалобы');
+      await showAlert('Не удалось загрузить жалобы');
     } finally {
       setLoadingReports(false);
     }
@@ -73,11 +75,11 @@ export const AdminPanelPage: React.FC = () => {
   const handleSetAdmin = async (isAdmin: boolean) => {
     try {
       await setAdminRoleApi({ userId: adminUserId.trim(), isAdmin });
-      alert(isAdmin ? 'Пользователь назначен админом' : 'Права админа сняты');
+      await showAlert(isAdmin ? 'Пользователь назначен админом' : 'Права админа сняты');
       setAdminUserId('');
     } catch (e) {
       console.error(e);
-      alert('Не удалось изменить роль пользователя');
+      await showAlert('Не удалось изменить роль пользователя');
     }
   };
 
@@ -88,12 +90,12 @@ export const AdminPanelPage: React.FC = () => {
         isBlocked,
         reason: reason.trim() || undefined,
       });
-      alert(isBlocked ? 'Пользователь заблокирован' : 'Пользователь разблокирован');
+      await showAlert(isBlocked ? 'Пользователь заблокирован' : 'Пользователь разблокирован');
       setBlockUserId('');
       setReason('');
     } catch (e) {
       console.error(e);
-      alert('Не удалось изменить блокировку пользователя');
+      await showAlert('Не удалось изменить блокировку пользователя');
     }
   };
 
@@ -104,12 +106,12 @@ export const AdminPanelPage: React.FC = () => {
         isBlocked,
         reason: reason.trim() || undefined,
       });
-      alert(isBlocked ? 'Игра заблокирована' : 'Игра разблокирована');
+      await showAlert(isBlocked ? 'Игра заблокирована' : 'Игра разблокирована');
       setBlockGameId('');
       setReason('');
     } catch (e) {
       console.error(e);
-      alert('Не удалось изменить блокировку игры');
+      await showAlert('Не удалось изменить блокировку игры');
     }
   };
 
@@ -119,7 +121,7 @@ export const AdminPanelPage: React.FC = () => {
       await refreshReports();
     } catch (e) {
       console.error(e);
-      alert('Не удалось принять жалобу');
+      await showAlert('Не удалось принять жалобу');
     }
   };
 
@@ -129,7 +131,7 @@ export const AdminPanelPage: React.FC = () => {
       await refreshReports();
     } catch (e) {
       console.error(e);
-      alert('Не удалось отклонить жалобу');
+      await showAlert('Не удалось отклонить жалобу');
     }
   };
 

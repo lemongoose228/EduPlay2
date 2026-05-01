@@ -4,6 +4,7 @@ import { Button } from '../../../shared/ui/Button/Button';
 import { Input } from '../../../shared/ui/Input/Input';
 import { Card } from '../../../shared/ui/Card/Card';
 import { createEmptyQuizQuestion } from '../../../features/templates/utils/template.utils';
+import { useDialogs } from '../../../shared/ui/DialogProvider';
 import './QuizGameBuilder.css';
 
 interface QuizGameBuilderProps {
@@ -17,6 +18,7 @@ export const QuizGameBuilder: React.FC<QuizGameBuilderProps> = ({
   onSave,
   onCancel
 }) => {
+  const { showAlert } = useDialogs();
   const [gameName, setGameName] = useState(initialData?.name || '');
   const [questions, setQuestions] = useState<QuizQuestion[]>(
     initialData?.questions || [createEmptyQuizQuestion()]
@@ -43,20 +45,20 @@ export const QuizGameBuilder: React.FC<QuizGameBuilderProps> = ({
     ));
   };
 
-  const validateGame = (): boolean => {
+  const validateGame = async (): Promise<boolean> => {
     if (!gameName.trim()) {
-      alert('Введите название игры');
+      await showAlert('Введите название игры');
       return false;
     }
 
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
       if (!q.question.trim()) {
-        alert(`Заполните вопрос ${i + 1}`);
+        await showAlert(`Заполните вопрос ${i + 1}`);
         return false;
       }
       if (!q.answer.trim()) {
-        alert(`Заполните ответ на вопрос ${i + 1}`);
+        await showAlert(`Заполните ответ на вопрос ${i + 1}`);
         return false;
       }
     }
@@ -64,8 +66,8 @@ export const QuizGameBuilder: React.FC<QuizGameBuilderProps> = ({
     return true;
   };
 
-  const handleSave = () => {
-    if (!validateGame()) return;
+  const handleSave = async () => {
+    if (!(await validateGame())) return;
 
     const gameData: QuizTemplate = {
       ...initialData,

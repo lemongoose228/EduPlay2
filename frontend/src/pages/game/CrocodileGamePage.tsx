@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FaCheckCircle, FaTimesCircle, FaStar } from 'react-icons/fa';
 import { Button } from '../../shared/ui/Button/Button';
+import { useDialogs } from '../../shared/ui/DialogProvider';
 import './CrocodileGamePage.css';
 
 interface Term {
@@ -48,6 +49,7 @@ export const CrocodileGamePage: React.FC<CrocodileGamePageProps> = ({
   onMarkMissed,
   onFinish
 }) => {
+  const { showAlert } = useDialogs();
   const [timeLeft, setTimeLeft] = useState(gameData.timePerTerm);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [hoveredTermId, setHoveredTermId] = useState<string | null>(null);
@@ -107,12 +109,12 @@ export const CrocodileGamePage: React.FC<CrocodileGamePageProps> = ({
     Promise.resolve(onMarkMissed(termId))
       .catch((e) => {
         console.error(e);
-        alert('Не удалось отметить термин как неугаданный');
+        void showAlert('Не удалось отметить термин как неугаданный');
       })
       .finally(() => {
         setIsActionLoading(false);
       });
-  }, [gameStatus, isHost, crocodileState?.currentTermId, timeLeft, isActionLoading, onMarkMissed]);
+  }, [gameStatus, isHost, crocodileState?.currentTermId, timeLeft, isActionLoading, onMarkMissed, showAlert]);
 
   useEffect(() => {
     autoMissTermRef.current = null;
@@ -125,7 +127,7 @@ export const CrocodileGamePage: React.FC<CrocodileGamePageProps> = ({
       await onMarkGuessed(currentTerm.id);
     } catch (e) {
       console.error(e);
-      alert('Не удалось отметить термин как угаданный');
+      await showAlert('Не удалось отметить термин как угаданный');
     } finally {
       setIsActionLoading(false);
     }
@@ -138,7 +140,7 @@ export const CrocodileGamePage: React.FC<CrocodileGamePageProps> = ({
       await onMarkMissed(currentTerm.id);
     } catch (e) {
       console.error(e);
-      alert('Не удалось отметить термин как неугаданный');
+      await showAlert('Не удалось отметить термин как неугаданный');
     } finally {
       setIsActionLoading(false);
     }
@@ -150,7 +152,7 @@ export const CrocodileGamePage: React.FC<CrocodileGamePageProps> = ({
       await onFinish();
     } catch (e) {
       console.error(e);
-      alert('Не удалось завершить игру');
+      await showAlert('Не удалось завершить игру');
     } finally {
       setIsActionLoading(false);
     }

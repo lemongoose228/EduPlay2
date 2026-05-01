@@ -6,11 +6,13 @@ import { Button } from '../../shared/ui/Button/Button';
 import { Input } from '../../shared/ui/Input/Input';
 import { Modal } from '../../shared/ui/Modal/Modal';
 import { resolveAvatarSrc } from '../../shared/lib/resolveAvatarSrc';
+import { useDialogs } from '../../shared/ui/DialogProvider';
 import './SettingsPage.css';
 
 export const SettingsPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const user = useAppSelector(selectAuthUser);
+  const { showAlert } = useDialogs();
   const [isLoading, setIsLoading] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -96,11 +98,11 @@ export const SettingsPage: React.FC = () => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        alert('Размер файла не должен превышать 2MB');
+        void showAlert('Размер файла не должен превышать 2MB');
         return;
       }
       if (!file.type.startsWith('image/')) {
-        alert('Пожалуйста, выберите изображение');
+        void showAlert('Пожалуйста, выберите изображение');
         return;
       }
       revokeBlobPreview();
@@ -115,7 +117,7 @@ export const SettingsPage: React.FC = () => {
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      alert('Имя не может быть пустым');
+      await showAlert('Имя не может быть пустым');
       return;
     }
 
@@ -135,7 +137,7 @@ export const SettingsPage: React.FC = () => {
       console.error('Error updating profile:', error);
       const message =
         typeof error === 'string' ? error : 'Не удалось обновить профиль';
-      alert(message);
+      await showAlert(message);
     } finally {
       setIsLoading(false);
     }

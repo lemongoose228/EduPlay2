@@ -8,6 +8,7 @@ import { TEMPLATE_CONSTANTS } from '../../../features/templates/types/template.t
 import { Button } from '../../../shared/ui/Button/Button';
 import { Card } from '../../../shared/ui/Card/Card';
 import { Input } from '../../../shared/ui/Input/Input';
+import { useDialogs } from '../../../shared/ui/DialogProvider';
 import './StationGameBuilder.css';
 
 interface StationGameBuilderProps {
@@ -21,6 +22,7 @@ export const StationGameBuilder: React.FC<StationGameBuilderProps> = ({
   onSave,
   onCancel,
 }) => {
+  const { showAlert } = useDialogs();
   const [gameName, setGameName] = useState(initialData?.name || '');
   const [stations, setStations] = useState(
     initialData?.stations ?? [
@@ -67,20 +69,20 @@ export const StationGameBuilder: React.FC<StationGameBuilderProps> = ({
     setStations((prev) => prev.filter((station) => station.id !== id));
   };
 
-  const validate = () => {
+  const validate = async (): Promise<boolean> => {
     if (!gameName.trim()) {
-      alert('Введите название игры');
+      await showAlert('Введите название игры');
       return false;
     }
 
     if (stations.length < TEMPLATE_CONSTANTS.MIN_STATIONS) {
-      alert(`Минимум ${TEMPLATE_CONSTANTS.MIN_STATIONS} станции`);
+      await showAlert(`Минимум ${TEMPLATE_CONSTANTS.MIN_STATIONS} станции`);
       return false;
     }
 
     for (const station of stations) {
       if (!station.name.trim() || !station.task.trim()) {
-        alert('Заполните название и задание для каждой станции');
+        await showAlert('Заполните название и задание для каждой станции');
         return false;
       }
     }
@@ -88,8 +90,8 @@ export const StationGameBuilder: React.FC<StationGameBuilderProps> = ({
     return true;
   };
 
-  const handleSave = () => {
-    if (!validate()) return;
+  const handleSave = async () => {
+    if (!(await validate())) return;
 
     onSave({
       ...initialData,

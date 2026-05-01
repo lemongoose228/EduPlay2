@@ -19,6 +19,7 @@ import type {
 } from '../../features/templates/types/template.types';
 import './TemplateBuilderPage.css';
 import { createGameApi, getGameApi, updateGameApi } from '../../features/games/api/gamesApi';
+import { useDialogs } from '../../shared/ui/DialogProvider';
 
 const STATION_META_PREFIX = '__station_meta__:';
 
@@ -58,6 +59,7 @@ const decodeStationAnswer = (raw: string | null | undefined) => {
 export const TemplateBuilderPage: React.FC = () => {
   const { templateId } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
+  const { showAlert } = useDialogs();
 
   const isTemplateMode = useMemo(
     () =>
@@ -309,7 +311,7 @@ export const TemplateBuilderPage: React.FC = () => {
       navigate('/my-games');
     } catch (e) {
       console.error(e);
-      alert('Не удалось сохранить игру');
+      await showAlert('Не удалось сохранить игру');
     }
   };
 

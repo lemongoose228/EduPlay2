@@ -8,6 +8,7 @@ import { Button } from '../../../shared/ui/Button/Button';
 import { Card } from '../../../shared/ui/Card/Card';
 import { Input } from '../../../shared/ui/Input/Input';
 import wheelIcon from '../../../assets/wheel_icon.png';
+import { useDialogs } from '../../../shared/ui/DialogProvider';
 import './WheelGameBuilder.css';
 
 interface WheelGameBuilderProps {
@@ -21,6 +22,7 @@ export const WheelGameBuilder: React.FC<WheelGameBuilderProps> = ({
   onSave,
   onCancel,
 }) => {
+  const { showAlert } = useDialogs();
   const [gameName, setGameName] = useState(initialData?.name || '');
   const [categories, setCategories] = useState<WheelCategory[]>(
     initialData?.categories || [createEmptyWheelCategory(0)],
@@ -84,24 +86,24 @@ export const WheelGameBuilder: React.FC<WheelGameBuilderProps> = ({
     );
   };
 
-  const validateGame = (): boolean => {
+  const validateGame = async (): Promise<boolean> => {
     if (!gameName.trim()) {
-      alert('Введите название игры');
+      await showAlert('Введите название игры');
       return false;
     }
 
     for (const category of categories) {
       if (!category.name.trim()) {
-        alert('Заполните названия всех тем');
+        await showAlert('Заполните названия всех тем');
         return false;
       }
       if (!category.questions.length) {
-        alert(`Добавьте минимум один вопрос в теме "${category.name}"`);
+        await showAlert(`Добавьте минимум один вопрос в теме "${category.name}"`);
         return false;
       }
       for (const question of category.questions) {
         if (!question.question.trim() || !question.answer.trim()) {
-          alert(`Заполните все задания в теме "${category.name}"`);
+          await showAlert(`Заполните все задания в теме "${category.name}"`);
           return false;
         }
       }
@@ -110,8 +112,8 @@ export const WheelGameBuilder: React.FC<WheelGameBuilderProps> = ({
     return true;
   };
 
-  const handleSave = () => {
-    if (!validateGame()) return;
+  const handleSave = async () => {
+    if (!(await validateGame())) return;
 
     onSave({
       ...initialData,

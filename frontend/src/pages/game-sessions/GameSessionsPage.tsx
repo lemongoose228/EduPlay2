@@ -13,6 +13,7 @@ import {
 } from '../../features/sessions/api/sessionsApi';
 import { useAppSelector } from '../../app/store/hooks';
 import { selectAuthUser } from '../../features/auth/model/selectors';
+import { useDialogs } from '../../shared/ui/DialogProvider';
 
 interface Session {
   id: string;
@@ -31,6 +32,7 @@ interface Session {
 
 export const GameSessionsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { showAlert, showConfirm } = useDialogs();
   const user = useAppSelector(selectAuthUser);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,10 +46,10 @@ export const GameSessionsPage: React.FC = () => {
     setIsInviteModalOpen(true);
   };
 
-  const copyInviteCode = () => {
+  const copyInviteCode = async () => {
     if (selectedSession?.inviteCode) {
-      navigator.clipboard.writeText(selectedSession.inviteCode);
-      alert('Код приглашения скопирован в буфер обмена!');
+      await navigator.clipboard.writeText(selectedSession.inviteCode);
+      await showAlert('Код приглашения скопирован в буфер обмена!');
     }
   };
 
@@ -121,7 +123,7 @@ export const GameSessionsPage: React.FC = () => {
       navigate(`/game/${session.id}`);
     } catch (e) {
       console.error(e);
-      alert('Не удалось присоединиться к сессии');
+      await showAlert('Не удалось присоединиться к сессии');
     }
   };
 
@@ -239,7 +241,11 @@ export const GameSessionsPage: React.FC = () => {
               onDelete={
                 session.hostId && user?.id && session.hostId === user.id
                   ? async () => {
-                      if (!window.confirm('Удалить эту сессию?')) return;
+                      const ok = await showConfirm('Удалить эту сессию?', {
+                        title: 'Удаление сессии',
+                        danger: true,
+                      });
+                      if (!ok) return;
                       try {
                         await deleteSessionApi(session.id);
                         const backendSessions = await getMySessionsApi();
@@ -266,7 +272,7 @@ export const GameSessionsPage: React.FC = () => {
                         setSessions(mapped);
                       } catch (e) {
                         console.error(e);
-                        alert('Не удалось удалить сессию');
+                        await showAlert('Не удалось удалить сессию');
                       }
                     }
                   : undefined

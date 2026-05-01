@@ -5,12 +5,13 @@ import { Input } from '../../shared/ui/Input/Input';
 import { Button } from '../../shared/ui/Button/Button';
 import { useDebounce } from '../../shared/hooks/useDebounce';
 import { useAppSelector } from '../../app/store/hooks';
-import { selectAuthUser } from '../../features/auth/model/selectors';
+import { selectAuthUser, selectIsAuthenticated } from '../../features/auth/model/selectors';
 import { GAME_TYPE_ICON_MAP } from '../../shared/lib/gameTypeIcons';
 import { createSessionApi, joinSessionApi } from '../../features/sessions/api/sessionsApi';
 import { likeGameApi, unlikeGameApi, getLikedGameIdsApi } from '../../features/games/api/gamesApi';
 import { searchLibraryApi, type LibraryGameDto } from '../../features/library/api/libraryApi';
 import { createReportApi } from '../../features/reports/api/reportsApi';
+import { useDialogs } from '../../shared/ui/DialogProvider';
 import './LibraryPage.css';
 
 interface PublicGame {
@@ -20,18 +21,19 @@ interface PublicGame {
   type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
   description?: string;
   author: string;
-  authorId: string;
   authorAvatar?: string;
   likes: number;
 }
 
 export const LibraryPage: React.FC = () => {
+  const { showAlert, showPrompt } = useDialogs();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [selectedType, setSelectedType] = useState<'all' | 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station'>('all');
   const [sortBy, setSortBy] = useState<'' | 'likes' | 'newest'>('');
   const [activeTab, setActiveTab] = useState<'all' | 'favorites'>('all');
   const user = useAppSelector(selectAuthUser);
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
   const [likedIds, setLikedIds] = useState<string[]>([]);
   const [likesByGame, setLikesByGame] = useState<Record<string, number>>({});
@@ -73,7 +75,6 @@ export const LibraryPage: React.FC = () => {
         type: game.type,
         description: game.description,
         author: game.author?.name ?? '',
-        authorId: game.author?.id ?? '',
         authorAvatar: game.author?.avatar ?? undefined,
         likes,
       } as PublicGame;
@@ -111,7 +112,7 @@ export const LibraryPage: React.FC = () => {
       } catch (e) {
         console.error(e);
         if (!cancelled) {
-          alert('Не удалось загрузить библиотеку. Попробуйте снова.');
+          void showAlert('Не удалось загрузить библиотеку. Попробуйте снова.');
         }
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -122,20 +123,28 @@ export const LibraryPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [debouncedSearch, selectedType, sortBy]);
+  }, [debouncedSearch, selectedType, sortBy, showAlert]);
 
   const handleReportGame = async (gameId: string) => {
-    const reason = window.prompt('Опишите причину жалобы');
-    if (!reason || reason.trim().length < 5) {
-      alert('Причина жалобы должна быть минимум 5 символов');
-      return;
-    }
+    const reason = await showPrompt({
+      title: 'Жалоба на игру',
+      label: 'Опишите причину жалобы',
+      multiline: true,
+      minLength: 5,
+      submitText: 'Отправить',
+      placeholder: 'Не менее 5 символов',
+    });
+    if (reason === null) return;
     try {
-      await createReportApi({ gameId, reason: reason.trim() });
-      alert('Жалоба отправлена');
-    } catch (e) {
+      await createReportApi({ gameId, reason });
+      await showAlert('Жалоба отправлена');
+    } catch (e: unknown) {
       console.error(e);
-      alert('Не удалось отправить жалобу');
+      const msg =
+        e && typeof e === 'object' && 'response' in e
+          ? (e as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      await showAlert(typeof msg === 'string' ? msg : 'Не удалось отправить жалобу');
     }
   };
 
@@ -162,7 +171,7 @@ export const LibraryPage: React.FC = () => {
       }
     } catch (e) {
       console.error(e);
-      alert('Не удалось изменить лайк');
+      await showAlert('Не удалось изменить лайк');
     }
   };
 
@@ -182,7 +191,7 @@ export const LibraryPage: React.FC = () => {
       navigate(`/game/${session.id}`);
     } catch (e) {
       console.error(e);
-      alert('Не удалось создать игровую сессию');
+      await showAlert('Не удалось создать игровую сессию');
     }
   };
 
@@ -309,7 +318,7 @@ export const LibraryPage: React.FC = () => {
               likes={game.likes}
               isLiked={likedIds.includes(game.id)}
               onLikeToggle={user ? () => handleToggleLike(game.id) : undefined}
-              onReport={user && game.authorId !== user.id ? () => handleReportGame(game.id) : undefined}
+              onReport={isAuthenticated ? () => handleReportGame(game.id) : undefined}
               onPlay={() => handlePlayGame(game.id)}
             />
           ))}

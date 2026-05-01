@@ -17,6 +17,7 @@ import {
 } from 'react-icons/fa';
 import { BsFillTriangleFill } from 'react-icons/bs';
 import { Button } from '../../shared/ui/Button/Button';
+import { useDialogs } from '../../shared/ui/DialogProvider';
 import { getStationPathLayout, segmentCurveD } from './stationPathUtils';
 import './StationGamePage.css';
 
@@ -103,6 +104,7 @@ export const StationGamePage: React.FC<StationGamePageProps> = ({
   onStart,
   onFinish,
 }) => {
+  const { showConfirm } = useDialogs();
   const [stationStatuses, setStationStatuses] = useState<Record<string, StationStatus>>({});
   const [attemptsCount, setAttemptsCount] = useState(0);
   const [errorsCount, setErrorsCount] = useState(0);
@@ -328,29 +330,33 @@ export const StationGamePage: React.FC<StationGamePageProps> = ({
   };
 
   const handleManualFinish = async () => {
-    if (window.confirm('Завершить игру? Непройденные станции будут отмечены как ошибки.')) {
-      const nowIso = new Date().toISOString();
-      const startedAtMs = session.startedAt ? new Date(session.startedAt).getTime() : Date.now();
-      const elapsedSec = Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000));
-      
-      sessionStorage.setItem(
-        getStationStatsStorageKey(session.id),
-        JSON.stringify({
-          completedStations: successCount,
-          totalStations: stationItems.length,
-          attempts: attemptsCount,
-          errors: errorsCount,
-          elapsedSec,
-          finishedAt: nowIso,
-          statuses: stationStatuses,
-          manuallyFinished: true,
-        }),
-      );
-      
-      setIsFinishing(true);
-      await onFinish();
-      setIsFinishing(false);
-    }
+    const ok = await showConfirm(
+      'Завершить игру? Непройденные станции будут отмечены как ошибки.',
+      { title: 'Завершение игры' },
+    );
+    if (!ok) return;
+
+    const nowIso = new Date().toISOString();
+    const startedAtMs = session.startedAt ? new Date(session.startedAt).getTime() : Date.now();
+    const elapsedSec = Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000));
+
+    sessionStorage.setItem(
+      getStationStatsStorageKey(session.id),
+      JSON.stringify({
+        completedStations: successCount,
+        totalStations: stationItems.length,
+        attempts: attemptsCount,
+        errors: errorsCount,
+        elapsedSec,
+        finishedAt: nowIso,
+        statuses: stationStatuses,
+        manuallyFinished: true,
+      }),
+    );
+
+    setIsFinishing(true);
+    await onFinish();
+    setIsFinishing(false);
   };
 
   const renderShape = (shape: StationShape, color: string, size: number = 54) => {

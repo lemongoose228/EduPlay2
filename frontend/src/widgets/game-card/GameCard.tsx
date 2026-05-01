@@ -83,7 +83,7 @@ export const GameCard: React.FC<GameCardProps> = ({
           <span>{getTypeText()}</span>
         </div>
         <div className="game-card-header-actions">
-          {isLibraryCard && onReport && (
+          {isLibraryCard && (
             <button
               type="button"
               className="game-card-report-icon"
@@ -91,7 +91,7 @@ export const GameCard: React.FC<GameCardProps> = ({
               title="Пожаловаться"
               onClick={(e) => {
                 e.stopPropagation();
-                onReport();
+                onReport?.();
               }}
             >
               <FaFlag size={14} />

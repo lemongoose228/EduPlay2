@@ -5,6 +5,7 @@ import { Input } from '../../../shared/ui/Input/Input';
 import { Card } from '../../../shared/ui/Card/Card';
 import { Table } from '../../../shared/ui/Table/Table';
 import { createEmptyCategory } from '../../../features/templates/utils/template.utils';
+import { useDialogs } from '../../../shared/ui/DialogProvider';
 import './OwnGameBuilder.css';
 
 interface OwnGameBuilderProps {
@@ -18,6 +19,7 @@ export const OwnGameBuilder: React.FC<OwnGameBuilderProps> = ({
   onSave,
   onCancel
 }) => {
+  const { showAlert } = useDialogs();
   const [gameName, setGameName] = useState(initialData?.name || '');
   const [categories, setCategories] = useState<OwnGameCategory[]>(
     initialData?.categories || [createEmptyCategory(0)]
@@ -60,21 +62,21 @@ export const OwnGameBuilder: React.FC<OwnGameBuilderProps> = ({
     }));
   };
 
-  const validateGame = (): boolean => {
+  const validateGame = async (): Promise<boolean> => {
     if (!gameName.trim()) {
-      alert('Введите название игры');
+      await showAlert('Введите название игры');
       return false;
     }
 
     for (const category of categories) {
       if (!category.name.trim()) {
-        alert('Заполните названия всех категорий');
+        await showAlert('Заполните названия всех категорий');
         return false;
       }
 
       for (const question of category.questions) {
         if (!question.question.trim() || !question.answer.trim()) {
-          alert(`Заполните все вопросы и ответы в категории "${category.name}"`);
+          await showAlert(`Заполните все вопросы и ответы в категории "${category.name}"`);
           return false;
         }
       }
@@ -83,8 +85,8 @@ export const OwnGameBuilder: React.FC<OwnGameBuilderProps> = ({
     return true;
   };
 
-  const handleSave = () => {
-    if (!validateGame()) return;
+  const handleSave = async () => {
+    if (!(await validateGame())) return;
 
     const gameData: OwnGameTemplate = {
       ...initialData,

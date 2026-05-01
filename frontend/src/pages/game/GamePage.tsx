@@ -24,6 +24,7 @@ import {
   waitForSessionsSocketConnected,
 } from '../../features/sessions/api/sessionsSocket';
 import { FaTrophy, FaDownload, FaChartBar } from 'react-icons/fa';
+import { useDialogs } from '../../shared/ui/DialogProvider';
 
 interface Question {
   id: string;
@@ -94,6 +95,7 @@ interface GameSession {
 
 export const GamePage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
+  const { showAlert } = useDialogs();
   const [session, setSession] = useState<GameSession | null>(null);
   const [selectedQuestion, setSelectedQuestion] = useState<{ category: Category; question: Question } | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -175,7 +177,7 @@ export const GamePage: React.FC = () => {
       const message = payload?.message?.trim()
         ? payload.message
         : 'Ошибка обработки игрового события';
-      alert(message);
+      void showAlert(message);
     };
 
     const joinPayload = { sessionId };
@@ -206,7 +208,7 @@ export const GamePage: React.FC = () => {
         quizReviewTimeoutRef.current = null;
       }
     };
-  }, [sessionId]);
+  }, [sessionId, showAlert]);
 
   const handleStartQuizSession = async () => {
     if (!session) return;
@@ -232,7 +234,7 @@ export const GamePage: React.FC = () => {
         setSession(updated);
       } catch (fallbackError) {
         console.error(fallbackError);
-        alert('Не удалось начать игру');
+        await showAlert('Не удалось начать игру');
       }
     } finally {
       setIsQuizStartPending(false);
@@ -411,7 +413,7 @@ export const GamePage: React.FC = () => {
       .then((updated) => setSession(updated))
       .catch((e) => {
         console.error(e);
-        alert('Не удалось закрыть вопрос');
+        void showAlert('Не удалось закрыть вопрос');
       })
       .finally(() => {
         pointsLockRef.current = false;
@@ -438,7 +440,7 @@ export const GamePage: React.FC = () => {
       .then((updated) => setSession(updated))
       .catch((e) => {
         console.error(e);
-        alert('Не удалось начислить очки');
+        void showAlert('Не удалось начислить очки');
       })
       .finally(() => {
         pointsLockRef.current = false;
@@ -456,7 +458,7 @@ export const GamePage: React.FC = () => {
       .then((updated) => setSession(updated))
       .catch((e) => {
         console.error(e);
-        alert('Не удалось снять очки');
+        void showAlert('Не удалось снять очки');
       })
       .finally(() => {
         pointsLockRef.current = false;
@@ -498,7 +500,7 @@ export const GamePage: React.FC = () => {
             setSession(updated);
           } catch (e) {
             console.error(e);
-            alert('Не удалось начать игру');
+            await showAlert('Не удалось начать игру');
           }
         }}
         onMarkGuessed={async (termId) => {
@@ -514,7 +516,7 @@ export const GamePage: React.FC = () => {
             .then((updated) => setSession(updated))
             .catch((e) => {
               console.error(e);
-              alert('Не удалось завершить игру');
+              void showAlert('Не удалось завершить игру');
             });
         }}
       />
@@ -621,7 +623,7 @@ export const GamePage: React.FC = () => {
                     .then((updated) => setSession(updated))
                     .catch((e) => {
                       console.error(e);
-                      alert('Не удалось начать игру');
+                      void showAlert('Не удалось начать игру');
                     });
                 }}
               >
@@ -934,7 +936,7 @@ export const GamePage: React.FC = () => {
                   socket.emit('session:finish', { sessionId: session.id });
                 } catch (e) {
                   console.error(e);
-                  alert('Не удалось завершить игру');
+                  await showAlert('Не удалось завершить игру');
                 }
               }}
             >
@@ -1036,7 +1038,7 @@ export const GamePage: React.FC = () => {
                       setSubmitSavedKey(currentQuestionKey);
                     } catch (e) {
                       console.error(e);
-                      alert('Не удалось отправить ответ');
+                      await showAlert('Не удалось отправить ответ');
                     }
                   }}
                 >
@@ -1075,7 +1077,7 @@ export const GamePage: React.FC = () => {
                 .then((updated) => setSession(updated))
                 .catch((e) => {
                   console.error(e);
-                  alert('Не удалось завершить игру');
+                  void showAlert('Не удалось завершить игру');
                 });
             }}
           >
@@ -1102,7 +1104,7 @@ export const GamePage: React.FC = () => {
                   setNewOwnTeamName('');
                 } catch (e) {
                   console.error(e);
-                  alert('Не удалось добавить команду');
+                  await showAlert('Не удалось добавить команду');
                 }
               }}
             >

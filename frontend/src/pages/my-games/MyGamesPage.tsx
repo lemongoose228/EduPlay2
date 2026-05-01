@@ -9,6 +9,7 @@ import { createSessionApi, joinSessionApi } from '../../features/sessions/api/se
 import { deleteGameApi, getMyGamesApi, publishGameApi } from '../../features/games/api/gamesApi';
 import { useAppSelector } from '../../app/store/hooks';
 import { selectAuthUser } from '../../features/auth/model/selectors';
+import { useDialogs } from '../../shared/ui/DialogProvider';
 
 interface Game {
   id: string;
@@ -22,6 +23,7 @@ interface Game {
 
 export const MyGamesPage: React.FC = () => {
   const navigate = useNavigate();
+  const { showAlert, showConfirm } = useDialogs();
   const user = useAppSelector(selectAuthUser);
   const [games, setGames] = useState<Game[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,7 +59,7 @@ export const MyGamesPage: React.FC = () => {
       setGames(mapped);
     } catch (e) {
       console.error(e);
-      alert('Не удалось загрузить игры');
+      await showAlert('Не удалось загрузить игры');
     } finally {
       setIsLoading(false);
     }
@@ -91,7 +93,7 @@ export const MyGamesPage: React.FC = () => {
       navigate(`/game/${session.id}`);
     } catch (e) {
       console.error(e);
-      alert('Не удалось создать игровую сессию');
+      await showAlert('Не удалось создать игровую сессию');
     }
   };
 
@@ -113,18 +115,22 @@ export const MyGamesPage: React.FC = () => {
       await loadGames();
     } catch (e) {
       console.error(e);
-      alert('Не удалось опубликовать игру');
+      await showAlert('Не удалось опубликовать игру');
     }
   };
 
   const handleDeleteGame = async (gameId: string) => {
-    if (!window.confirm('Вы уверены, что хотите удалить эту игру?')) return;
+    const ok = await showConfirm('Вы уверены, что хотите удалить эту игру?', {
+      title: 'Удаление игры',
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await deleteGameApi(gameId);
       await loadGames();
     } catch (e) {
       console.error(e);
-      alert('Не удалось удалить игру');
+      await showAlert('Не удалось удалить игру');
     }
   };
 

@@ -4,6 +4,7 @@ import { Button } from '../../../shared/ui/Button/Button';
 import { Input } from '../../../shared/ui/Input/Input';
 import { Card } from '../../../shared/ui/Card/Card';
 import { createEmptyTerm } from '../../../features/templates/utils/template.utils';
+import { useDialogs } from '../../../shared/ui/DialogProvider';
 import './CrocodileGameBuilder.css';
 
 interface CrocodileGameBuilderProps {
@@ -17,6 +18,7 @@ export const CrocodileGameBuilder: React.FC<CrocodileGameBuilderProps> = ({
   onSave,
   onCancel
 }) => {
+  const { showAlert } = useDialogs();
   const [gameName, setGameName] = useState(initialData?.name || '');
   const [terms, setTerms] = useState<CrocodileTerm[]>(
     initialData?.terms || [createEmptyTerm()]
@@ -41,28 +43,28 @@ export const CrocodileGameBuilder: React.FC<CrocodileGameBuilderProps> = ({
     ));
   };
 
-  const validateGame = (): boolean => {
+  const validateGame = async (): Promise<boolean> => {
     if (!gameName.trim()) {
-      alert('Введите название игры');
+      await showAlert('Введите название игры');
       return false;
     }
 
     const emptyTerms = terms.filter(t => !t.term.trim());
     if (emptyTerms.length > 0) {
-      alert('Заполните все термины');
+      await showAlert('Заполните все термины');
       return false;
     }
 
     if (terms.length < 3) {
-      alert('Добавьте минимум 3 термина');
+      await showAlert('Добавьте минимум 3 термина');
       return false;
     }
 
     return true;
   };
 
-  const handleSave = () => {
-    if (!validateGame()) return;
+  const handleSave = async () => {
+    if (!(await validateGame())) return;
 
     const gameData: CrocodileTemplate = {
       ...initialData,
