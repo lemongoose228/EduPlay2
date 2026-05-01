@@ -5,12 +5,17 @@ import {
   FaCheck,
   FaChevronLeft,
   FaChevronRight,
+  FaCircle,
   FaClipboardList,
   FaCrown,
+  FaHeart,
   FaMapMarkedAlt,
   FaRegClock,
+  FaSquare,
+  FaStar,
   FaTimes,
 } from 'react-icons/fa';
+import { BsFillTriangleFill } from 'react-icons/bs';
 import { Button } from '../../shared/ui/Button/Button';
 import './StationGamePage.css';
 
@@ -318,50 +323,36 @@ export const StationGamePage: React.FC<StationGamePageProps> = ({
     }
   };
 
-  const renderShape = (shape: StationShape, color: string, status: StationStatus, size: number = 54) => {
-    const statusClass = status === 'success' ? 'shape-border-status-success' : status === 'failed' ? 'shape-border-status-failed' : '';
-    const style = {
-      backgroundColor: color,
-      width: size,
-      height: size,
-    };
-    
-    if (shape === 'circle') {
-      return <div className={`shape shape-circle ${statusClass}`} style={{ ...style, borderRadius: '50%' }} />;
-    }
-    if (shape === 'square') {
-      return <div className={`shape shape-square ${statusClass}`} style={{ ...style, borderRadius: '12px' }} />;
-    }
-    if (shape === 'triangle') {
-      return (
-        <div 
-          className={`shape shape-triangle ${statusClass}`} 
-          style={{ 
-            ...style, 
-            clipPath: 'polygon(50% 6%, 94% 92%, 6% 92%)',
-          }} 
-        />
-      );
-    }
-    if (shape === 'heart') {
-      return (
-        <div 
-          className={`shape shape-heart ${statusClass}`} 
-          style={{ 
-            ...style, 
-            clipPath: 'polygon(50% 92%, 10% 52%, 8% 30%, 22% 14%, 38% 14%, 50% 28%, 62% 14%, 78% 14%, 92% 30%, 90% 52%)',
-          }} 
-        />
-      );
-    }
+  const renderShape = (shape: StationShape, color: string, size: number = 54) => {
+    const Icon =
+      shape === 'circle'
+        ? FaCircle
+        : shape === 'square'
+          ? FaSquare
+          : shape === 'triangle'
+            ? BsFillTriangleFill
+            : shape === 'heart'
+              ? FaHeart
+              : FaStar;
+
     return (
-      <div 
-        className={`shape shape-star ${statusClass}`} 
-        style={{ 
-          ...style, 
-          clipPath: 'polygon(50% 4%, 61% 34%, 94% 34%, 67% 54%, 78% 88%, 50% 68%, 22% 88%, 33% 54%, 6% 34%, 39% 34%)',
-        }} 
-      />
+      <span className="station-shape-wrap" style={{ width: size, height: size }} aria-hidden>
+        <Icon className="station-shape-icon" style={{ color }} />
+      </span>
+    );
+  };
+
+  const renderStationResultMark = (status: StationStatus, variant: 'compact' | 'main') => {
+    if (status === 'pending') return null;
+    const ok = status === 'success';
+    return (
+      <span
+        className={`station-result-mark station-result-mark--${variant} ${ok ? 'station-result-mark--ok' : 'station-result-mark--fail'}`}
+        aria-label={ok ? 'Выполнено верно' : 'Ошибка'}
+        role="img"
+      >
+        {ok ? <FaCheck className="station-result-mark-icon" aria-hidden /> : <FaTimes className="station-result-mark-icon" aria-hidden />}
+      </span>
     );
   };
 
@@ -487,7 +478,8 @@ export const StationGamePage: React.FC<StationGamePageProps> = ({
                   {prevStation && (
                     <div className="station-node-small">
                       <div className="station-node-shape">
-                        {renderShape(prevStation.shape, prevStation.color, getStationStatus(prevStation.id), 48)}
+                        {renderShape(prevStation.shape, prevStation.color, 48)}
+                        {renderStationResultMark(getStationStatus(prevStation.id), 'compact')}
                       </div>
                       <span className="station-node-name">{prevStation.name}</span>
                     </div>
@@ -499,7 +491,8 @@ export const StationGamePage: React.FC<StationGamePageProps> = ({
                   {currentStation && (
                     <div className="station-node-main">
                       <div className="station-node-shape-main">
-                        {renderShape(currentStation.shape, currentStation.color, getStationStatus(currentStation.id), 80)}
+                        {renderShape(currentStation.shape, currentStation.color, 80)}
+                        {renderStationResultMark(getStationStatus(currentStation.id), 'main')}
                       </div>
                       <h3 className="station-node-name-main">{currentStation.name}</h3>
                       <div className="station-progress-badge">
@@ -514,7 +507,8 @@ export const StationGamePage: React.FC<StationGamePageProps> = ({
                   {nextStation && (
                     <div className="station-node-small">
                       <div className="station-node-shape">
-                        {renderShape(nextStation.shape, nextStation.color, getStationStatus(nextStation.id), 48)}
+                        {renderShape(nextStation.shape, nextStation.color, 48)}
+                        {renderStationResultMark(getStationStatus(nextStation.id), 'compact')}
                       </div>
                       <span className="station-node-name">{nextStation.name}</span>
                     </div>
