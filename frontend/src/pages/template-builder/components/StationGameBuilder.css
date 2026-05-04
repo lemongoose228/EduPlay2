@@ -10,15 +10,6 @@
   gap: 16px;
 }
 
-.station-route-badge {
-  border-radius: 10px;
-  border: 1px solid var(--border-color);
-  background: linear-gradient(135deg, rgba(107, 78, 255, 0.08), rgba(107, 191, 255, 0.1));
-  padding: 10px 12px;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
 .station-list {
   display: flex;
   flex-direction: column;

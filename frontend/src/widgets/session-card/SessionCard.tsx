@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '../../shared/ui/Button/Button';
-import { GAME_TYPE_ICON_MAP } from '../../shared/lib/gameTypeIcons';
+import { GameTypeIcon } from '../../shared/lib/gameTypeIcons';
 import './SessionCard.css';
 
 interface SessionCardProps {
@@ -54,10 +54,6 @@ export const SessionCard: React.FC<SessionCardProps> = ({
     }
   };
 
-  const getTypeIcon = () => {
-    return GAME_TYPE_ICON_MAP[gameType];
-  };
-
   const getTypeText = () => {
     if (gameType === 'own') return 'Своя игра';
     if (gameType === 'quiz') return 'Викторина';
@@ -70,9 +66,9 @@ export const SessionCard: React.FC<SessionCardProps> = ({
     <div className="session-card" onClick={onClick}>
       <div className="session-card-header">
         <div className="session-type">
-          <img
+          <GameTypeIcon
+            type={gameType}
             className={`type-icon ${gameType === 'own' ? 'type-icon-own' : ''}`}
-            src={getTypeIcon()}
             alt={getTypeText()}
           />
           <span>{getTypeText()}</span>

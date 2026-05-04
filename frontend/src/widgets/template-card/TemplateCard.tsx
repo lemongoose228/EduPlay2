@@ -6,7 +6,7 @@ interface TemplateCardProps {
   id: string;
   title: string;
   description: string;
-  icon: string;
+  icon: string | React.ReactNode;
   color: string;
   onSelect: (id: string) => void;
 }
@@ -22,7 +22,11 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({
   return (
     <div className="template-card" style={{ '--template-color': color } as React.CSSProperties}>
       <div className="template-card-header">
-        <img className={`template-icon ${id === 'custom' ? 'template-icon-own' : ''}`} src={icon} alt={title} />
+        {typeof icon === 'string' ? (
+          <img className={`template-icon ${id === 'custom' ? 'template-icon-own' : ''}`} src={icon} alt={title} />
+        ) : (
+          icon
+        )}
         <h3 className="template-title">{title}</h3>
       </div>
       <div className="template-card-content">

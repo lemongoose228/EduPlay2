@@ -1,8 +1,8 @@
 import React from 'react';
 import { Button } from '../../shared/ui/Button/Button';
 import { resolveAvatarSrc } from '../../shared/lib/resolveAvatarSrc';
-import { GAME_TYPE_ICON_MAP } from '../../shared/lib/gameTypeIcons';
-import { FaHeart, FaFlag } from 'react-icons/fa';
+import { GameTypeIcon } from '../../shared/lib/gameTypeIcons';
+import { FaHeart, FaFlag, FaHashtag } from 'react-icons/fa';
 import './GameCard.css';
 
 interface GameCardProps {
@@ -55,10 +55,6 @@ export const GameCard: React.FC<GameCardProps> = ({
   onLikeToggle,
   onReport,
 }) => {
-  const getTypeIcon = () => {
-    return GAME_TYPE_ICON_MAP[type];
-  };
-
   const getTypeText = () => {
     if (type === 'own') return 'Своя игра';
     if (type === 'quiz') return 'Викторина';
@@ -75,9 +71,9 @@ export const GameCard: React.FC<GameCardProps> = ({
     <div className="game-card" onClick={onClick}>
       <div className="game-card-header">
         <div className="game-card-type">
-          <img
+          <GameTypeIcon
+            type={type}
             className={`type-icon ${type === 'own' ? 'type-icon-own' : ''}`}
-            src={getTypeIcon()}
             alt={getTypeText()}
           />
           <span>{getTypeText()}</span>
@@ -115,38 +111,55 @@ export const GameCard: React.FC<GameCardProps> = ({
         <h3 className="game-card-title">{title}</h3>
         {description && <p className="game-card-description">{description}</p>}
         
-        <div className="game-card-meta">
-          {isLibraryCard && (
-            <div className="game-card-meta-item">
-              <span className="meta-icon">🆔</span>
+        {isLibraryCard ? (
+          <div className="game-card-library-footer-meta">
+            <div className="game-card-meta-item game-card-library-id">
+              <span className="meta-icon meta-icon-svg" aria-hidden>
+                <FaHashtag size={14} />
+              </span>
               <span>ID игры: {displayGameId}</span>
             </div>
-          )}
-          {!isLibraryCard && questionsCount && (
-            <div className="game-card-meta-item">
-              <span className="meta-icon">📋</span>
-              <span>{questionsCount} вопросов</span>
-            </div>
-          )}
-          {createdAt && (
-            <div className="game-card-meta-item">
-              <span className="meta-icon">🕐</span>
-              <span>{createdAt}</span>
-            </div>
-          )}
-          {author && (
-            <div className="game-card-meta-item">
-              <span className="author-avatar">
-                {resolvedAuthorAvatar ? (
-                  <img src={resolvedAuthorAvatar} alt={author} />
-                ) : (
-                  authorInitial || '👤'
-                )}
-              </span>
-              <span>{author}</span>
-            </div>
-          )}
-        </div>
+            {author && (
+              <div className="game-card-meta-item game-card-library-author">
+                <span className="author-avatar">
+                  {resolvedAuthorAvatar ? (
+                    <img src={resolvedAuthorAvatar} alt={author} />
+                  ) : (
+                    authorInitial || '👤'
+                  )}
+                </span>
+                <span>{author}</span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="game-card-meta">
+            {questionsCount && (
+              <div className="game-card-meta-item">
+                <span className="meta-icon">📋</span>
+                <span>{questionsCount} вопросов</span>
+              </div>
+            )}
+            {createdAt && (
+              <div className="game-card-meta-item">
+                <span className="meta-icon">🕐</span>
+                <span>{createdAt}</span>
+              </div>
+            )}
+            {author && (
+              <div className="game-card-meta-item">
+                <span className="author-avatar">
+                  {resolvedAuthorAvatar ? (
+                    <img src={resolvedAuthorAvatar} alt={author} />
+                  ) : (
+                    authorInitial || '👤'
+                  )}
+                </span>
+                <span>{author}</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {!isLibraryCard && (plays !== undefined || likes !== undefined || rating !== undefined) && (
           <div className={`game-card-stats ${isLibraryCard ? 'library-stats' : ''}`}>

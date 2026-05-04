@@ -126,6 +126,25 @@
   line-height: 1.5;
 }
 
+.game-card-library-footer-meta {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.game-card-library-id {
+  flex-shrink: 0;
+}
+
+.game-card-library-author {
+  min-width: 0;
+}
+
 .game-card-meta {
   display: flex;
   flex-wrap: wrap;
@@ -143,6 +162,14 @@
 
 .meta-icon {
   font-size: 14px;
+}
+
+.meta-icon-svg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  color: var(--text-light);
 }
 
 .author-avatar {

@@ -8,7 +8,7 @@ import ConstructorImg from '../../assets/menu/constructor.svg'
 import LibImg from '../../assets/menu/lib.svg'
 import MyGamesImg from '../../assets/menu/mygames.svg'
 import SessionsImg from '../../assets/menu/sessions.svg'
-import { FaCog, FaSignOutAlt } from 'react-icons/fa';
+import { FaCog, FaSearch, FaSignOutAlt } from 'react-icons/fa';
 import { resolveAvatarSrc } from '../../shared/lib/resolveAvatarSrc';
 
 interface MenuItem {
@@ -103,8 +103,8 @@ export const Menu: React.FC = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <button type="submit" className="search-button">
-          🔍
+        <button type="submit" className="search-button" aria-label="Поиск в библиотеке">
+          <FaSearch size={18} aria-hidden />
         </button>
       </form>
 

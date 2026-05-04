@@ -65,8 +65,29 @@
   box-shadow: 0 4px 12px rgba(107, 78, 255, 0.3);
 }
 
-.search-section {
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
   margin-bottom: 20px;
+}
+
+.search-section {
+  flex: 1;
+  min-width: min(100%, 220px);
+  margin-bottom: 0;
+}
+
+/* как у shared/ui/Input: убрать margin у обёртки и выровнять высоту с сортировкой */
+.search-section .input-wrapper {
+  margin-bottom: 0;
+}
+
+.search-section .input-container {
+  box-sizing: border-box;
+  min-height: 48px;
+  border-radius: 12px;
 }
 
 .filters-row {
@@ -126,24 +147,31 @@
 }
 
 .sort-select {
-  min-width: 240px;
+  flex: 0 0 auto;
+  min-width: 200px;
+  max-width: 100%;
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .sort-dropdown {
+  box-sizing: border-box;
   width: 100%;
-  padding: 11px 42px 11px 16px;
-  border: 1px solid #d9d8ee;
-  border-radius: 14px;
+  min-height: 48px;
+  padding: 12px 42px 12px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
   font-size: 14px;
   font-weight: 400;
-  color: #2f2f4a;
-  background-color: #ffffff;
+  line-height: 1.25;
+  color: var(--text-primary);
+  background-color: var(--white);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 20 20'%3E%3Cpath fill='%236b4eff' d='M5.5 7.5 10 12l4.5-4.5 1.4 1.4L10 14.8 4.1 8.9z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
   background-size: 16px 16px;
-  box-shadow: 0 4px 14px rgba(41, 36, 85, 0.08);
+  box-shadow: none;
   cursor: pointer;
   outline: none;
   appearance: none;
@@ -153,13 +181,13 @@
 }
 
 .sort-dropdown:hover {
-  border-color: #b7b4f4;
-  box-shadow: 0 8px 18px rgba(63, 55, 138, 0.12);
+  border-color: var(--primary-light);
+  box-shadow: none;
 }
 
 .sort-dropdown:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(107, 78, 255, 0.14), 0 8px 18px rgba(63, 55, 138, 0.12);
+  box-shadow: 0 0 0 3px rgba(107, 78, 255, 0.1);
 }
 
 .games-grid {
@@ -179,8 +207,11 @@
 }
 
 .no-results-icon {
-  font-size: 64px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   margin-bottom: 20px;
+  color: var(--text-light);
   opacity: 0.5;
 }
 
@@ -199,6 +230,16 @@
 @media (max-width: 768px) {
   .library-page {
     padding: 20px;
+  }
+
+  .search-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sort-select {
+    min-width: 0;
+    width: 100%;
   }
 
   .filters-row {

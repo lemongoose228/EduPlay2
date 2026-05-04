@@ -307,7 +307,7 @@ export class SessionsService {
     if (game.type === 'wheel' || game.type === 'station') {
       session.teams = [
         this.teamsRepository.create({
-          name: game.type === 'station' ? 'Преподаватель' : 'Ученик',
+          name: game.type === 'station' ? 'Преподаватель' : 'Отвечено вопросов',
           score: 0,
           players: [],
         }),

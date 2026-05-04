@@ -6,12 +6,17 @@ import { Button } from '../../shared/ui/Button/Button';
 import { useDebounce } from '../../shared/hooks/useDebounce';
 import { useAppSelector } from '../../app/store/hooks';
 import { selectAuthUser, selectIsAuthenticated } from '../../features/auth/model/selectors';
-import { GAME_TYPE_ICON_MAP } from '../../shared/lib/gameTypeIcons';
+import { GameTypeIcon } from '../../shared/lib/gameTypeIcons';
+import ownIcon from '../../assets/own_icon.png';
+import quizIcon from '../../assets/quiz_icon.png';
+import crocodileIcon from '../../assets/crocodile_icon.png';
+import wheelIcon from '../../assets/wheel_icon.png';
 import { createSessionApi, joinSessionApi } from '../../features/sessions/api/sessionsApi';
 import { likeGameApi, unlikeGameApi, getLikedGameIdsApi } from '../../features/games/api/gamesApi';
 import { searchLibraryApi, type LibraryGameDto } from '../../features/library/api/libraryApi';
 import { createReportApi } from '../../features/reports/api/reportsApi';
 import { useDialogs } from '../../shared/ui/DialogProvider';
+import { FaSearch } from 'react-icons/fa';
 import './LibraryPage.css';
 
 interface PublicGame {
@@ -222,15 +227,28 @@ export const LibraryPage: React.FC = () => {
       </div>
 
       <div className="library-controls">
-        <div className="search-section">
-          <Input
-            placeholder="Название, автор, числовой ID игры или пользователя..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            leftIcon="🔍"
-          />
+        <div className="search-row">
+          <div className="search-section">
+            <Input
+              placeholder="Название, автор, числовой ID игры или пользователя..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              leftIcon={<FaSearch size={18} aria-hidden />}
+            />
+          </div>
+          <div className="sort-select">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as '' | 'likes' | 'newest')}
+              className="sort-dropdown"
+            >
+              <option value="">Сортировка</option>
+              <option value="likes">По лайкам</option>
+              <option value="newest">Сначала новые</option>
+            </select>
+          </div>
         </div>
-        
+
         <div className="filters-row">
           <div className="type-filters">
             <button
@@ -244,7 +262,7 @@ export const LibraryPage: React.FC = () => {
               onClick={() => setSelectedType('own')}
             >
               <span className="filter-label">
-                <img className="filter-type-icon filter-type-icon-own" src={GAME_TYPE_ICON_MAP.own} alt="Своя игра" />
+                <img className="filter-type-icon filter-type-icon-own" src={ownIcon} alt="Своя игра" />
                 Своя игра
               </span>
             </button>
@@ -253,7 +271,7 @@ export const LibraryPage: React.FC = () => {
               onClick={() => setSelectedType('quiz')}
             >
               <span className="filter-label">
-                <img className="filter-type-icon" src={GAME_TYPE_ICON_MAP.quiz} alt="Викторина" />
+                <img className="filter-type-icon" src={quizIcon} alt="Викторина" />
                 Викторина
               </span>
             </button>
@@ -262,7 +280,7 @@ export const LibraryPage: React.FC = () => {
               onClick={() => setSelectedType('crocodile')}
             >
               <span className="filter-label">
-                <img className="filter-type-icon" src={GAME_TYPE_ICON_MAP.crocodile} alt="Крокодил" />
+                <img className="filter-type-icon" src={crocodileIcon} alt="Крокодил" />
                 Крокодил
               </span>
             </button>
@@ -271,7 +289,7 @@ export const LibraryPage: React.FC = () => {
               onClick={() => setSelectedType('wheel')}
             >
               <span className="filter-label">
-                <img className="filter-type-icon" src={GAME_TYPE_ICON_MAP.wheel} alt="Колесо Фортуны" />
+                <img className="filter-type-icon" src={wheelIcon} alt="Колесо Фортуны" />
                 Колесо Фортуны
               </span>
             </button>
@@ -280,22 +298,10 @@ export const LibraryPage: React.FC = () => {
               onClick={() => setSelectedType('station')}
             >
               <span className="filter-label">
-                <img className="filter-type-icon" src={GAME_TYPE_ICON_MAP.station} alt="Станции" />
+                <GameTypeIcon type="station" className="filter-type-icon" alt="Станции" />
                 Станции
               </span>
             </button>
-          </div>
-
-          <div className="sort-select">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as '' | 'likes' | 'newest')}
-              className="sort-dropdown"
-            >
-              <option value="">Сортировка</option>
-              <option value="likes">По лайкам</option>
-              <option value="newest">Сначала новые</option>
-            </select>
           </div>
         </div>
       </div>
@@ -325,7 +331,9 @@ export const LibraryPage: React.FC = () => {
         </div>
       ) : (
         <div className="no-results">
-          <div className="no-results-icon">🔍</div>
+          <div className="no-results-icon">
+            <FaSearch size={64} aria-hidden />
+          </div>
           <h3>{activeTab === 'favorites' ? 'В избранном пока пусто' : 'Игры не найдены'}</h3>
           <p>
             {activeTab === 'favorites'

@@ -278,7 +278,7 @@ export const WheelGamePage: React.FC<WheelGamePageProps> = ({
             <div className="wheel-score-value">
               {firstTeam ? (
                 <>
-                  <span className="team-name">{firstTeam.name}</span>
+                  <span className="team-name">Отвечено вопросов</span>
                   <span className="team-score">{firstTeam.score}</span>
                 </>
               ) : (

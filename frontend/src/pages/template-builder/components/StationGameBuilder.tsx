@@ -113,7 +113,7 @@ export const StationGameBuilder: React.FC<StationGameBuilderProps> = ({
     <div className="station-game-builder">
       <div className="builder-header">
         <div>
-          <h2 className="builder-title">Конструктор "Station Game"</h2>
+          <h2 className="builder-title">Конструктор «Станции»</h2>
           <p className="builder-subtitle">Вертикальный зигзаг с путём между станциями и кастомным стилем узлов</p>
         </div>
         <div className="header-actions">
@@ -132,7 +132,6 @@ export const StationGameBuilder: React.FC<StationGameBuilderProps> = ({
             onChange={(e) => setGameName(e.target.value)}
             placeholder="Введите название игры"
           />
-          <div className="station-route-badge">Маршрут: вертикальная линия со связями «змейкой» (как в Duolingo)</div>
         </div>
       </Card>
 
