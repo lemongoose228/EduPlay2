@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>База данных — схемы</title>
+    <link rel="stylesheet" href="common.css" />
+  </head>
+  <body>
+    <div class="toolbar">
+      <a href="index.html">← Все схемы</a>
+      <span class="sep">|</span>
+      <a href="architecture.html">Архитектура</a>
+      <a href="use-cases.html">Варианты использования</a>
+    </div>
+    <header class="page-header">
+      <h1>Модель данных (ER)</h1>
+      <p class="lead">
+        Упрощённая схема таблиц и связей, соответствующая сущностям TypeORM в проекте.
+      </p>
+    </header>
+    <p class="note">
+      У сущности Game дополнительно: type, status, settings JSON, счётчики, поля модерации.
+      У Session: статус, inviteCode, JSON состояния викторины и крокодила.
+    </p>
+    <div class="diagram-wrap">
+      <pre class="mermaid">
+erDiagram
+  users ||--o{ games : author
+  users ||--o{ sessions : host
+  users ||--o{ game_likes : likes
+  users ||--o{ reports : reporter_or_reviewer
+
+  games ||--o{ categories : contains
+  games ||--o{ sessions : instance
+  games ||--o{ game_likes : liked_by
+  games ||--o{ reports : target
+
+  categories ||--o{ questions : contains
+
+  sessions ||--o{ teams : has
+  teams ||--o{ players : has
+
+  users {
+    uuid id PK
+    string email UK
+    string name
+    string role
+    boolean isBlocked
+    string avatar
+  }
+
+  games {
+    uuid id PK
+    uuid authorId FK
+    string title
+    string type
+    string status
+    jsonb settings
+  }
+
+  categories {
+    uuid id PK
+    uuid gameId FK
+    string name
+    int order
+  }
+
+  questions {
+    uuid id PK
+    uuid categoryId FK
+    int value
+    text question
+    text answer
+  }
+
+  game_likes {
+    uuid userId PK
+    uuid gameId PK
+  }
+
+  sessions {
+    uuid id PK
+    string inviteCode UK
+    uuid gameId FK
+    uuid hostId FK
+    string status
+    jsonb settings
+  }
+
+  teams {
+    uuid id PK
+    uuid sessionId FK
+    string name
+    int score
+  }
+
+  players {
+    uuid id PK
+    uuid teamId FK
+    string name
+    string userId
+    boolean isHost
+  }
+
+  reports {
+    uuid id PK
+    uuid gameId FK
+    uuid reporterUserId FK
+    string status
+    uuid reviewedByUserId FK
+    text reason
+  }
+      </pre>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <script>
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "dark",
+        securityLevel: "loose",
+        er: { fontSize: 12 },
+      });
+    </script>
+  </body>
+</html>

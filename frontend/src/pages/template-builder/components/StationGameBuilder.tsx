@@ -9,6 +9,7 @@ import { Button } from '../../../shared/ui/Button/Button';
 import { Card } from '../../../shared/ui/Card/Card';
 import { Input } from '../../../shared/ui/Input/Input';
 import { useDialogs } from '../../../shared/ui/DialogProvider';
+import { QuestionImageField } from './QuestionImageField';
 import './StationGameBuilder.css';
 
 interface StationGameBuilderProps {
@@ -51,7 +52,7 @@ export const StationGameBuilder: React.FC<StationGameBuilderProps> = ({
 
   const updateStation = (
     id: string,
-    field: 'name' | 'task' | 'shape' | 'color',
+    field: 'name' | 'task' | 'shape' | 'color' | 'imageUrl',
     value: string,
   ) => {
     setStations((prev) =>
@@ -156,6 +157,10 @@ export const StationGameBuilder: React.FC<StationGameBuilderProps> = ({
                 value={station.task}
                 onChange={(e) => updateStation(station.id, 'task', e.target.value)}
                 placeholder="Введите задание станции"
+              />
+              <QuestionImageField
+                imageUrl={station.imageUrl}
+                onChange={(nextUrl) => updateStation(station.id, 'imageUrl', nextUrl)}
               />
               <div className="station-style-grid">
                 <label className="station-style-field">

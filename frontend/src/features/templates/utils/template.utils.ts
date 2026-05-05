@@ -23,13 +23,15 @@ export const createEmptyQuizQuestion = (): QuizQuestion => ({
   id: `q-${Date.now()}-${Math.random()}`,
   question: '',
   answer: '',
-  points: 100
+  points: 100,
+  imageUrl: '',
 });
 
 export const createEmptyWheelQuestion = (): WheelQuestion => ({
   id: `wheel-q-${Date.now()}-${Math.random()}`,
   question: '',
   answer: '',
+  imageUrl: '',
 });
 
 export const createEmptyWheelCategory = (index: number): WheelCategory => ({
@@ -84,6 +86,7 @@ export const createEmptyStationNode = (index: number): StationNodeTemplate => ({
   task: '',
   shape: 'circle',
   color: '#6b8cff',
+  imageUrl: '',
 });
 
 export const buildStationConnections = (nodes: StationNodeTemplate[]): StationConnectionTemplate[] => {

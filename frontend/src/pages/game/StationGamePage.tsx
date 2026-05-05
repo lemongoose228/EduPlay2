@@ -19,6 +19,7 @@ import { BsFillTriangleFill } from 'react-icons/bs';
 import { Button } from '../../shared/ui/Button/Button';
 import { useDialogs } from '../../shared/ui/DialogProvider';
 import { getStationPathLayout, segmentCurveD } from './stationPathUtils';
+import { QuestionContent } from './QuestionContent';
 import './StationGamePage.css';
 
 type StationStatus = 'pending' | 'success' | 'failed';
@@ -28,6 +29,7 @@ interface StationQuestion {
   id: string;
   question: string;
   answer: string;
+  imageUrl?: string;
 }
 
 interface StationCategory {
@@ -60,6 +62,7 @@ interface StationItem {
   task: string;
   shape: StationShape;
   color: string;
+  imageUrl?: string;
 }
 
 const STATION_META_PREFIX = '__station_meta__:';
@@ -78,14 +81,16 @@ const decodeStationAnswer = (raw: string | null | undefined) => {
       name?: string;
       shape?: StationShape;
       color?: string;
+      imageUrl?: string;
     };
     return {
       name: parsed.name?.trim() || 'Станция',
       shape: parsed.shape ?? 'circle',
       color: parsed.color ?? '#6B4EFF',
+      imageUrl: parsed.imageUrl?.trim() || '',
     };
   } catch {
-    return { name: 'Станция', shape: 'circle' as StationShape, color: '#6B4EFF' };
+    return { name: 'Станция', shape: 'circle' as StationShape, color: '#6B4EFF', imageUrl: '' };
   }
 };
 
@@ -124,6 +129,7 @@ export const StationGamePage: React.FC<StationGamePageProps> = ({
           task: question.question,
           shape: meta.shape,
           color: meta.color,
+          imageUrl: question.imageUrl || meta.imageUrl || '',
         };
       }),
     [session.game.categories],
@@ -639,7 +645,11 @@ export const StationGamePage: React.FC<StationGamePageProps> = ({
             
             {currentStation ? (
               <div className="task-content">
-                <p className="task-text">{currentStation.task}</p>
+                <QuestionContent
+                  text={currentStation.task}
+                  imageUrl={currentStation.imageUrl}
+                  textClassName="task-text"
+                />
                 
                 {isHost && session.status === 'active' && (
                   <div className="task-actions">

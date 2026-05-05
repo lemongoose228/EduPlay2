@@ -1,0 +1,33 @@
+.question-content-block {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.question-content-image-wrap {
+  width: 100%;
+  max-width: min(100%, 520px);
+  max-height: 240px;
+  margin: 0 auto;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(125, 136, 187, 0.3);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.question-content-image {
+  width: 100%;
+  height: 240px;
+  display: block;
+  object-fit: contain;
+}
+
+@media (max-width: 768px) {
+  .question-content-image-wrap {
+    max-height: 180px;
+  }
+
+  .question-content-image {
+    height: 180px;
+  }
+}

@@ -3,6 +3,7 @@ import React, { useMemo, useState, useRef } from 'react';
 import { Button } from '../../shared/ui/Button/Button';
 import { FaCheck, FaTimes } from 'react-icons/fa';
 import wheelIcon from '../../assets/wheel_icon.png';
+import { QuestionContent } from './QuestionContent';
 import './WheelGamePage.css';
 
 /** Согласованная пастельная палитра (ровная яркость, соседние сектора различимы) */
@@ -29,6 +30,7 @@ interface WheelQuestion {
   id: string;
   question: string;
   answer: string;
+  imageUrl?: string;
 }
 
 interface WheelCategory {
@@ -296,9 +298,11 @@ export const WheelGamePage: React.FC<WheelGamePageProps> = ({
               <div className="wheel-question-value">
                 За верный ответ: <strong>+1 балл</strong>
               </div>
-              <div className="wheel-question-text">
-                {activeQuestion.question}
-              </div>
+              <QuestionContent
+                text={activeQuestion.question}
+                imageUrl={activeQuestion.imageUrl}
+                textClassName="wheel-question-text"
+              />
               {showAnswer && (
                 <div className="wheel-question-answer">
                   <strong>📖 Ответ:</strong> {activeQuestion.answer}

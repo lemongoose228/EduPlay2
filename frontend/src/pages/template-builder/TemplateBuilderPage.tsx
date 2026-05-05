@@ -23,7 +23,7 @@ import { useDialogs } from '../../shared/ui/DialogProvider';
 
 const STATION_META_PREFIX = '__station_meta__:';
 
-const encodeStationAnswer = (payload: { name: string; shape: string; color: string }) =>
+const encodeStationAnswer = (payload: { name: string; shape: string; color: string; imageUrl?: string }) =>
   `${STATION_META_PREFIX}${JSON.stringify(payload)}`;
 
 const decodeStationAnswer = (raw: string | null | undefined) => {
@@ -41,17 +41,20 @@ const decodeStationAnswer = (raw: string | null | undefined) => {
       name?: string;
       shape?: 'circle' | 'star' | 'heart' | 'triangle' | 'square';
       color?: string;
+      imageUrl?: string;
     };
     return {
       name: parsed.name?.trim() || 'Станция',
       shape: parsed.shape ?? 'circle',
       color: parsed.color ?? '#6b8cff',
+      imageUrl: parsed.imageUrl?.trim() || '',
     };
   } catch {
     return {
       name: 'Станция',
       shape: 'circle' as const,
       color: '#6b8cff',
+      imageUrl: '',
     };
   }
 };
@@ -130,6 +133,7 @@ export const TemplateBuilderPage: React.FC = () => {
               answer: q.answer,
               points: q.value,
               options: [],
+              imageUrl: q.imageUrl || '',
             })),
           );
 
@@ -167,6 +171,7 @@ export const TemplateBuilderPage: React.FC = () => {
                 id: q.id,
                 question: q.question,
                 answer: q.answer,
+                imageUrl: q.imageUrl || '',
               })),
             })),
             createdAt: game.createdAt,
@@ -252,6 +257,7 @@ export const TemplateBuilderPage: React.FC = () => {
           questions: category.questions.map((question) => ({
             question: question.question,
             answer: question.answer,
+            imageUrl: question.imageUrl,
             value: 1,
           })),
         })),
@@ -272,7 +278,9 @@ export const TemplateBuilderPage: React.FC = () => {
                 name: station.name,
                 shape: station.shape,
                 color: station.color,
+                imageUrl: station.imageUrl,
               }),
+              imageUrl: station.imageUrl,
               value: 1,
             })),
           },
@@ -290,6 +298,7 @@ export const TemplateBuilderPage: React.FC = () => {
           questions: gameData.questions.map((q) => ({
             question: q.question,
             answer: q.answer,
+            imageUrl: q.imageUrl,
             value: q.points,
           })),
         },

@@ -24,6 +24,7 @@ export interface WheelQuestion {
   id: string;
   question: string;
   answer: string;
+  imageUrl?: string;
 }
 
 export interface WheelCategory {
@@ -47,6 +48,7 @@ export interface QuizQuestion {
   answer: string;
   options?: string[];
   points: number;
+  imageUrl?: string;
 }
 
 export interface QuizTemplate {
@@ -65,6 +67,7 @@ export interface StationNodeTemplate {
   task: string;
   shape: 'circle' | 'star' | 'heart' | 'triangle' | 'square';
   color: string;
+  imageUrl?: string;
 }
 
 export interface StationConnectionTemplate {

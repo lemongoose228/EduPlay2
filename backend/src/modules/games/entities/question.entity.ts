@@ -22,6 +22,9 @@ export class Question {
   @Column('text')
   answer: string;
 
+  @Column('text', { nullable: true })
+  imageUrl: string | null;
+
   @Column({ default: false })
   isAnswered: boolean;
 

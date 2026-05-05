@@ -615,6 +615,10 @@
   gap: 20px;
 }
 
+.quiz-card .question-content-image-wrap {
+  margin-bottom: 20px;
+}
+
 .quiz-answer-input .input-wrapper {
   width: 100%;
 }

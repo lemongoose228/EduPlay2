@@ -1,0 +1,27 @@
+.question-image-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.question-image-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.question-image-preview-wrap {
+  width: 100%;
+  max-width: 260px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  background: #f8f9ff;
+}
+
+.question-image-preview {
+  display: block;
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}

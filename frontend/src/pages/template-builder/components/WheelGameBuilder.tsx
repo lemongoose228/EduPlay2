@@ -9,6 +9,7 @@ import { Card } from '../../../shared/ui/Card/Card';
 import { Input } from '../../../shared/ui/Input/Input';
 import wheelIcon from '../../../assets/wheel_icon.png';
 import { useDialogs } from '../../../shared/ui/DialogProvider';
+import { QuestionImageField } from './QuestionImageField';
 import './WheelGameBuilder.css';
 
 interface WheelGameBuilderProps {
@@ -47,7 +48,7 @@ export const WheelGameBuilder: React.FC<WheelGameBuilderProps> = ({
   const updateQuestion = (
     categoryId: string,
     questionIndex: number,
-    field: 'question' | 'answer',
+    field: 'question' | 'answer' | 'imageUrl',
     value: string,
   ) => {
     setCategories((prev) =>
@@ -203,6 +204,10 @@ export const WheelGameBuilder: React.FC<WheelGameBuilderProps> = ({
                         value={question.answer}
                         onChange={(e) => updateQuestion(category.id, index, 'answer', e.target.value)}
                         placeholder="Введите ответ"
+                      />
+                      <QuestionImageField
+                        imageUrl={question.imageUrl}
+                        onChange={(nextUrl) => updateQuestion(category.id, index, 'imageUrl', nextUrl)}
                       />
                     </div>
                   </div>

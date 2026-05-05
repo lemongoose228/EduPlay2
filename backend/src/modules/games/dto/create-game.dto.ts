@@ -25,6 +25,10 @@ class QuestionDto {
   @IsString()
   answer!: string;
 
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
+
   @IsNumber()
   @Min(1)
   @Max(1000)

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Архитектура — схемы</title>
+    <link rel="stylesheet" href="common.css" />
+  </head>
+  <body>
+    <div class="toolbar">
+      <a href="index.html">← Все схемы</a>
+      <span class="sep">|</span>
+      <a href="database.html">База данных</a>
+      <a href="use-cases.html">Варианты использования</a>
+    </div>
+    <header class="page-header">
+      <h1>Архитектура системы</h1>
+      <p class="lead">
+        Трёхуровневая модель: SPA, NestJS (модули из кода), Redis для TTL-таймеров сессий,
+        PostgreSQL через TypeORM.
+      </p>
+    </header>
+    <p class="note">
+      Стрелки показывают основные потоки: HTTP и WebSocket от клиента; сессии используют Redis
+      и БД; остальные модули обращаются к данным через TypeORM.
+    </p>
+    <div class="diagram-wrap">
+      <pre class="mermaid">
+flowchart TB
+  subgraph FE["Клиент SPA (React + TypeScript)"]
+    direction TB
+    RR[React Router]
+    RTK[Redux Toolkit]
+    AX[Axios — REST /api]
+    SIO[Socket.IO — namespace /sessions]
+    JWT[JWT в localStorage]
+  end
+
+  subgraph BE["Сервер NestJS"]
+    direction TB
+    REST[REST контроллеры]
+    GW[WebSocket Gateway]
+    AUTH[AuthModule]
+    USR[UsersModule]
+    GAM[GamesModule]
+    LIB[LibraryModule]
+    SES[SessionsModule + таймеры]
+    REP[ReportsModule]
+    ADM[AdminModule]
+    ORM[TypeORM]
+  end
+
+  subgraph DATA["Данные и кэш"]
+    PG[(PostgreSQL)]
+    RD[(Redis — ключи TTL)]
+  end
+
+  FE --> REST
+  FE --> GW
+  GW --> SES
+  SES --> RD
+  SES --> ORM
+  AUTH --> ORM
+  USR --> ORM
+  GAM --> ORM
+  LIB --> ORM
+  REP --> ORM
+  ADM --> ORM
+  ORM --> PG
+      </pre>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <script>
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "dark",
+        securityLevel: "loose",
+        flowchart: { curve: "basis", padding: 12 },
+      });
+    </script>
+  </body>
+</html>

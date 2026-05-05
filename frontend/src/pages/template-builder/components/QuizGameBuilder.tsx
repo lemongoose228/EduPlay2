@@ -5,6 +5,7 @@ import { Input } from '../../../shared/ui/Input/Input';
 import { Card } from '../../../shared/ui/Card/Card';
 import { createEmptyQuizQuestion } from '../../../features/templates/utils/template.utils';
 import { useDialogs } from '../../../shared/ui/DialogProvider';
+import { QuestionImageField } from './QuestionImageField';
 import './QuizGameBuilder.css';
 
 interface QuizGameBuilderProps {
@@ -173,6 +174,12 @@ export const QuizGameBuilder: React.FC<QuizGameBuilderProps> = ({
                     onChange={(e) => updateQuestion(question.id, 'points', Number(e.target.value))}
                     min="100"
                     step="100"
+                  />
+                </div>
+                <div className="question-field full-width">
+                  <QuestionImageField
+                    imageUrl={question.imageUrl}
+                    onChange={(nextUrl) => updateQuestion(question.id, 'imageUrl', nextUrl)}
                   />
                 </div>
               </div>

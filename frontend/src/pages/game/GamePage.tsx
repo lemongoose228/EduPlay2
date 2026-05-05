@@ -19,6 +19,7 @@ import {
 import { CrocodileGamePage } from './CrocodileGamePage';
 import { WheelGamePage } from './WheelGamePage';
 import { StationGamePage } from './StationGamePage';
+import { QuestionContent } from './QuestionContent';
 import {
   getSessionsSocket,
   waitForSessionsSocketConnected,
@@ -31,6 +32,7 @@ interface Question {
   value: number;
   question: string;
   answer: string;
+  imageUrl?: string;
   isAnswered?: boolean;
 }
 
@@ -982,7 +984,7 @@ export const GamePage: React.FC = () => {
             </div>
           ) : (
             <div className="quiz-card">
-              <div className="quiz-question">{q.question.question}</div>
+              <QuestionContent text={q.question.question} imageUrl={q.question.imageUrl} textClassName="quiz-question" />
 
               <div className="quiz-answer-input">
                 <Input
@@ -1199,7 +1201,11 @@ export const GamePage: React.FC = () => {
           <div className="question-and-points">
             <div className="question-modal">
               <div className="question-value">{selectedQuestion.question.value}</div>
-              <div className="question-text">{selectedQuestion.question.question}</div>
+              <QuestionContent
+                text={selectedQuestion.question.question}
+                imageUrl={selectedQuestion.question.imageUrl}
+                textClassName="question-text"
+              />
               {showAnswer && (
                 <div className="question-answer">
                   <strong>Ответ:</strong> {selectedQuestion.question.answer}

@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { promises as fs } from 'fs';
+import { join } from 'path';
 import { Game } from './entities/game.entity';
 import { GameLike } from './entities/game-like.entity';
 import { Category } from './entities/category.entity';
@@ -12,6 +14,9 @@ import { PublishGameDto } from './dto/publish-game.dto';
 
 @Injectable()
 export class GamesService {
+  private readonly uploadRoot = join(process.cwd(), 'uploads');
+  private readonly questionImagesSubdir = 'question-images';
+
   constructor(
     @InjectRepository(Game)
     private gamesRepository: Repository<Game>,
@@ -24,6 +29,10 @@ export class GamesService {
     @InjectRepository(Session)
     private sessionsRepository: Repository<Session>,
   ) {}
+
+  private async ensureUploadDirs() {
+    await fs.mkdir(join(this.uploadRoot, this.questionImagesSubdir), { recursive: true });
+  }
 
   async create(userId: string, createGameDto: CreateGameDto): Promise<Game> {
     const game = this.gamesRepository.create({
@@ -156,6 +165,34 @@ async remove(id: string, userId: string): Promise<void> {
 
   async incrementPlays(id: string): Promise<void> {
     await this.gamesRepository.increment({ id }, 'plays', 1);
+  }
+
+  async storeQuestionImageUpload(file: Express.Multer.File): Promise<{ url: string }> {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException('Пустой файл');
+    }
+
+    await this.ensureUploadDirs();
+
+    const ext = this.extensionFromMimetype(file.mimetype);
+    const filename = `question-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+    const diskPath = join(this.uploadRoot, this.questionImagesSubdir, filename);
+    await fs.writeFile(diskPath, file.buffer);
+
+    return {
+      url: `/uploads/${this.questionImagesSubdir}/${filename}`,
+    };
+  }
+
+  private extensionFromMimetype(mimetype: string): string {
+    const map: Record<string, string> = {
+      'image/jpeg': '.jpg',
+      'image/jpg': '.jpg',
+      'image/png': '.png',
+      'image/webp': '.webp',
+      'image/gif': '.gif',
+    };
+    return map[mimetype] || '.bin';
   }
 
   /** Принимает UUID или числовой publicId из UI. */

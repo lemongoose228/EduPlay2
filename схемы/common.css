@@ -1,0 +1,130 @@
+:root {
+  --bg: #0f1419;
+  --surface: #1a2332;
+  --border: #2d3a4d;
+  --text: #e8eef7;
+  --muted: #9aa8bc;
+  --accent: #5b9fd4;
+  --accent-hover: #7ab8e8;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.page-header {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 1rem;
+}
+
+.page-header h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+.lead {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.toolbar {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.toolbar a {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.toolbar a:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+.toolbar .sep {
+  color: var(--border);
+  user-select: none;
+}
+
+.diagram-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.25rem;
+  overflow-x: auto;
+}
+
+.diagram-wrap .mermaid {
+  display: flex;
+  justify-content: center;
+}
+
+.note {
+  max-width: 960px;
+  margin: 0 auto 1rem;
+  padding: 0 1.25rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.card-grid {
+  max-width: 720px;
+  margin: 2rem auto;
+  padding: 0 1.25rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.card {
+  display: block;
+  padding: 1.25rem 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.card-title {
+  display: block;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.35rem;
+  color: var(--accent);
+}
+
+.card-desc {
+  font-size: 0.9rem;
+  color: var(--muted);
+}

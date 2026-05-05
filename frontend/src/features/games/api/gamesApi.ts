@@ -20,6 +20,7 @@ export type CreateGameDto = {
       question: string;
       answer: string;
       value: number;
+      imageUrl?: string;
     }>;
   }>;
   settings?: {
@@ -84,5 +85,18 @@ export async function unlikeGameApi(gameId: string) {
 export async function getLikedGameIdsApi(): Promise<string[]> {
   const res: AxiosResponse<ApiEnvelope<string[]>> = await axiosInstance.get('/games/liked/ids');
   return res.data.data ?? [];
+}
+
+export async function uploadQuestionImageApi(file: File): Promise<{ url: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res: AxiosResponse<ApiEnvelope<{ url: string }>> = await axiosInstance.post(
+    '/games/question-image',
+    formData,
+    {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    },
+  );
+  return res.data.data;
 }
 
