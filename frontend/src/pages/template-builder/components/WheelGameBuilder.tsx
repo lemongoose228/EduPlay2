@@ -10,6 +10,7 @@ import { Input } from '../../../shared/ui/Input/Input';
 import wheelIcon from '../../../assets/wheel_icon.png';
 import { useDialogs } from '../../../shared/ui/DialogProvider';
 import { QuestionImageField } from './QuestionImageField';
+import './OwnGameBuilder.css';
 import './WheelGameBuilder.css';
 
 interface WheelGameBuilderProps {
