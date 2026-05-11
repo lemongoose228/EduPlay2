@@ -595,19 +595,19 @@ export const GamePage: React.FC = () => {
             </div>
           ) : null}
 
-          {/* <div className="teams-section">
+          <div className="teams-section">
             <h2>Команды ({session.teams.length})</h2>
             <div className="teams-list">
               {session.teams.map((team) => (
                 <div key={team.id} className="team-item">
                   <span className="team-name">{team.name}</span>
-                  <span className="team-players">
+                  {/* <span className="team-players">
                     👥 {team.players.length} {team.players.length === 1 ? 'игрок' : 'игроков'}
-                  </span>
+                  </span> */}
                 </div>
               ))}
             </div>
-          </div> */}
+          </div>
 
           {isHost && (
             <div className="game-actions">
