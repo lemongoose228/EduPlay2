@@ -1,3 +1,55 @@
+.library-author-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 8px 0 4px;
+}
+
+.library-author-modal-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f0f2ff 0%, #e8ecff 100%);
+  border: 3px solid rgba(107, 78, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.library-author-modal-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.library-author-modal-avatar-fallback {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--primary-color);
+  line-height: 1;
+}
+
+.library-author-modal-name {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.library-author-modal-id {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  word-break: break-all;
+  max-width: 100%;
+}
+
 .library-page {
   padding: 40px;
   max-width: 1400px;

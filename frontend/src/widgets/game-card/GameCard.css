@@ -145,6 +145,30 @@
   min-width: 0;
 }
 
+button.game-card-library-author--clickable {
+  font: inherit;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: inherit;
+  max-width: 100%;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+button.game-card-library-author--clickable:hover {
+  background: rgba(107, 78, 255, 0.08);
+  color: var(--primary-color);
+}
+
+button.game-card-library-author--clickable:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
 .game-card-meta {
   display: flex;
   flex-wrap: wrap;

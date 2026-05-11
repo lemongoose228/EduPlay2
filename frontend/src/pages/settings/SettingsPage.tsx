@@ -60,7 +60,7 @@ export const SettingsPage: React.FC = () => {
     'https://api.dicebear.com/7.x/avataaars/svg?seed=545',
     'https://api.dicebear.com/7.x/avataaars/svg?seed=55',
     'https://api.dicebear.com/7.x/avataaars/svg?seed=6',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=79',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=585',
     'https://api.dicebear.com/7.x/avataaars/svg?seed=873',
     'https://api.dicebear.com/7.x/avataaars/svg?seed=9',
     'https://api.dicebear.com/7.x/avataaars/svg?seed=108',
@@ -70,6 +70,10 @@ export const SettingsPage: React.FC = () => {
     'https://api.dicebear.com/7.x/avataaars/svg?seed=1089',
     'https://api.dicebear.com/7.x/avataaars/svg?seed=1244',
     'https://api.dicebear.com/7.x/avataaars/svg?seed=1204',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=13556562',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=9336644',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=108946',
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=124464',
   ];
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {

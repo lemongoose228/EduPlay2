@@ -16,6 +16,8 @@ import { likeGameApi, unlikeGameApi, getLikedGameIdsApi } from '../../features/g
 import { searchLibraryApi, type LibraryGameDto } from '../../features/library/api/libraryApi';
 import { createReportApi } from '../../features/reports/api/reportsApi';
 import { useDialogs } from '../../shared/ui/DialogProvider';
+import { Modal } from '../../shared/ui/Modal/Modal';
+import { resolveAvatarSrc } from '../../shared/lib/resolveAvatarSrc';
 import { FaSearch } from 'react-icons/fa';
 import './LibraryPage.css';
 
@@ -27,8 +29,17 @@ interface PublicGame {
   description?: string;
   author: string;
   authorAvatar?: string;
+  authorId?: string;
+  authorPublicId?: string;
   likes: number;
 }
+
+type AuthorModalState = {
+  name: string;
+  avatar?: string;
+  id: string;
+  publicId?: string;
+};
 
 export const LibraryPage: React.FC = () => {
   const { showAlert, showPrompt } = useDialogs();
@@ -49,6 +60,7 @@ export const LibraryPage: React.FC = () => {
 
   const [items, setItems] = useState<LibraryGameDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [authorModal, setAuthorModal] = useState<AuthorModalState | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -73,6 +85,7 @@ export const LibraryPage: React.FC = () => {
     return items.map((game) => {
       const likes = likesByGame[game.id] ?? game.likes ?? 0;
 
+      const authorPublicId = game.author?.publicId;
       return {
         id: game.id,
         publicId: game.publicId ?? '',
@@ -81,6 +94,11 @@ export const LibraryPage: React.FC = () => {
         description: game.description,
         author: game.author?.name ?? '',
         authorAvatar: game.author?.avatar ?? undefined,
+        authorId: game.author?.id,
+        authorPublicId:
+          authorPublicId !== undefined && authorPublicId !== null
+            ? String(authorPublicId)
+            : undefined,
         likes,
       } as PublicGame;
     });
@@ -200,8 +218,39 @@ export const LibraryPage: React.FC = () => {
     }
   };
 
+  const authorModalAvatarSrc = authorModal ? resolveAvatarSrc(authorModal.avatar) : null;
+  const authorModalInitial = authorModal?.name.trim().charAt(0).toUpperCase() ?? '';
+  const authorModalIdLabel = authorModal?.publicId?.trim()
+    ? `ID: ${authorModal.publicId.trim()}`
+    : authorModal
+      ? `ID пользователя: ${authorModal.id}`
+      : '';
+
   return (
     <div className="library-page">
+      <Modal
+        isOpen={!!authorModal}
+        onClose={() => setAuthorModal(null)}
+        title="Профиль автора"
+        size="small"
+      >
+        {authorModal && (
+          <div className="library-author-modal">
+            <div className="library-author-modal-avatar" aria-hidden>
+              {authorModalAvatarSrc ? (
+                <img src={authorModalAvatarSrc} alt="" />
+              ) : (
+                <span className="library-author-modal-avatar-fallback">
+                  {authorModalInitial || '👤'}
+                </span>
+              )}
+            </div>
+            <p className="library-author-modal-name">{authorModal.name}</p>
+            <p className="library-author-modal-id">{authorModalIdLabel}</p>
+          </div>
+        )}
+      </Modal>
+
       <div className="page-header">
         <h1 className="page-title">Библиотека игр</h1>
         <p className="page-description">
@@ -221,7 +270,8 @@ export const LibraryPage: React.FC = () => {
             className={`library-tab ${activeTab === 'favorites' ? 'active' : ''}`}
             onClick={() => setActiveTab('favorites')}
           >
-            Избранное {likedIds.length > 0 ? `(${likedIds.length})` : ''}
+            Избранное 
+            {/* {likedIds.length > 0 ? `(${likedIds.length})` : ''} */}
           </button>
         )}
       </div>
@@ -326,6 +376,17 @@ export const LibraryPage: React.FC = () => {
               onLikeToggle={user ? () => handleToggleLike(game.id) : undefined}
               onReport={isAuthenticated ? () => handleReportGame(game.id) : undefined}
               onPlay={() => handlePlayGame(game.id)}
+              onAuthorClick={
+                game.author && game.authorId
+                  ? () =>
+                      setAuthorModal({
+                        name: game.author,
+                        avatar: game.authorAvatar,
+                        id: game.authorId,
+                        publicId: game.authorPublicId,
+                      })
+                  : undefined
+              }
             />
           ))}
         </div>

@@ -82,10 +82,10 @@ export const SessionCard: React.FC<SessionCardProps> = ({
         <h3 className="session-title">{gameTitle}</h3>
         
         <div className="session-meta">
-          <div className="session-meta-item">
+          {/* <div className="session-meta-item">
             <span className="meta-icon">👥</span>
             <span>{teams}{maxTeams ? ` / ${maxTeams}` : ''} команд</span>
-          </div>
+          </div> */}
           {startedAt && (
             <div className="session-meta-item">
               <span className="meta-icon">🕐</span>

@@ -29,6 +29,7 @@ interface GameCardProps {
   onDelete?: () => void;
   onLikeToggle?: () => void;
   onReport?: () => void;
+  onAuthorClick?: () => void;
 }
 
 export const GameCard: React.FC<GameCardProps> = ({
@@ -54,6 +55,7 @@ export const GameCard: React.FC<GameCardProps> = ({
   onDelete,
   onLikeToggle,
   onReport,
+  onAuthorClick,
 }) => {
   const getTypeText = () => {
     if (type === 'own') return 'Своя игра';
@@ -119,18 +121,38 @@ export const GameCard: React.FC<GameCardProps> = ({
               </span>
               <span>ID игры: {displayGameId}</span>
             </div>
-            {author && (
-              <div className="game-card-meta-item game-card-library-author">
-                <span className="author-avatar">
-                  {resolvedAuthorAvatar ? (
-                    <img src={resolvedAuthorAvatar} alt={author} />
-                  ) : (
-                    authorInitial || '👤'
-                  )}
-                </span>
-                <span>{author}</span>
-              </div>
-            )}
+            {author &&
+              (onAuthorClick ? (
+                <button
+                  type="button"
+                  className="game-card-meta-item game-card-library-author game-card-library-author--clickable"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAuthorClick();
+                  }}
+                  aria-label={`Профиль автора: ${author}`}
+                >
+                  <span className="author-avatar">
+                    {resolvedAuthorAvatar ? (
+                      <img src={resolvedAuthorAvatar} alt="" />
+                    ) : (
+                      authorInitial || '👤'
+                    )}
+                  </span>
+                  <span>{author}</span>
+                </button>
+              ) : (
+                <div className="game-card-meta-item game-card-library-author">
+                  <span className="author-avatar">
+                    {resolvedAuthorAvatar ? (
+                      <img src={resolvedAuthorAvatar} alt={author} />
+                    ) : (
+                      authorInitial || '👤'
+                    )}
+                  </span>
+                  <span>{author}</span>
+                </div>
+              ))}
           </div>
         ) : (
           <div className="game-card-meta">
