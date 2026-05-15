@@ -64,6 +64,11 @@ export async function publishGameApi(id: string, dto: PublishGameDto) {
   return res.data.data;
 }
 
+export async function unpublishGameApi(id: string) {
+  const res: AxiosResponse<ApiEnvelope<any>> = await axiosInstance.post(`/games/${id}/unpublish`);
+  return res.data.data;
+}
+
 export async function deleteGameApi(id: string) {
   await axiosInstance.delete(`/games/${id}`);
 }

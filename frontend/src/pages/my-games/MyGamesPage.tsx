@@ -6,7 +6,7 @@ import { Modal } from '../../shared/ui/Modal/Modal';
 import { Input } from '../../shared/ui/Input/Input';
 import './MyGamesPage.css';
 import { createSessionApi, joinSessionApi } from '../../features/sessions/api/sessionsApi';
-import { deleteGameApi, getMyGamesApi, publishGameApi } from '../../features/games/api/gamesApi';
+import { deleteGameApi, getMyGamesApi, publishGameApi, unpublishGameApi } from '../../features/games/api/gamesApi';
 import { useAppSelector } from '../../app/store/hooks';
 import { selectAuthUser } from '../../features/auth/model/selectors';
 import { useDialogs } from '../../shared/ui/DialogProvider';
@@ -119,6 +119,21 @@ export const MyGamesPage: React.FC = () => {
     }
   };
 
+  const handleUnpublishGame = async (gameId: string) => {
+    const ok = await showConfirm(
+      'Игра исчезнет из общей библиотеки, но останется в черновиках. Статистика сохранится.',
+      { title: 'Снять с публикации' },
+    );
+    if (!ok) return;
+    try {
+      await unpublishGameApi(gameId);
+      await loadGames();
+    } catch (e) {
+      console.error(e);
+      await showAlert('Не удалось снять игру с публикации');
+    }
+  };
+
   const handleDeleteGame = async (gameId: string) => {
     const ok = await showConfirm('Вы уверены, что хотите удалить эту игру?', {
       title: 'Удаление игры',
@@ -218,6 +233,7 @@ export const MyGamesPage: React.FC = () => {
                   onEdit={() => handleEditGame(game.id)}
                   onPlay={() => handlePlayGame(game.id)}
                   onPublish={() => handlePublishClick(game)}
+                  onUnpublish={() => handleUnpublishGame(game.id)}
                   onDelete={() => handleDeleteGame(game.id)}
                 />
               ))}

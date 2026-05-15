@@ -8,7 +8,7 @@ import { GameLike } from './entities/game-like.entity';
 import { Category } from './entities/category.entity';
 import { Question } from './entities/question.entity';
 import { Session } from '../sessions/entities/session.entity';
-import { CreateGameDto } from './dto/create-game.dto';
+import { CategoryDto, CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { PublishGameDto } from './dto/publish-game.dto';
 
@@ -79,8 +79,34 @@ export class GamesService {
       throw new ForbiddenException('Нет прав на редактирование этой игры');
     }
 
-    Object.assign(game, updateGameDto);
+    const { categories, ...gameFields } = updateGameDto;
+    Object.assign(game, gameFields);
+
+    if (categories !== undefined) {
+      await this.replaceGameCategories(game, categories);
+    }
+
     return this.gamesRepository.save(game);
+  }
+
+  private async replaceGameCategories(game: Game, categories: CategoryDto[]): Promise<void> {
+    await this.categoriesRepository.delete({ gameId: game.id });
+
+    game.categories = categories.map((catDto, index) =>
+      this.categoriesRepository.create({
+        name: catDto.name,
+        order: index,
+        gameId: game.id,
+        questions: catDto.questions.map((qDto) =>
+          this.questionsRepository.create({
+            question: qDto.question,
+            answer: qDto.answer,
+            value: qDto.value,
+            imageUrl: qDto.imageUrl ?? null,
+          }),
+        ),
+      }),
+    );
   }
 
   async publish(id: string, userId: string, publishGameDto: PublishGameDto): Promise<Game> {
@@ -107,7 +133,22 @@ export class GamesService {
     return this.gamesRepository.save(game);
   }
 
-async remove(id: string, userId: string): Promise<void> {
+  async unpublish(id: string, userId: string): Promise<Game> {
+    const game = await this.findOne(id, userId);
+
+    if (game.authorId !== userId) {
+      throw new ForbiddenException('Нет прав на снятие публикации этой игры');
+    }
+
+    if (game.status !== 'published') {
+      throw new BadRequestException('Игра не опубликована');
+    }
+
+    game.status = 'draft';
+    return this.gamesRepository.save(game);
+  }
+
+  async remove(id: string, userId: string): Promise<void> {
   const game = await this.findOne(id, userId);
 
   if (game.authorId !== userId) {

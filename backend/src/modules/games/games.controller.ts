@@ -103,6 +103,11 @@ export class GamesController {
     return this.gamesService.publish(id, user.id, publishGameDto);
   }
 
+  @Post(':id/unpublish')
+  unpublish(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.gamesService.unpublish(id, user.id);
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string, @CurrentUser() user: User) {
     return this.gamesService.remove(id, user.id);

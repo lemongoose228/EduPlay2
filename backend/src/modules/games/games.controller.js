@@ -53,6 +53,9 @@ let GamesController = class GamesController {
     publish(id, user, publishGameDto) {
         return this.gamesService.publish(id, user.id, publishGameDto);
     }
+    unpublish(id, user) {
+        return this.gamesService.unpublish(id, user.id);
+    }
     remove(id, user) {
         return this.gamesService.remove(id, user.id);
     }
@@ -124,6 +127,14 @@ __decorate([
         publish_game_dto_1.PublishGameDto]),
     __metadata("design:returntype", void 0)
 ], GamesController.prototype, "publish", null);
+__decorate([
+    (0, common_1.Post)(':id/unpublish'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, user_entity_1.User]),
+    __metadata("design:returntype", void 0)
+], GamesController.prototype, "unpublish", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     __param(0, (0, common_1.Param)('id')),

@@ -25,6 +25,7 @@ interface GameCardProps {
   onClick?: () => void;
   onEdit?: () => void;
   onPublish?: () => void;
+  onUnpublish?: () => void;
   onPlay?: () => void;
   onDelete?: () => void;
   onLikeToggle?: () => void;
@@ -51,6 +52,7 @@ export const GameCard: React.FC<GameCardProps> = ({
   onClick,
   onEdit,
   onPublish,
+  onUnpublish,
   onPlay,
   onDelete,
   onLikeToggle,
@@ -235,6 +237,11 @@ export const GameCard: React.FC<GameCardProps> = ({
         {onPublish && !isPublished && (
           <Button variant="secondary" size="small" onClick={(e) => { e.stopPropagation(); onPublish(); }}>
             Опубликовать
+          </Button>
+        )}
+        {onUnpublish && isPublished && (
+          <Button variant="secondary" size="small" onClick={(e) => { e.stopPropagation(); onUnpublish(); }}>
+            Снять с публикации
           </Button>
         )}
         {onDelete && (

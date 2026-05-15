@@ -35,7 +35,7 @@ class QuestionDto {
   value!: number;
 }
 
-class CategoryDto {
+export class CategoryDto {
   @IsString()
   name!: string;
 

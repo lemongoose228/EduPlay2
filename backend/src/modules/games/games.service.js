@@ -84,6 +84,17 @@ let GamesService = class GamesService {
             game.description = publishGameDto.description;
         return this.gamesRepository.save(game);
     }
+    async unpublish(id, userId) {
+        const game = await this.findOne(id, userId);
+        if (game.authorId !== userId) {
+            throw new common_1.ForbiddenException('Нет прав на снятие публикации этой игры');
+        }
+        if (game.status !== 'published') {
+            throw new common_1.BadRequestException('Игра не опубликована');
+        }
+        game.status = 'draft';
+        return this.gamesRepository.save(game);
+    }
     async remove(id, userId) {
         const game = await this.findOne(id, userId);
         if (game.authorId !== userId) {
