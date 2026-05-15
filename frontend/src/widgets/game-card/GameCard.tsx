@@ -224,11 +224,6 @@ export const GameCard: React.FC<GameCardProps> = ({
             {isLiked ? '♥ В избранном' : '♡ Лайк'}
           </Button>
         )}
-        {onPlay && (
-          <Button variant="primary" size="small" onClick={(e) => { e.stopPropagation(); onPlay(); }}>
-            Играть
-          </Button>
-        )}
         {onEdit && (
           <Button variant="outline" size="small" onClick={(e) => { e.stopPropagation(); onEdit(); }}>
             Редактировать
@@ -239,14 +234,19 @@ export const GameCard: React.FC<GameCardProps> = ({
             Опубликовать
           </Button>
         )}
+        {onDelete && (
+          <Button variant="danger" size="small" onClick={(e) => { e.stopPropagation(); onDelete(); }}>
+            Удалить
+          </Button>
+        )}
         {onUnpublish && isPublished && (
           <Button variant="secondary" size="small" onClick={(e) => { e.stopPropagation(); onUnpublish(); }}>
             Снять с публикации
           </Button>
         )}
-        {onDelete && (
-          <Button variant="danger" size="small" onClick={(e) => { e.stopPropagation(); onDelete(); }}>
-            Удалить
+        {onPlay && (
+          <Button variant="primary" size="small" onClick={(e) => { e.stopPropagation(); onPlay(); }}>
+            Играть
           </Button>
         )}
       </div>

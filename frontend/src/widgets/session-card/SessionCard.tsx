@@ -101,9 +101,9 @@ export const SessionCard: React.FC<SessionCardProps> = ({
         </div>
 
         {showInviteCode && inviteCode && status !== 'finished' && (
-          <div className="invite-code">
-            <span>Код приглашения:</span>
-            <strong>{inviteCode}</strong>
+          <div className="session-invite-code">
+            <span className="session-invite-code__label">Код:</span>
+            <strong className="session-invite-code__value">{inviteCode}</strong>
           </div>
         )}
       </div>

@@ -97,23 +97,33 @@
   font-size: 16px;
 }
 
-.invite-code {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  color: var(--text-secondary);
-  border: 1px dashed var(--primary-color);
-  display: flex;
+.session-invite-code {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: #f5f6f8;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.invite-code strong {
-  color: var(--primary-color);
+.session-invite-code__label {
+  flex-shrink: 0;
+}
+
+.session-invite-code__value {
   font-size: 16px;
+  color: var(--primary-color);
   font-family: monospace;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .session-card-footer {
