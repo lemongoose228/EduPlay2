@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
 import { Game } from '../games/entities/game.entity';
+import { applyGameAgeOverlapFilter } from '../games/game-age-query.util';
 import { SearchGamesDto } from './dto/search-games.dto';
 
 @Injectable()
@@ -12,8 +13,18 @@ export class LibraryService {
   ) {}
 
   async search(searchDto: SearchGamesDto) {
-    const { search, type, sortBy, page = 1, limit = 12 } = searchDto;
-    
+    const { search, type, sortBy, page = 1, limit = 12, ageFrom, ageTo } = searchDto;
+
+    if (
+      (ageFrom !== undefined && ageTo === undefined) ||
+      (ageFrom === undefined && ageTo !== undefined)
+    ) {
+      throw new BadRequestException('Передайте ageFrom и ageTo вместе');
+    }
+    if (ageFrom !== undefined && ageTo !== undefined && ageFrom > ageTo) {
+      throw new BadRequestException('Некорректный диапазон возраста');
+    }
+
     const queryBuilder = this.gamesRepository
       .createQueryBuilder('game')
       .leftJoinAndSelect('game.author', 'author')
@@ -40,6 +51,10 @@ export class LibraryService {
 
     if (type) {
       queryBuilder.andWhere('game.type = :type', { type });
+    }
+
+    if (ageFrom !== undefined && ageTo !== undefined) {
+      applyGameAgeOverlapFilter(queryBuilder, 'game', ageFrom, ageTo);
     }
 
     switch (sortBy) {

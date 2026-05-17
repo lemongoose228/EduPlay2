@@ -28,6 +28,8 @@ export type CreateGameDto = {
     timePerTerm?: number;
     allowNegativeScores?: boolean;
   };
+  ageFrom?: number | null;
+  ageTo?: number | null;
 };
 
 export type UpdateGameDto = Partial<CreateGameDto> & {
@@ -44,8 +46,15 @@ export async function createGameApi(dto: CreateGameDto) {
   return res.data.data;
 }
 
-export async function getMyGamesApi() {
-  const res: AxiosResponse<ApiEnvelope<any[]>> = await axiosInstance.get('/games');
+export async function getMyGamesApi(params?: {
+  search?: string;
+  type?: GameType;
+  sortBy?: 'likes' | 'newest';
+  ageFrom?: number;
+  ageTo?: number;
+  status?: GameStatus;
+}) {
+  const res: AxiosResponse<ApiEnvelope<any[]>> = await axiosInstance.get('/games', { params });
   return res.data.data;
 }
 

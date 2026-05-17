@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   UseInterceptors,
   UploadedFile,
@@ -16,6 +17,7 @@ import { memoryStorage } from 'multer';
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { PublishGameDto } from './dto/publish-game.dto';
+import { MyGamesQueryDto } from './dto/my-games-query.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
@@ -56,8 +58,8 @@ export class GamesController {
   }
 
   @Get()
-  findAll(@CurrentUser() user: User) {
-    return this.gamesService.findAll(user.id);
+  findAll(@CurrentUser() user: User, @Query() query: MyGamesQueryDto) {
+    return this.gamesService.findAll(user.id, query);
   }
 
   @Get('liked/ids')

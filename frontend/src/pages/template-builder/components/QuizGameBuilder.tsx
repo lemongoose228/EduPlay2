@@ -12,12 +12,14 @@ interface QuizGameBuilderProps {
   initialData?: QuizTemplate;
   onSave: (data: QuizTemplate) => void;
   onCancel: () => void;
+  afterMainInfo?: React.ReactNode;
 }
 
 export const QuizGameBuilder: React.FC<QuizGameBuilderProps> = ({
   initialData,
   onSave,
-  onCancel
+  onCancel,
+  afterMainInfo,
 }) => {
   const { showAlert } = useDialogs();
   const [gameName, setGameName] = useState(initialData?.name || '');
@@ -118,6 +120,8 @@ export const QuizGameBuilder: React.FC<QuizGameBuilderProps> = ({
           />
         </div>
       </Card>
+
+      {afterMainInfo}
 
       <div className="questions-section">
         <div className="section-header">

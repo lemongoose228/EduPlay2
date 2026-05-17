@@ -11,12 +11,14 @@ interface CrocodileGameBuilderProps {
   initialData?: CrocodileTemplate;
   onSave: (data: CrocodileTemplate) => void;
   onCancel: () => void;
+  afterMainInfo?: React.ReactNode;
 }
 
 export const CrocodileGameBuilder: React.FC<CrocodileGameBuilderProps> = ({
   initialData,
   onSave,
-  onCancel
+  onCancel,
+  afterMainInfo,
 }) => {
   const { showAlert } = useDialogs();
   const [gameName, setGameName] = useState(initialData?.name || '');
@@ -116,6 +118,8 @@ export const CrocodileGameBuilder: React.FC<CrocodileGameBuilderProps> = ({
           />
         </div>
       </Card>
+
+      {afterMainInfo}
 
       <div className="terms-section">
         <div className="section-header">

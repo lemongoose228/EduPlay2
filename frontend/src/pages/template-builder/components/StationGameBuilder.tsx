@@ -16,12 +16,14 @@ interface StationGameBuilderProps {
   initialData?: StationTemplate;
   onSave: (data: StationTemplate) => void;
   onCancel: () => void;
+  afterMainInfo?: React.ReactNode;
 }
 
 export const StationGameBuilder: React.FC<StationGameBuilderProps> = ({
   initialData,
   onSave,
   onCancel,
+  afterMainInfo,
 }) => {
   const { showAlert } = useDialogs();
   const [gameName, setGameName] = useState(initialData?.name || '');
@@ -135,6 +137,8 @@ export const StationGameBuilder: React.FC<StationGameBuilderProps> = ({
           />
         </div>
       </Card>
+
+      {afterMainInfo}
 
       <Card title={`Станции (${stations.length})`}>
         <div className="station-list">

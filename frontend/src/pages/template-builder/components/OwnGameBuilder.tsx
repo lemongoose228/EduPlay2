@@ -12,12 +12,14 @@ interface OwnGameBuilderProps {
   initialData?: OwnGameTemplate;
   onSave: (data: OwnGameTemplate) => void;
   onCancel: () => void;
+  afterMainInfo?: React.ReactNode;
 }
 
 export const OwnGameBuilder: React.FC<OwnGameBuilderProps> = ({
   initialData,
   onSave,
-  onCancel
+  onCancel,
+  afterMainInfo,
 }) => {
   const { showAlert } = useDialogs();
   const [gameName, setGameName] = useState(initialData?.name || '');
@@ -158,6 +160,8 @@ export const OwnGameBuilder: React.FC<OwnGameBuilderProps> = ({
           placeholder="Введите название игры"
         />
       </Card>
+
+      {afterMainInfo}
 
       <div className="categories-section">
         <div className="section-header">

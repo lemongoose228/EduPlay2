@@ -26,6 +26,7 @@ import {
 } from '../../features/sessions/api/sessionsSocket';
 import { FaTrophy, FaDownload, FaChartBar } from 'react-icons/fa';
 import { useDialogs } from '../../shared/ui/DialogProvider';
+import { GameFullscreenShell } from '../../shared/ui/GameFullscreenShell/GameFullscreenShell';
 
 interface Question {
   id: string;
@@ -472,6 +473,7 @@ export const GamePage: React.FC = () => {
     return <div className="loading">Загрузка...</div>;
   }
 
+  const renderSessionContent = (): React.ReactNode => {
   const showInviteCode =
     (session.multiplayer ?? session.game.type === 'quiz') && Boolean(session.inviteCode?.trim());
 
@@ -1249,4 +1251,7 @@ export const GamePage: React.FC = () => {
       </Modal>
     </div>
   );
+  };
+
+  return <GameFullscreenShell>{renderSessionContent()}</GameFullscreenShell>;
 };

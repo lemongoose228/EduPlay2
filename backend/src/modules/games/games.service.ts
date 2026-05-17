@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Brackets, Repository, In } from 'typeorm';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { Game } from './entities/game.entity';
@@ -8,9 +8,11 @@ import { GameLike } from './entities/game-like.entity';
 import { Category } from './entities/category.entity';
 import { Question } from './entities/question.entity';
 import { Session } from '../sessions/entities/session.entity';
-import { CategoryDto, CreateGameDto } from './dto/create-game.dto';
+import { CategoryDto, CreateGameDto, GAME_AGE_PLUS_CODE, GAME_AGE_SCALE_MIN } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { PublishGameDto } from './dto/publish-game.dto';
+import { MyGamesQueryDto } from './dto/my-games-query.dto';
+import { applyGameAgeOverlapFilter } from './game-age-query.util';
 
 @Injectable()
 export class GamesService {
@@ -34,9 +36,47 @@ export class GamesService {
     await fs.mkdir(join(this.uploadRoot, this.questionImagesSubdir), { recursive: true });
   }
 
+  private resolveAgePair(
+    ageFrom: number | null | undefined,
+    ageTo: number | null | undefined,
+  ): [number | null, number | null] {
+    const fromDef = ageFrom !== undefined;
+    const toDef = ageTo !== undefined;
+    if (!fromDef && !toDef) {
+      return [null, null];
+    }
+    if (!fromDef || !toDef) {
+      throw new BadRequestException('Укажите возраст «от» и «до» вместе');
+    }
+    if (ageFrom === null && ageTo === null) {
+      return [null, null];
+    }
+    if (ageFrom === null || ageTo === null) {
+      throw new BadRequestException('Укажите возраст «от» и «до» вместе');
+    }
+    if (
+      !Number.isInteger(ageFrom) ||
+      !Number.isInteger(ageTo) ||
+      ageFrom < GAME_AGE_SCALE_MIN ||
+      ageFrom > GAME_AGE_PLUS_CODE ||
+      ageTo < GAME_AGE_SCALE_MIN ||
+      ageTo > GAME_AGE_PLUS_CODE
+    ) {
+      throw new BadRequestException(`Возраст должен быть в диапазоне ${GAME_AGE_SCALE_MIN}–${GAME_AGE_PLUS_CODE}`);
+    }
+    if (ageFrom > ageTo) {
+      throw new BadRequestException('Возраст «от» не может быть больше «до»');
+    }
+    return [ageFrom, ageTo];
+  }
+
   async create(userId: string, createGameDto: CreateGameDto): Promise<Game> {
+    const { ageFrom, ageTo, ...rest } = createGameDto;
+    const [af, at] = this.resolveAgePair(ageFrom, ageTo);
     const game = this.gamesRepository.create({
-      ...createGameDto,
+      ...rest,
+      ageFrom: af,
+      ageTo: at,
       authorId: userId,
       status: 'draft',
     });
@@ -44,11 +84,66 @@ export class GamesService {
     return this.gamesRepository.save(game);
   }
 
-  async findAll(userId: string): Promise<Game[]> {
-    return this.gamesRepository.find({
-      where: { authorId: userId },
-      order: { createdAt: 'DESC' },
+  async findAll(userId: string, dto: MyGamesQueryDto = {}): Promise<Game[]> {
+    const qb = this.gamesRepository.createQueryBuilder('game');
+    qb.where('game.authorId = :userId', { userId });
+
+    const { search, type, sortBy, ageFrom, ageTo, status } = dto;
+
+    if (status) {
+      qb.andWhere('game.status = :status', { status });
+    }
+
+    if (search?.trim()) {
+      const term = `%${search.trim()}%`;
+      qb.andWhere(
+        new Brackets((q) => {
+          q.where('game.title ILIKE :term', { term }).orWhere('game.description ILIKE :term', { term });
+        }),
+      );
+    }
+
+    if (type) {
+      qb.andWhere('game.type = :type', { type });
+    }
+
+    if (ageFrom !== undefined && ageTo !== undefined && ageFrom > ageTo) {
+      throw new BadRequestException('Некорректный фильтр по возрасту');
+    }
+    if (ageFrom !== undefined && ageTo === undefined) {
+      throw new BadRequestException('Передайте ageFrom и ageTo вместе');
+    }
+    if (ageTo !== undefined && ageFrom === undefined) {
+      throw new BadRequestException('Передайте ageFrom и ageTo вместе');
+    }
+    if (ageFrom !== undefined && ageTo !== undefined) {
+      applyGameAgeOverlapFilter(qb, 'game', ageFrom, ageTo);
+    }
+
+    switch (sortBy) {
+      case 'likes':
+        qb.orderBy('game.likes', 'DESC').addOrderBy('game.createdAt', 'DESC');
+        break;
+      default:
+        qb.orderBy('game.createdAt', 'DESC');
+        break;
+    }
+
+    const games = await qb.getMany();
+    if (games.length === 0) {
+      return [];
+    }
+
+    const ids = games.map((g) => g.id);
+    const withRelations = await this.gamesRepository.find({
+      where: { id: In(ids) },
+      relations: ['categories', 'categories.questions'],
     });
+
+    const orderIndex = new Map(ids.map((id, i) => [id, i]));
+    withRelations.sort((a, b) => (orderIndex.get(a.id) ?? 0) - (orderIndex.get(b.id) ?? 0));
+
+    return withRelations;
   }
 
   async findOne(id: string, userId?: string): Promise<Game> {
@@ -79,7 +174,25 @@ export class GamesService {
       throw new ForbiddenException('Нет прав на редактирование этой игры');
     }
 
-    const { categories, ...gameFields } = updateGameDto;
+    const { categories, ageFrom, ageTo, ...gameFields } = updateGameDto;
+
+    const touchesAge =
+      typeof updateGameDto === 'object' &&
+      updateGameDto !== null &&
+      ('ageFrom' in updateGameDto || 'ageTo' in updateGameDto);
+
+    if (touchesAge) {
+      if (!('ageFrom' in updateGameDto) || !('ageTo' in updateGameDto)) {
+        throw new BadRequestException('Укажите возраст «от» и «до» вместе');
+      }
+      const resolved = this.resolveAgePair(
+        updateGameDto.ageFrom as number | null | undefined,
+        updateGameDto.ageTo as number | null | undefined,
+      );
+      game.ageFrom = resolved[0];
+      game.ageTo = resolved[1];
+    }
+
     Object.assign(game, gameFields);
 
     if (categories !== undefined) {

@@ -142,6 +142,29 @@
   border-radius: 12px;
 }
 
+.age-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 24px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: rgba(107, 78, 255, 0.04);
+  border: 1px solid rgba(107, 78, 255, 0.12);
+  border-radius: 16px;
+}
+
+.age-filter-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 0 0 auto;
+}
+
+.age-filter-row .age-range-slider {
+  flex: 1 1 260px;
+}
+
 .filters-row {
   display: flex;
   justify-content: space-between;

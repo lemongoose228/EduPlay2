@@ -1,8 +1,8 @@
-import { IsOptional, IsString, IsEnum, IsNumber, Min, Max, IsInt } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsInt, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
-import { GAME_AGE_PLUS_CODE, GAME_AGE_SCALE_MIN } from '../../games/game-age-query.util';
+import { GAME_AGE_PLUS_CODE, GAME_AGE_SCALE_MIN } from '../game-age-query.util';
 
-export class SearchGamesDto {
+export class MyGamesQueryDto {
   @IsOptional()
   @IsString()
   search?: string;
@@ -30,14 +30,6 @@ export class SearchGamesDto {
   ageTo?: number;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(1)
-  page?: number = 1;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(1)
-  limit?: number = 12;
+  @IsEnum(['draft', 'published', 'archived'])
+  status?: 'draft' | 'published' | 'archived';
 }

@@ -1,0 +1,142 @@
+.age-range-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 2px 0;
+  box-sizing: border-box;
+}
+
+.age-range-slider__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 2px;
+}
+
+.age-range-slider__hint {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary, #666);
+  line-height: 1.2;
+}
+
+.age-range-slider__selection {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.age-range-slider__selection strong {
+  color: var(--text-primary, #222);
+  font-weight: 600;
+}
+
+.age-range-slider__sep {
+  margin: 0 4px;
+  opacity: 0.6;
+}
+
+.age-range-slider__track-wrap {
+  position: relative;
+  height: 28px;
+}
+
+.age-range-slider__track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 6px;
+  border-radius: 6px;
+  background: rgba(107, 78, 255, 0.12);
+  pointer-events: none;
+}
+
+.age-range-slider__active {
+  position: absolute;
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(
+    135deg,
+    var(--primary-color, #6b4eff) 0%,
+    var(--primary-dark, #5a3fd4) 100%
+  );
+  box-shadow: 0 2px 6px rgba(107, 78, 255, 0.28);
+}
+
+.age-range-slider__input {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 0;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+  appearance: none;
+  background: transparent;
+}
+
+.age-range-slider__input::-webkit-slider-thumb {
+  pointer-events: auto;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  background: linear-gradient(
+    135deg,
+    var(--primary-color, #6b4eff) 0%,
+    var(--primary-dark, #5a3fd4) 100%
+  );
+  box-shadow: 0 2px 6px rgba(107, 78, 255, 0.45);
+  cursor: grab;
+}
+
+.age-range-slider__input:active::-webkit-slider-thumb {
+  cursor: grabbing;
+}
+
+.age-range-slider__input::-moz-range-thumb {
+  pointer-events: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  background: linear-gradient(
+    135deg,
+    var(--primary-color, #6b4eff) 0%,
+    var(--primary-dark, #5a3fd4) 100%
+  );
+  box-shadow: 0 2px 6px rgba(107, 78, 255, 0.45);
+  cursor: grab;
+}
+
+.age-range-slider__input::-webkit-slider-runnable-track {
+  height: 6px;
+  background: transparent;
+}
+
+.age-range-slider__input::-moz-range-track {
+  height: 6px;
+  background: transparent;
+}
+
+@media (max-width: 360px) {
+  .age-range-slider__selection {
+    font-size: 11px;
+  }
+
+  .age-range-slider__sep {
+    margin: 0 2px;
+  }
+}

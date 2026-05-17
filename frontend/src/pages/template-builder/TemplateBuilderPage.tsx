@@ -20,6 +20,8 @@ import type {
 import './TemplateBuilderPage.css';
 import { createGameApi, getGameApi, updateGameApi } from '../../features/games/api/gamesApi';
 import { useDialogs } from '../../shared/ui/DialogProvider';
+import { GAME_AGE_CODE_MAX, GAME_AGE_CODE_MIN } from '../../shared/lib/gameAgeConstants';
+import { GameAgeCategoryCard } from './components/GameAgeCategoryCard';
 
 const STATION_META_PREFIX = '__station_meta__:';
 
@@ -77,6 +79,9 @@ export const TemplateBuilderPage: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [initialData, setInitialData] = useState<GameTemplate | undefined>(undefined);
+  const [anyAgeAudience, setAnyAgeAudience] = useState(true);
+  const [metaAgeMin, setMetaAgeMin] = useState(3);
+  const [metaAgeMax, setMetaAgeMax] = useState(25);
   const [gameKind, setGameKind] = useState<'own' | 'quiz' | 'crocodile' | 'wheel' | 'station'>(() => {
     if (templateId === 'custom') return 'own';
     if (templateId === 'crocodile') return 'crocodile';
@@ -107,6 +112,20 @@ export const TemplateBuilderPage: React.FC = () => {
         if (cancelled) return;
 
         setGameKind(kind);
+
+        if (game.ageFrom != null && game.ageTo != null) {
+          setAnyAgeAudience(false);
+          setMetaAgeMin(
+            Math.min(GAME_AGE_CODE_MAX, Math.max(GAME_AGE_CODE_MIN, Number(game.ageFrom))),
+          );
+          setMetaAgeMax(
+            Math.min(GAME_AGE_CODE_MAX, Math.max(GAME_AGE_CODE_MIN, Number(game.ageTo))),
+          );
+        } else {
+          setAnyAgeAudience(true);
+          setMetaAgeMin(3);
+          setMetaAgeMax(25);
+        }
 
         if (kind === 'own') {
           const own: OwnGameTemplate = { 
@@ -208,6 +227,14 @@ export const TemplateBuilderPage: React.FC = () => {
       cancelled = true;
     };
   }, [editingGameId]);
+
+  useEffect(() => {
+    if (isTemplateMode) {
+      setAnyAgeAudience(true);
+      setMetaAgeMin(3);
+      setMetaAgeMax(25);
+    }
+  }, [isTemplateMode, templateId]);
 
   const toBackendCreateDto = (gameData: GameTemplate) => {
     if (gameData.type === 'own') {
@@ -311,6 +338,13 @@ export const TemplateBuilderPage: React.FC = () => {
 
   const handleSave = async (gameData: GameTemplate) => {
     const dto = toBackendCreateDto(gameData) as any;
+    if (anyAgeAudience) {
+      dto.ageFrom = null;
+      dto.ageTo = null;
+    } else {
+      dto.ageFrom = metaAgeMin;
+      dto.ageTo = metaAgeMax;
+    }
     try {
       if (editingGameId) {
         await updateGameApi(editingGameId, dto);
@@ -328,21 +362,34 @@ export const TemplateBuilderPage: React.FC = () => {
     navigate('/my-games');
   };
 
+  const ageCategorySection = (
+    <GameAgeCategoryCard
+      anyAgeAudience={anyAgeAudience}
+      ageMin={metaAgeMin}
+      ageMax={metaAgeMax}
+      onAnyAgeChange={setAnyAgeAudience}
+      onRangeChange={(a, b) => {
+        setMetaAgeMin(a);
+        setMetaAgeMax(b);
+      }}
+    />
+  );
+
   const renderBuilder = () => {
     if (isTemplateMode) {
       if (templateId === 'custom') {
-        return <OwnGameBuilder initialData={initialData as OwnGameTemplate | undefined} onSave={handleSave} onCancel={handleCancel} />;
+        return <OwnGameBuilder initialData={initialData as OwnGameTemplate | undefined} onSave={handleSave} onCancel={handleCancel} afterMainInfo={ageCategorySection} />;
       }
       if (templateId === 'crocodile') {
-        return <CrocodileGameBuilder initialData={initialData as CrocodileTemplate | undefined} onSave={handleSave} onCancel={handleCancel} />;
+        return <CrocodileGameBuilder initialData={initialData as CrocodileTemplate | undefined} onSave={handleSave} onCancel={handleCancel} afterMainInfo={ageCategorySection} />;
       }
       if (templateId === 'wheel') {
-        return <WheelGameBuilder initialData={initialData as WheelTemplate | undefined} onSave={handleSave} onCancel={handleCancel} />;
+        return <WheelGameBuilder initialData={initialData as WheelTemplate | undefined} onSave={handleSave} onCancel={handleCancel} afterMainInfo={ageCategorySection} />;
       }
       if (templateId === 'station') {
-        return <StationGameBuilder initialData={initialData as StationTemplate | undefined} onSave={handleSave} onCancel={handleCancel} />;
+        return <StationGameBuilder initialData={initialData as StationTemplate | undefined} onSave={handleSave} onCancel={handleCancel} afterMainInfo={ageCategorySection} />;
       }
-      return <QuizGameBuilder initialData={initialData as QuizTemplate | undefined} onSave={handleSave} onCancel={handleCancel} />;
+      return <QuizGameBuilder initialData={initialData as QuizTemplate | undefined} onSave={handleSave} onCancel={handleCancel} afterMainInfo={ageCategorySection} />;
     }
 
     if (isLoading) {
@@ -355,6 +402,7 @@ export const TemplateBuilderPage: React.FC = () => {
           initialData={initialData as OwnGameTemplate | undefined}
           onSave={handleSave}
           onCancel={handleCancel}
+          afterMainInfo={ageCategorySection}
         />
       );
     }
@@ -365,6 +413,7 @@ export const TemplateBuilderPage: React.FC = () => {
           initialData={initialData as CrocodileTemplate | undefined}
           onSave={handleSave}
           onCancel={handleCancel}
+          afterMainInfo={ageCategorySection}
         />
       );
     }
@@ -375,6 +424,7 @@ export const TemplateBuilderPage: React.FC = () => {
           initialData={initialData as WheelTemplate | undefined}
           onSave={handleSave}
           onCancel={handleCancel}
+          afterMainInfo={ageCategorySection}
         />
       );
     }
@@ -385,6 +435,7 @@ export const TemplateBuilderPage: React.FC = () => {
           initialData={initialData as StationTemplate | undefined}
           onSave={handleSave}
           onCancel={handleCancel}
+          afterMainInfo={ageCategorySection}
         />
       );
     }
@@ -394,6 +445,7 @@ export const TemplateBuilderPage: React.FC = () => {
         initialData={initialData as QuizTemplate | undefined}
         onSave={handleSave}
         onCancel={handleCancel}
+        afterMainInfo={ageCategorySection}
       />
     );
   };

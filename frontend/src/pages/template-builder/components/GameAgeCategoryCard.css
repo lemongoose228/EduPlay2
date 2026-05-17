@@ -1,0 +1,36 @@
+.builder-age-panel {
+  margin-top: 16px;
+  padding: 16px 20px;
+  background: rgba(107, 78, 255, 0.06);
+  border: 1px solid rgba(107, 78, 255, 0.15);
+  border-radius: 16px;
+  box-sizing: border-box;
+}
+
+.builder-age-panel__title {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.builder-age-panel__any {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.builder-age-panel__any input {
+  accent-color: var(--primary-color, #6b4eff);
+  width: 16px;
+  height: 16px;
+}
+
+.builder-age-panel__slider {
+  margin-top: 16px;
+  width: 100%;
+}

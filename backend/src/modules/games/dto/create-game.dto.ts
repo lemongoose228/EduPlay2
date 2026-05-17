@@ -7,8 +7,15 @@ import {
   Min,
   Max,
   IsNumber,
+  IsInt,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+export const GAME_AGE_SCALE_MIN = 2;
+/** 26 означает «25+» */
+export const GAME_AGE_PLUS_CODE = 26;
+export const GAME_AGE_SCALE_MAX = GAME_AGE_PLUS_CODE;
 
 export enum GameType {
   Own = 'own',
@@ -67,4 +74,18 @@ export class CreateGameDto {
     timePerTerm?: number;
     allowNegativeScores?: boolean;
   };
+
+  @IsOptional()
+  @ValidateIf((_, v) => v !== undefined && v !== null)
+  @IsInt()
+  @Min(GAME_AGE_SCALE_MIN)
+  @Max(GAME_AGE_SCALE_MAX)
+  ageFrom?: number | null;
+
+  @IsOptional()
+  @ValidateIf((_, v) => v !== undefined && v !== null)
+  @IsInt()
+  @Min(GAME_AGE_SCALE_MIN)
+  @Max(GAME_AGE_SCALE_MAX)
+  ageTo?: number | null;
 }

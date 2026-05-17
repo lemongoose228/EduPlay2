@@ -19,6 +19,8 @@ import { useDialogs } from '../../shared/ui/DialogProvider';
 import { Modal } from '../../shared/ui/Modal/Modal';
 import { resolveAvatarSrc } from '../../shared/lib/resolveAvatarSrc';
 import { FaSearch } from 'react-icons/fa';
+import { GAME_AGE_CODE_MAX, GAME_AGE_CODE_MIN } from '../../shared/lib/gameAgeConstants';
+import { AgeRangeSlider } from '../../shared/ui/AgeRangeSlider/AgeRangeSlider';
 import './LibraryPage.css';
 
 interface PublicGame {
@@ -53,6 +55,9 @@ export const LibraryPage: React.FC = () => {
 
   const [likedIds, setLikedIds] = useState<string[]>([]);
   const [likesByGame, setLikesByGame] = useState<Record<string, number>>({});
+
+  const [filterAgeMin, setFilterAgeMin] = useState(GAME_AGE_CODE_MIN);
+  const [filterAgeMax, setFilterAgeMax] = useState(GAME_AGE_CODE_MAX);
 
   const debouncedSearch = useDebounce(searchTerm, 500);
 
@@ -122,10 +127,14 @@ export const LibraryPage: React.FC = () => {
     async function fetchLibrary() {
       setIsLoading(true);
       try {
+        const sendsAgeRange =
+          filterAgeMin !== GAME_AGE_CODE_MIN || filterAgeMax !== GAME_AGE_CODE_MAX;
+
         const data = await searchLibraryApi({
           search: debouncedSearch || undefined,
           type: selectedType === 'all' ? undefined : selectedType,
           sortBy: sortBy || undefined,
+          ...(sendsAgeRange ? { ageFrom: filterAgeMin, ageTo: filterAgeMax } : {}),
           page: 1,
           limit: 12,
         });
@@ -146,7 +155,7 @@ export const LibraryPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [debouncedSearch, selectedType, sortBy, showAlert]);
+  }, [debouncedSearch, selectedType, sortBy, filterAgeMin, filterAgeMax, showAlert]);
 
   const handleReportGame = async (gameId: string) => {
     const reason = await showPrompt({
@@ -299,6 +308,19 @@ export const LibraryPage: React.FC = () => {
           </div>
         </div>
 
+        <div className="age-filter-row">
+          <span className="age-filter-label">Возраст аудитории</span>
+          <AgeRangeSlider
+            id="library-age"
+            valueMin={filterAgeMin}
+            valueMax={filterAgeMax}
+            onChange={(a, b) => {
+              setFilterAgeMin(a);
+              setFilterAgeMax(b);
+            }}
+          />
+        </div>
+
         <div className="filters-row">
           <div className="type-filters">
             <button
@@ -408,6 +430,8 @@ export const LibraryPage: React.FC = () => {
               setSelectedType('all');
               setActiveTab('all');
               setSortBy('');
+              setFilterAgeMin(GAME_AGE_CODE_MIN);
+              setFilterAgeMax(GAME_AGE_CODE_MAX);
             }}
           >
             Сбросить

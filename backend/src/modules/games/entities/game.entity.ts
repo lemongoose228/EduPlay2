@@ -82,6 +82,13 @@ export class Game {
     allowNegativeScores?: boolean;
   };
 
+  /** Код шкалы 2 («до 3») … 26 («25+»), null = любой возраст */
+  @Column({ type: 'int', nullable: true })
+  ageFrom: number | null;
+
+  @Column({ type: 'int', nullable: true })
+  ageTo: number | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

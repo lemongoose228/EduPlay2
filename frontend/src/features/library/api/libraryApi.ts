@@ -11,6 +11,8 @@ export type SearchGamesDto = {
   search?: string;
   type?: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
   sortBy?: 'likes' | 'newest';
+  ageFrom?: number;
+  ageTo?: number;
   page?: number;
   limit?: number;
 };
@@ -32,6 +34,8 @@ export interface LibraryGameDto {
   likes?: number;
   plays?: number;
   usageCount?: number;
+  ageFrom?: number | null;
+  ageTo?: number | null;
 }
 
 export interface SearchLibraryResponseDto {

@@ -140,6 +140,114 @@
   gap: 16px;
 }
 
+.empty-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+}
+
+.my-games-controls {
+  margin-bottom: 32px;
+}
+
+.my-games-filter-row {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+  margin-bottom: 20px;
+}
+
+.my-games-filter-col {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 50%;
+}
+
+.my-games-search-section {
+  display: flex;
+  align-items: center;
+}
+
+.my-games-search-section .input-wrapper {
+  margin-bottom: 0;
+}
+
+.my-games-search-section .input-container {
+  box-sizing: border-box;
+  min-height: 48px;
+  border-radius: 12px;
+}
+
+.my-games-age-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(107, 78, 255, 0.04);
+  border: 1px solid rgba(107, 78, 255, 0.12);
+  border-radius: 16px;
+  box-sizing: border-box;
+}
+
+.my-games-age-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.my-games-age-section .age-range-slider {
+  width: 100%;
+}
+
+.my-games-type-filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.my-games-filter-btn {
+  padding: 8px 20px;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.my-games-filter-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.my-games-filter-btn.active {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 4px 12px rgba(107, 78, 255, 0.3);
+}
+
+.my-games-filter-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.my-games-type-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.my-games-type-icon.own {
+  width: 19px;
+  height: 19px;
+}
+
 @media (max-width: 768px) {
   .my-games-page {
     padding: 20px;
@@ -153,5 +261,13 @@
 
   .games-stats {
     grid-template-columns: 1fr;
+  }
+
+  .my-games-filter-row {
+    flex-direction: column;
+  }
+
+  .my-games-filter-col {
+    width: 100%;
   }
 }

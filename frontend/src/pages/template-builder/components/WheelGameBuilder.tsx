@@ -17,12 +17,14 @@ interface WheelGameBuilderProps {
   initialData?: WheelTemplate;
   onSave: (data: WheelTemplate) => void;
   onCancel: () => void;
+  afterMainInfo?: React.ReactNode;
 }
 
 export const WheelGameBuilder: React.FC<WheelGameBuilderProps> = ({
   initialData,
   onSave,
   onCancel,
+  afterMainInfo,
 }) => {
   const { showAlert } = useDialogs();
   const [gameName, setGameName] = useState(initialData?.name || '');
@@ -150,6 +152,8 @@ export const WheelGameBuilder: React.FC<WheelGameBuilderProps> = ({
           placeholder="Введите название игры"
         />
       </Card>
+
+      {afterMainInfo}
 
       <div className="categories-section">
         <div className="section-header">
