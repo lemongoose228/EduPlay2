@@ -175,6 +175,93 @@
   background-clip: text;
 }
 
+.tictactoe-results-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 32px 24px 40px;
+  margin-bottom: 32px;
+  background: linear-gradient(145deg, #f5f3ff 0%, #faf5ff 50%, #fff7ed 100%);
+  border-radius: 28px;
+  border: 1px solid rgba(196, 181, 253, 0.6);
+  box-shadow:
+    0 4px 24px rgba(102, 126, 234, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.tictactoe-results-trophy {
+  font-size: 56px;
+  color: #eab308;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 4px 12px rgba(234, 179, 8, 0.35));
+}
+
+.tictactoe-results-label {
+  margin: 0 0 20px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #764ba2;
+}
+
+.tictactoe-results-subtitle {
+  margin: -12px 0 24px;
+  font-size: 16px;
+  color: #64748b;
+}
+
+.tictactoe-results-winner-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 28px 48px;
+  background: #ffffff;
+  border-radius: 24px;
+  border: 2px solid #c4b5fd;
+  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.18);
+  min-width: min(100%, 320px);
+}
+
+.tictactoe-results-winner-name {
+  font-size: 32px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+.tictactoe-results-teams {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.tictactoe-results-team-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 28px;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 2px solid #ddd6fe;
+  min-width: 140px;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.1);
+}
+
+.tictactoe-results-team-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #334155;
+}
+
 .results-summary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

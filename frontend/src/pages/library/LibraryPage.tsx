@@ -27,7 +27,7 @@ interface PublicGame {
   id: string;
   publicId: string;
   title: string;
-  type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
+  type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station' | 'tictactoe';
   description?: string;
   author: string;
   authorAvatar?: string;
@@ -47,7 +47,7 @@ export const LibraryPage: React.FC = () => {
   const { showAlert, showPrompt } = useDialogs();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
-  const [selectedType, setSelectedType] = useState<'all' | 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station'>('all');
+  const [selectedType, setSelectedType] = useState<'all' | 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station' | 'tictactoe'>('all');
   const [sortBy, setSortBy] = useState<'' | 'likes' | 'newest'>('');
   const [activeTab, setActiveTab] = useState<'all' | 'favorites'>('all');
   const user = useAppSelector(selectAuthUser);
@@ -211,7 +211,7 @@ export const LibraryPage: React.FC = () => {
     try {
       const game = games.find((item) => item.id === gameId);
       const session = await createSessionApi({ gameId });
-      if (user && game?.type !== 'crocodile' && game?.type !== 'wheel' && game?.type !== 'station') {
+      if (user && game?.type !== 'crocodile' && game?.type !== 'wheel' && game?.type !== 'station' && game?.type !== 'tictactoe') {
         const trimmed = user.name?.trim();
         const playerName = trimmed && trimmed.length >= 2 ? trimmed : 'Хост';
         try {
@@ -374,6 +374,15 @@ export const LibraryPage: React.FC = () => {
                 Станции
               </span>
             </button>
+            <button
+              className={`filter-btn ${selectedType === 'tictactoe' ? 'active' : ''}`}
+              onClick={() => setSelectedType('tictactoe')}
+            >
+              <span className="filter-label">
+                <GameTypeIcon type="tictactoe" className="filter-type-icon" alt="Крестики-нолики" />
+                Крестики-нолики
+              </span>
+            </button>
           </div>
         </div>
       </div>
@@ -404,7 +413,7 @@ export const LibraryPage: React.FC = () => {
                       setAuthorModal({
                         name: game.author,
                         avatar: game.authorAvatar,
-                        id: game.authorId,
+                        id: game.authorId!,
                         publicId: game.authorPublicId,
                       })
                   : undefined

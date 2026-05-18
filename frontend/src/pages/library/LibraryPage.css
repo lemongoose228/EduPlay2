@@ -209,6 +209,11 @@
   height: 19px;
 }
 
+.filter-type-icon.game-type-icon-tictactoe {
+  width: 22px;
+  height: 22px;
+}
+
 .filter-btn:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);

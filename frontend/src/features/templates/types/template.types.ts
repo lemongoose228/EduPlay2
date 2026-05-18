@@ -86,12 +86,28 @@ export interface StationTemplate {
   updatedAt?: string;
 }
 
+export interface TicTacToeQuestion {
+  id: string;
+  question: string;
+  answer?: string;
+}
+
+export interface TicTacToeTemplate {
+  id?: string;
+  name: string;
+  type: 'tictactoe';
+  questions: TicTacToeQuestion[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export type GameTemplate =
   | OwnGameTemplate
   | QuizTemplate
   | CrocodileTemplate
   | WheelTemplate
-  | StationTemplate;
+  | StationTemplate
+  | TicTacToeTemplate;
 
 export interface ValidationError {
   field: string;
@@ -112,7 +128,8 @@ export const TEMPLATE_CONSTANTS = {
   MAX_TERMS: 50,
   MIN_TERMS: 3,
   MIN_STATIONS: 3,
-  MAX_STATIONS: 20
+  MAX_STATIONS: 20,
+  TICTACTOE_QUESTION_COUNT: 9,
 };
 
 export interface CrocodileTerm {

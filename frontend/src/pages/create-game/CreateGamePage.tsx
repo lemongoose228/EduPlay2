@@ -6,6 +6,7 @@ import ownIcon from '../../assets/own_icon.png';
 import quizIcon from '../../assets/quiz_icon.png';
 import crocodileIcon from '../../assets/crocodile_icon.png';
 import wheelIcon from '../../assets/wheel_icon.png';
+import tictactoeIcon from '../../assets/tictactoe_icon.png';
 import './CreateGamePage.css';
 
 interface Template {
@@ -54,6 +55,13 @@ export const CreateGamePage: React.FC = () => {
       description: 'Превратите урок в увлекательное путешествие. Прокладывайте путь шаг за шагом: двигайтесь маршруту, открывайте новые этапы и выполняйте задания, чтобы дойти до финиша.',
       icon: <GameTypeIcon type="station" className="template-icon" alt="Станции" />,
       color: '#6ee7b7'
+    },
+    {
+      id: 'tictactoe',
+      title: 'Крестики-нолики',
+      description: 'Две команды соревнуются на поле 3×3. Отвечайте на вопросы, чтобы поставить свой символ. Первые три в ряд — победа!',
+      icon: tictactoeIcon,
+      color: '#a78bfa'
     }
   ];
 

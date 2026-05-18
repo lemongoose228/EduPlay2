@@ -1,0 +1,342 @@
+.tictactoe-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #7d88bb 0%, #b6a4c8 100%);
+  box-sizing: border-box;
+}
+
+.tictactoe-page--lobby,
+.tictactoe-page--setup {
+  align-items: center;
+  justify-content: center;
+}
+
+.tictactoe-page--playing {
+  min-height: 100vh;
+}
+
+.tictactoe-lobby-card,
+.tictactoe-setup-screen {
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 24px;
+  padding: 48px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  width: 100%;
+  max-width: 720px;
+}
+
+.tictactoe-lobby-card {
+  text-align: center;
+}
+
+.tictactoe-setup-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.tictactoe-setup-screen-subtitle {
+  margin: 0;
+  color: #64748b;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.tictactoe-lobby-text {
+  color: #64748b;
+  margin: 0 0 24px;
+}
+
+.tictactoe-wait-host {
+  margin: 0;
+  text-align: center;
+  color: #64748b;
+  font-size: 16px;
+}
+
+.tictactoe-setup-start-btn {
+  align-self: center;
+  min-width: 200px;
+}
+
+.tictactoe-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.tictactoe-title--compact {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.tictactoe-game-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 20px;
+  min-height: 0;
+}
+
+.tictactoe-turn-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 20px;
+  padding: 18px 24px;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.tictactoe-turn-bar-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tictactoe-turn-bar-label {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #764ba2;
+  font-weight: 600;
+}
+
+.tictactoe-turn-bar-team {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.tictactoe-turn-bar-teams {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tictactoe-team-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #f8fafc;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  font-weight: 600;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.tictactoe-team-chip--active {
+  border-color: #667eea;
+  background: #ede9fe;
+  color: #4338ca;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.tictactoe-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  flex: 1;
+  align-items: stretch;
+  min-height: calc(100vh - 200px);
+}
+
+@media (max-width: 900px) {
+  .tictactoe-layout {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+}
+
+.tictactoe-board-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+}
+
+.tictactoe-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 1;
+  background: #ede9fe;
+  padding: 8px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+}
+
+.tictactoe-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  min-width: 0;
+  aspect-ratio: 1;
+  background: #ffffff;
+  border: 2px solid #c4b5fd;
+  border-radius: 8px;
+  padding: 0;
+  cursor: default;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tictactoe-cell--clickable {
+  cursor: pointer;
+}
+
+.tictactoe-cell--clickable:hover {
+  background: #f5f3ff;
+}
+
+.tictactoe-cell--selected {
+  background: #ede9fe;
+  box-shadow: inset 0 0 0 2px #667eea;
+  border-color: #667eea;
+}
+
+.tictactoe-cell:disabled {
+  opacity: 1;
+}
+
+.tictactoe-panel {
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 24px;
+  padding: 28px;
+  min-height: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.tictactoe-panel-title {
+  margin: 0 0 16px;
+  font-size: 20px;
+  color: #667eea;
+}
+
+.tictactoe-question-text {
+  font-size: 18px;
+  line-height: 1.5;
+  color: #1e293b;
+  margin: 0 0 auto;
+  flex: 1;
+}
+
+.tictactoe-answer-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  flex-shrink: 0;
+}
+
+.tictactoe-panel-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  text-align: center;
+  font-size: 16px;
+}
+
+.tictactoe-footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.tictactoe-setup {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 640px) {
+  .tictactoe-setup {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tictactoe-setup-label {
+  margin: 12px 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.tictactoe-symbol-picker {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tictactoe-symbol-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.tictactoe-symbol-btn:hover:not(:disabled) {
+  border-color: #667eea;
+}
+
+.tictactoe-symbol-btn--selected {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
+}
+
+.tictactoe-symbol-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.tictactoe-setup-error {
+  grid-column: 1 / -1;
+  color: #ef4444;
+  margin: 0;
+  font-size: 14px;
+}
+
+.tictactoe-victory {
+  text-align: center;
+  padding: 16px;
+}
+
+.tictactoe-trophy {
+  font-size: 48px;
+  color: #eab308;
+  margin-bottom: 16px;
+}
+
+.tictactoe-victory-team {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 16px;
+}

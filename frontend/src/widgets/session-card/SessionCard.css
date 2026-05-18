@@ -46,6 +46,11 @@
   height: 21px;
 }
 
+.type-icon.game-type-icon-tictactoe {
+  width: 24px;
+  height: 24px;
+}
+
 .session-status {
   font-size: 12px;
   padding: 4px 12px;

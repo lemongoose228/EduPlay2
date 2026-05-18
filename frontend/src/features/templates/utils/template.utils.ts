@@ -4,6 +4,7 @@ import type {
   QuizQuestion,
   StationConnectionTemplate,
   StationNodeTemplate,
+  TicTacToeQuestion,
   WheelCategory,
   WheelQuestion,
 } from '../types/template.types';
@@ -26,6 +27,17 @@ export const createEmptyQuizQuestion = (): QuizQuestion => ({
   points: 100,
   imageUrl: '',
 });
+
+export const createEmptyTicTacToeQuestion = (): TicTacToeQuestion => ({
+  id: `ttt-q-${Date.now()}-${Math.random()}`,
+  question: '',
+});
+
+export const createInitialTicTacToeQuestions = (): TicTacToeQuestion[] =>
+  Array.from({ length: TEMPLATE_CONSTANTS.TICTACTOE_QUESTION_COUNT }, (_, i) => ({
+    ...createEmptyTicTacToeQuestion(),
+    id: `ttt-q-init-${i}-${Date.now()}`,
+  }));
 
 export const createEmptyWheelQuestion = (): WheelQuestion => ({
   id: `wheel-q-${Date.now()}-${Math.random()}`,

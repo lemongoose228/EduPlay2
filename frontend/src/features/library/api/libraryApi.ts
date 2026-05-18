@@ -9,7 +9,7 @@ type ApiEnvelope<T> = {
 
 export type SearchGamesDto = {
   search?: string;
-  type?: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
+  type?: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station' | 'tictactoe';
   sortBy?: 'likes' | 'newest';
   ageFrom?: number;
   ageTo?: number;
@@ -28,7 +28,7 @@ export interface LibraryGameDto {
   id: string;
   publicId?: string;
   title: string;
-  type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
+  type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station' | 'tictactoe';
   description?: string;
   author?: LibraryAuthorDto;
   likes?: number;

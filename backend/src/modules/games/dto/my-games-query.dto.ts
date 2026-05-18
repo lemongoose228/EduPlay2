@@ -8,8 +8,8 @@ export class MyGamesQueryDto {
   search?: string;
 
   @IsOptional()
-  @IsEnum(['own', 'quiz', 'crocodile', 'wheel', 'station'])
-  type?: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
+  @IsEnum(['own', 'quiz', 'crocodile', 'wheel', 'station', 'tictactoe'])
+  type?: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station' | 'tictactoe';
 
   @IsOptional()
   @IsEnum(['likes', 'newest'])

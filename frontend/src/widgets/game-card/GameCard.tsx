@@ -10,7 +10,7 @@ interface GameCardProps {
   /** Числовой публичный ID для отображения в библиотеке */
   publicId?: string;
   title: string;
-  type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
+  type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station' | 'tictactoe';
   description?: string;
   questionsCount?: number;
   createdAt?: string;
@@ -64,6 +64,7 @@ export const GameCard: React.FC<GameCardProps> = ({
     if (type === 'quiz') return 'Викторина';
     if (type === 'wheel') return 'Колесо Фортуны';
     if (type === 'station') return 'Станции';
+    if (type === 'tictactoe') return 'Крестики-нолики';
     return 'Крокодил';
   };
 

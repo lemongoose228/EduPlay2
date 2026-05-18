@@ -119,3 +119,37 @@ export async function deleteSessionApi(sessionId: string) {
   await axiosInstance.delete(`/sessions/${sessionId}`);
 }
 
+export type TicTacToeSymbol = 'cross' | 'circle' | 'heart' | 'star';
+
+export async function setupTicTacToeApi(
+  sessionId: string,
+  payload: {
+    team1Name: string;
+    team2Name: string;
+    team1Symbol: TicTacToeSymbol;
+    team2Symbol: TicTacToeSymbol;
+  },
+) {
+  const res: AxiosResponse<ApiEnvelope<any>> = await axiosInstance.post(
+    `/sessions/${sessionId}/tictactoe/setup`,
+    payload,
+  );
+  return res.data.data;
+}
+
+export async function openTicTacToeCellApi(sessionId: string, cellIndex: number) {
+  const res: AxiosResponse<ApiEnvelope<any>> = await axiosInstance.post(
+    `/sessions/${sessionId}/tictactoe/open-cell`,
+    { cellIndex },
+  );
+  return res.data.data;
+}
+
+export async function answerTicTacToeApi(sessionId: string, correct: boolean) {
+  const res: AxiosResponse<ApiEnvelope<any>> = await axiosInstance.post(
+    `/sessions/${sessionId}/tictactoe/answer`,
+    { correct },
+  );
+  return res.data.data;
+}
+

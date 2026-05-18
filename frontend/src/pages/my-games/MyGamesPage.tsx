@@ -23,7 +23,7 @@ import { FaSearch } from 'react-icons/fa';
 interface Game {
   id: string;
   title: string;
-  type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
+  type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station' | 'tictactoe';
   description?: string;
   questionsCount: number;
   createdAt: string;
@@ -39,7 +39,7 @@ export const MyGamesPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 500);
   const [selectedType, setSelectedType] = useState<
-    'all' | 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station'
+    'all' | 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station' | 'tictactoe'
   >('all');
   const [filterAgeMin, setFilterAgeMin] = useState(GAME_AGE_CODE_MIN);
   const [filterAgeMax, setFilterAgeMax] = useState(GAME_AGE_CODE_MAX);
@@ -125,7 +125,7 @@ export const MyGamesPage: React.FC = () => {
     try {
       const game = games.find((item) => item.id === gameId);
       const session = await createSessionApi({ gameId });
-      if (user && game?.type !== 'crocodile' && game?.type !== 'wheel' && game?.type !== 'station') {
+      if (user && game?.type !== 'crocodile' && game?.type !== 'wheel' && game?.type !== 'station' && game?.type !== 'tictactoe') {
         const trimmed = user.name?.trim();
         const playerName = trimmed && trimmed.length >= 2 ? trimmed : 'Хост';
         try {
@@ -334,6 +334,16 @@ export const MyGamesPage: React.FC = () => {
                 <span className="my-games-filter-label">
                   <GameTypeIcon type="station" className="my-games-type-icon" alt="" />
                   Станции
+                </span>
+              </button>
+              <button
+                type="button"
+                className={`my-games-filter-btn ${selectedType === 'tictactoe' ? 'active' : ''}`}
+                onClick={() => setSelectedType('tictactoe')}
+              >
+                <span className="my-games-filter-label">
+                  <GameTypeIcon type="tictactoe" className="my-games-type-icon" alt="" />
+                  Крестики-нолики
                 </span>
               </button>
             </div>

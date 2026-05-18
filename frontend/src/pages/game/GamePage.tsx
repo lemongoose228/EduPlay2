@@ -13,12 +13,17 @@ import {
   getSessionApi,
   markCrocodileGuessedApi,
   markCrocodileMissedApi,
+  setupTicTacToeApi,
+  openTicTacToeCellApi,
+  answerTicTacToeApi,
   startSessionApi,
   updateScoreApi,
 } from '../../features/sessions/api/sessionsApi';
 import { CrocodileGamePage } from './CrocodileGamePage';
 import { WheelGamePage } from './WheelGamePage';
 import { StationGamePage } from './StationGamePage';
+import { TicTacToeGamePage } from './TicTacToeGamePage';
+import { TicTacToeResultsHero } from './TicTacToeResultsHero';
 import { QuestionContent } from './QuestionContent';
 import {
   getSessionsSocket,
@@ -54,7 +59,7 @@ interface GameSession {
   id: string;
   game: {
     title: string;
-    type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
+    type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station' | 'tictactoe';
     categories: Category[];
     settings?: {
       timePerQuestion?: number;
@@ -91,6 +96,23 @@ interface GameSession {
     turnEndsAt: string | null;
     termResults: Array<{ termId: string; result: 'guessed' | 'missed' }>;
   } | null;
+  tictactoeState?: {
+    setupComplete: boolean;
+    team1Id: string;
+    team2Id: string;
+    team1Symbol: 'cross' | 'circle' | 'heart' | 'star';
+    team2Symbol: 'cross' | 'circle' | 'heart' | 'star';
+    currentTurnTeamId: string;
+    cells: Array<{
+      index: number;
+      questionId: string;
+      occupiedByTeamId: string | null;
+    }>;
+    removedQuestionIds: string[];
+    selectedCellIndex: number | null;
+    winnerTeamId: string | null;
+    isDraw?: boolean;
+  } | null;
   questionStartedAt?: string | null;
   startedAt?: string;
   finishedAt?: string;
@@ -110,7 +132,12 @@ export const GamePage: React.FC = () => {
   const [isQuizStartPending, setIsQuizStartPending] = useState(false);
   const [submittedLocks, setSubmittedLocks] = useState<string[]>([]);
   const [submitSavedKey, setSubmitSavedKey] = useState<string | null>(null);
-  
+  const [tictactoeDismissed, setTictactoeDismissed] = useState(false);
+
+  useEffect(() => {
+    setTictactoeDismissed(false);
+  }, [sessionId]);
+
   useEffect(() => {
     if (!session || !user) {
       setIsHost(false);
@@ -477,6 +504,73 @@ export const GamePage: React.FC = () => {
   const showInviteCode =
     (session.multiplayer ?? session.game.type === 'quiz') && Boolean(session.inviteCode?.trim());
 
+  if (session.game.type === 'tictactoe' && !(session.status === 'finished' && tictactoeDismissed)) {
+    const tictactoeQuestions = session.game.categories.flatMap((cat) =>
+      cat.questions.map((q) => ({
+        id: q.id,
+        question: q.question,
+        answer: q.answer,
+      })),
+    );
+
+    return (
+      <TicTacToeGamePage
+        title={session.game.title}
+        questions={tictactoeQuestions}
+        teams={session.teams.map((t) => ({ id: t.id, name: t.name }))}
+        tictactoeState={session.tictactoeState}
+        status={session.status}
+        isHost={isHost}
+        onStart={async () => {
+          try {
+            const updated = await startSessionApi(session.id);
+            setSession(updated);
+          } catch (e) {
+            console.error(e);
+            await showAlert('Не удалось начать игру');
+          }
+        }}
+        onSetup={async (payload) => {
+          try {
+            const updated = await setupTicTacToeApi(session.id, payload);
+            setSession(updated);
+          } catch (e) {
+            console.error(e);
+            await showAlert('Не удалось настроить команды');
+          }
+        }}
+        onOpenCell={async (cellIndex) => {
+          try {
+            const updated = await openTicTacToeCellApi(session.id, cellIndex);
+            setSession(updated);
+          } catch (e) {
+            console.error(e);
+            await showAlert('Не удалось открыть клетку');
+          }
+        }}
+        onAnswer={async (correct) => {
+          try {
+            const updated = await answerTicTacToeApi(session.id, correct);
+            setSession(updated);
+          } catch (e) {
+            console.error(e);
+            await showAlert('Не удалось обработать ответ');
+          }
+        }}
+        onFinish={async () => {
+          try {
+            const updated = await finishSessionApi(session.id);
+            setSession(updated);
+          } catch (e) {
+            console.error(e);
+            await showAlert('Не удалось завершить игру');
+          }
+        }}
+        onVictoryClose={() => setTictactoeDismissed(true)}
+      />
+    );
+  }
+
   if (session.game.type === 'crocodile') {
     const crocodileGameData = {
       id: session.id,
@@ -796,9 +890,24 @@ export const GamePage: React.FC = () => {
         ? new Date(session.startedAt).toLocaleString('ru-RU')
         : 'Не указано';
 
-      const rows = sortedTeams.length
-        ? sortedTeams.map((team, index) => `${index + 1}. ${team.name} — ${team.score} очков`)
-        : ['Нет данных о командах'];
+      const tictactoeState = session.tictactoeState;
+      const tictactoeWinner =
+        session.game.type === 'tictactoe' &&
+        tictactoeState?.winnerTeamId &&
+        !tictactoeState.isDraw
+          ? session.teams.find((t) => t.id === tictactoeState.winnerTeamId)
+          : null;
+
+      const resultLines =
+        session.game.type === 'tictactoe'
+          ? tictactoeState?.isDraw
+            ? ['Результат: ничья', ...session.teams.map((t) => `Команда: ${t.name}`)]
+            : tictactoeWinner
+              ? [`Победитель: ${tictactoeWinner.name}`]
+              : ['Результат: игра завершена']
+          : sortedTeams.length
+            ? sortedTeams.map((team, index) => `${index + 1}. ${team.name} — ${team.score} очков`)
+            : ['Нет данных о командах'];
 
       const report = [
         'Результаты игровой сессии',
@@ -809,8 +918,8 @@ export const GamePage: React.FC = () => {
         `Старт: ${startedAtText}`,
         `Завершение: ${finishedAtText}`,
         '',
-        'Итоговая таблица:',
-        ...rows,
+        session.game.type === 'tictactoe' ? 'Итог:' : 'Итоговая таблица:',
+        ...resultLines,
       ].join('\n');
 
       const titlePart = sanitizeFileNamePart(session.game.title) || 'game';
@@ -830,10 +939,12 @@ export const GamePage: React.FC = () => {
       <div className="game-page game-finished">
         <div className="game-results-container">
           <h1 className="results-title">Игра завершена!</h1>
-          
-          
-
-          {/* Таблица лидеров */}
+          {session.game.type === 'tictactoe' ? (
+            <TicTacToeResultsHero
+              teams={session.teams}
+              tictactoeState={session.tictactoeState}
+            />
+          ) : (
           <div className="leaderboard-section">
             <h3>
               <FaTrophy style={{ color: '#ffd700' }} />
@@ -856,6 +967,7 @@ export const GamePage: React.FC = () => {
               )}
             </div>
           </div>
+          )}
 
           <div className="results-export">
             <Button
@@ -867,8 +979,6 @@ export const GamePage: React.FC = () => {
               Сохранить результаты (.txt)
             </Button>
           </div>
-
-          
         </div>
       </div>
     );

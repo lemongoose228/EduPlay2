@@ -6,6 +6,7 @@ import { QuizGameBuilder } from './components/QuizGameBuilder';
 import { CrocodileGameBuilder } from './components/CrocodileGameBuilder';
 import { WheelGameBuilder } from './components/WheelGameBuilder';
 import { StationGameBuilder } from './components/StationGameBuilder';
+import { TicTacToeGameBuilder } from './components/TicTacToeGameBuilder';
 import type {
   GameTemplate,
   OwnGameTemplate,
@@ -16,6 +17,8 @@ import type {
   StationNodeTemplate,
   StationTemplate,
   WheelTemplate,
+  TicTacToeTemplate,
+  TicTacToeQuestion,
 } from '../../features/templates/types/template.types';
 import './TemplateBuilderPage.css';
 import { createGameApi, getGameApi, updateGameApi } from '../../features/games/api/gamesApi';
@@ -72,7 +75,8 @@ export const TemplateBuilderPage: React.FC = () => {
       templateId === 'quiz' ||
       templateId === 'crocodile' ||
       templateId === 'wheel' ||
-      templateId === 'station',
+      templateId === 'station' ||
+      templateId === 'tictactoe',
     [templateId],
   );
   const editingGameId = useMemo(() => (isTemplateMode ? null : templateId || null), [isTemplateMode, templateId]);
@@ -82,11 +86,12 @@ export const TemplateBuilderPage: React.FC = () => {
   const [anyAgeAudience, setAnyAgeAudience] = useState(true);
   const [metaAgeMin, setMetaAgeMin] = useState(3);
   const [metaAgeMax, setMetaAgeMax] = useState(25);
-  const [gameKind, setGameKind] = useState<'own' | 'quiz' | 'crocodile' | 'wheel' | 'station'>(() => {
+  const [gameKind, setGameKind] = useState<'own' | 'quiz' | 'crocodile' | 'wheel' | 'station' | 'tictactoe'>(() => {
     if (templateId === 'custom') return 'own';
     if (templateId === 'crocodile') return 'crocodile';
     if (templateId === 'wheel') return 'wheel';
     if (templateId === 'station') return 'station';
+    if (templateId === 'tictactoe') return 'tictactoe';
     return 'quiz';
   });
 
@@ -107,6 +112,8 @@ export const TemplateBuilderPage: React.FC = () => {
                 ? 'wheel'
                 : game.type === 'station'
                   ? 'station'
+                  : game.type === 'tictactoe'
+                    ? 'tictactoe'
                 : 'own';
 
         if (cancelled) return;
@@ -216,6 +223,21 @@ export const TemplateBuilderPage: React.FC = () => {
             updatedAt: game.updatedAt,
           };
           setInitialData(station);
+        } else if (kind === 'tictactoe') {
+          const allQuestions: TicTacToeQuestion[] = (game.categories || []).flatMap((cat: any) =>
+            (cat.questions || []).map((q: any) => ({
+              id: q.id,
+              question: q.question,
+            })),
+          );
+          const tictactoe: TicTacToeTemplate = {
+            type: 'tictactoe',
+            name: game.title,
+            questions: allQuestions,
+            createdAt: game.createdAt,
+            updatedAt: game.updatedAt,
+          };
+          setInitialData(tictactoe);
         }
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -288,6 +310,24 @@ export const TemplateBuilderPage: React.FC = () => {
             value: 1,
           })),
         })),
+      };
+    }
+
+    if (gameData.type === 'tictactoe') {
+      return {
+        title: gameData.name,
+        description: undefined,
+        type: 'tictactoe' as const,
+        categories: [
+          {
+            name: 'Вопросы',
+            questions: (gameData as TicTacToeTemplate).questions.map((q) => ({
+              question: q.question,
+              answer: '',
+              value: 1,
+            })),
+          },
+        ],
       };
     }
 
@@ -389,6 +429,9 @@ export const TemplateBuilderPage: React.FC = () => {
       if (templateId === 'station') {
         return <StationGameBuilder initialData={initialData as StationTemplate | undefined} onSave={handleSave} onCancel={handleCancel} afterMainInfo={ageCategorySection} />;
       }
+      if (templateId === 'tictactoe') {
+        return <TicTacToeGameBuilder initialData={initialData as TicTacToeTemplate | undefined} onSave={handleSave} onCancel={handleCancel} afterMainInfo={ageCategorySection} />;
+      }
       return <QuizGameBuilder initialData={initialData as QuizTemplate | undefined} onSave={handleSave} onCancel={handleCancel} afterMainInfo={ageCategorySection} />;
     }
 
@@ -433,6 +476,17 @@ export const TemplateBuilderPage: React.FC = () => {
       return (
         <StationGameBuilder
           initialData={initialData as StationTemplate | undefined}
+          onSave={handleSave}
+          onCancel={handleCancel}
+          afterMainInfo={ageCategorySection}
+        />
+      );
+    }
+
+    if (gameKind === 'tictactoe') {
+      return (
+        <TicTacToeGameBuilder
+          initialData={initialData as TicTacToeTemplate | undefined}
           onSave={handleSave}
           onCancel={handleCancel}
           afterMainInfo={ageCategorySection}

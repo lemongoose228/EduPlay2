@@ -6,7 +6,13 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Session, CrocodileState, CrocodileTermResult } from './entities/session.entity';
+import {
+  Session,
+  CrocodileState,
+  CrocodileTermResult,
+  TicTacToeState,
+} from './entities/session.entity';
+import { TicTacToeSetupDto } from './dto/tictactoe-setup.dto';
 import { Team } from './entities/team.entity';
 import { Player } from './entities/player.entity';
 import { GamesService } from '../games/games.service';
@@ -27,6 +33,19 @@ export interface QuizRevealInfo extends QuizQuestionRef {
   correctAnswer: string;
   value: number;
 }
+
+const TICTACTOE_WIN_LINES = [
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6],
+];
+
+const TICTACTOE_QUESTION_COUNT = 9;
 
 @Injectable()
 export class SessionsService {
@@ -302,6 +321,7 @@ export class SessionsService {
       teams: [],
       answeredQuestions: [],
       crocodileState: game.type === 'crocodile' ? null : undefined,
+      tictactoeState: game.type === 'tictactoe' ? null : undefined,
     });
 
     if (game.type === 'wheel' || game.type === 'station') {
@@ -336,7 +356,8 @@ export class SessionsService {
     if (
       session.game?.type === 'crocodile' ||
       session.game?.type === 'wheel' ||
-      session.game?.type === 'station'
+      session.game?.type === 'station' ||
+      session.game?.type === 'tictactoe'
     ) {
       throw new ForbiddenException(
         'Эта игровая сессия запускается только локально у преподавателя',
@@ -730,5 +751,226 @@ export class SessionsService {
     }
 
     await this.sessionsRepository.remove(session);
+  }
+
+  private ensureTicTacToeHost(session: Session, userId: string) {
+    if (session.hostId !== userId) {
+      throw new ForbiddenException('Только создатель может управлять игрой');
+    }
+    if (session.game?.type !== 'tictactoe') {
+      throw new BadRequestException('Эта операция доступна только для "Крестики-нолики"');
+    }
+  }
+
+  private getTicTacToeQuestionIds(session: Session): string[] {
+    const ids = (session.game?.categories ?? []).flatMap((category) =>
+      (category.questions ?? []).map((q) => q.id),
+    );
+    return ids;
+  }
+
+  private buildTicTacToeCells(questionIds: string[]): TicTacToeState['cells'] {
+    const shuffled = this.shuffleArray(questionIds);
+    return shuffled.map((questionId, index) => ({
+      index,
+      questionId,
+      occupiedByTeamId: null,
+    }));
+  }
+
+  private checkTicTacToeWinner(
+    cells: TicTacToeState['cells'],
+    teamId: string,
+  ): boolean {
+    return TICTACTOE_WIN_LINES.some((line) =>
+      line.every((idx) => cells[idx].occupiedByTeamId === teamId),
+    );
+  }
+
+  private getOtherTeamId(state: TicTacToeState, teamId: string): string {
+    return state.team1Id === teamId ? state.team2Id : state.team1Id;
+  }
+
+  private reshuffleEmptyTicTacToeCells(state: TicTacToeState): TicTacToeState['cells'] {
+    const emptyIndices = state.cells
+      .filter((cell) => cell.occupiedByTeamId === null)
+      .map((cell) => cell.index);
+    const questionIds = emptyIndices.map((idx) => state.cells[idx].questionId);
+    const shuffled = this.shuffleArray(questionIds);
+    const nextCells = state.cells.map((cell) => ({ ...cell }));
+    emptyIndices.forEach((cellIndex, i) => {
+      nextCells[cellIndex] = {
+        ...nextCells[cellIndex],
+        questionId: shuffled[i],
+      };
+    });
+    return nextCells;
+  }
+
+  async setupTicTacToe(id: string, userId: string, dto: TicTacToeSetupDto): Promise<Session> {
+    const session = await this.loadSessionById(id);
+    this.ensureTicTacToeHost(session, userId);
+
+    if (session.status !== 'active') {
+      throw new BadRequestException('Игра должна быть активна');
+    }
+
+    if (session.tictactoeState?.setupComplete) {
+      throw new BadRequestException('Настройка команд уже выполнена');
+    }
+
+    if (dto.team1Symbol === dto.team2Symbol) {
+      throw new BadRequestException('Команды должны выбрать разные символы');
+    }
+
+    const questionIds = this.getTicTacToeQuestionIds(session);
+    if (questionIds.length !== TICTACTOE_QUESTION_COUNT) {
+      throw new BadRequestException(
+        `Игра должна содержать ровно ${TICTACTOE_QUESTION_COUNT} вопросов`,
+      );
+    }
+
+    const team1 = await this.teamsRepository.save(
+      this.teamsRepository.create({
+        name: dto.team1Name.trim(),
+        sessionId: session.id,
+        score: 0,
+        players: [],
+      }),
+    );
+
+    const team2 = await this.teamsRepository.save(
+      this.teamsRepository.create({
+        name: dto.team2Name.trim(),
+        sessionId: session.id,
+        score: 0,
+        players: [],
+      }),
+    );
+
+    session.teams = [team1, team2];
+    session.tictactoeState = {
+      setupComplete: true,
+      team1Id: team1.id,
+      team2Id: team2.id,
+      team1Symbol: dto.team1Symbol,
+      team2Symbol: dto.team2Symbol,
+      currentTurnTeamId: team1.id,
+      cells: this.buildTicTacToeCells(questionIds),
+      removedQuestionIds: [],
+      selectedCellIndex: null,
+      winnerTeamId: null,
+    };
+
+    const saved = await this.sessionsRepository.save(session);
+    return this.toClientSession(saved);
+  }
+
+  async openTicTacToeCell(id: string, userId: string, cellIndex: number): Promise<Session> {
+    const session = await this.loadSessionById(id);
+    this.ensureTicTacToeHost(session, userId);
+
+    if (session.status !== 'active') {
+      throw new BadRequestException('Игра не активна');
+    }
+
+    const state = session.tictactoeState;
+    if (!state?.setupComplete) {
+      throw new BadRequestException('Сначала настройте команды');
+    }
+
+    if (state.winnerTeamId) {
+      throw new BadRequestException('Игра уже завершена');
+    }
+
+    if (state.selectedCellIndex !== null) {
+      throw new BadRequestException('Сначала ответьте на открытый вопрос');
+    }
+
+    const cell = state.cells[cellIndex];
+    if (!cell || cell.occupiedByTeamId !== null) {
+      throw new BadRequestException('Клетка уже занята');
+    }
+
+    session.tictactoeState = {
+      ...state,
+      selectedCellIndex: cellIndex,
+    };
+
+    const saved = await this.sessionsRepository.save(session);
+    return this.toClientSession(saved);
+  }
+
+  async answerTicTacToe(id: string, userId: string, correct: boolean): Promise<Session> {
+    const session = await this.loadSessionById(id);
+    this.ensureTicTacToeHost(session, userId);
+
+    if (session.status !== 'active') {
+      throw new BadRequestException('Игра не активна');
+    }
+
+    const state = session.tictactoeState;
+    if (!state?.setupComplete) {
+      throw new BadRequestException('Сначала настройте команды');
+    }
+
+    if (state.winnerTeamId) {
+      throw new BadRequestException('Игра уже завершена');
+    }
+
+    if (state.selectedCellIndex === null) {
+      throw new BadRequestException('Сначала выберите клетку');
+    }
+
+    const cellIndex = state.selectedCellIndex;
+    const cell = state.cells[cellIndex];
+    if (!cell || cell.occupiedByTeamId !== null) {
+      throw new BadRequestException('Клетка уже занята');
+    }
+
+    let nextCells = state.cells.map((c) => ({ ...c }));
+    let removedQuestionIds = [...state.removedQuestionIds];
+    let winnerTeamId: string | null = null;
+
+    if (correct) {
+      nextCells[cellIndex] = {
+        ...nextCells[cellIndex],
+        occupiedByTeamId: state.currentTurnTeamId,
+      };
+      if (!removedQuestionIds.includes(cell.questionId)) {
+        removedQuestionIds.push(cell.questionId);
+      }
+      if (this.checkTicTacToeWinner(nextCells, state.currentTurnTeamId)) {
+        winnerTeamId = state.currentTurnTeamId;
+      }
+    } else {
+      nextCells = this.reshuffleEmptyTicTacToeCells({
+        ...state,
+        cells: nextCells,
+      });
+    }
+
+    const allOccupied = nextCells.every((c) => c.occupiedByTeamId !== null);
+    const isDraw = allOccupied && !winnerTeamId;
+
+    const nextState: TicTacToeState = {
+      ...state,
+      cells: nextCells,
+      removedQuestionIds,
+      selectedCellIndex: null,
+      currentTurnTeamId: this.getOtherTeamId(state, state.currentTurnTeamId),
+      winnerTeamId,
+      isDraw,
+    };
+
+    session.tictactoeState = nextState;
+
+    if (winnerTeamId || isDraw) {
+      session.status = 'finished';
+      session.finishedAt = new Date();
+    }
+
+    const saved = await this.sessionsRepository.save(session);
+    return this.toClientSession(saved);
   }
 }

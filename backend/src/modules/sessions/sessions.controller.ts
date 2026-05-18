@@ -15,6 +15,9 @@ import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { UpdateScoreDto } from './dto/update-score.dto';
 import { AddTeamDto } from './dto/add-team.dto';
 import { MarkCrocodileTermDto } from './dto/mark-crocodile-term.dto';
+import { TicTacToeSetupDto } from './dto/tictactoe-setup.dto';
+import { TicTacToeOpenCellDto } from './dto/tictactoe-open-cell.dto';
+import { TicTacToeAnswerDto } from './dto/tictactoe-answer.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
@@ -147,6 +150,33 @@ export class SessionsController {
     @Body() dto: MarkCrocodileTermDto,
   ) {
     return this.sessionsService.markCrocodileTerm(id, user.id, 'missed', dto.termId);
+  }
+
+  @Post(':id/tictactoe/setup')
+  setupTicTacToe(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+    @Body() dto: TicTacToeSetupDto,
+  ) {
+    return this.sessionsService.setupTicTacToe(id, user.id, dto);
+  }
+
+  @Post(':id/tictactoe/open-cell')
+  openTicTacToeCell(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+    @Body() dto: TicTacToeOpenCellDto,
+  ) {
+    return this.sessionsService.openTicTacToeCell(id, user.id, dto.cellIndex);
+  }
+
+  @Post(':id/tictactoe/answer')
+  answerTicTacToe(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+    @Body() dto: TicTacToeAnswerDto,
+  ) {
+    return this.sessionsService.answerTicTacToe(id, user.id, dto.correct);
   }
 
   @Post(':id/teams')

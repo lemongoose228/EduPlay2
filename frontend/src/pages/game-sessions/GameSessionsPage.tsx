@@ -18,7 +18,7 @@ import { useDialogs } from '../../shared/ui/DialogProvider';
 interface Session {
   id: string;
   gameTitle: string;
-  gameType: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
+  gameType: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station' | 'tictactoe';
   
   multiplayer: boolean;
   status: 'waiting' | 'active' | 'finished';

@@ -23,7 +23,7 @@ export interface Game {
   templateId: string;
   title: string;
   description: string;
-  type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
+  type: 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station' | 'tictactoe';
   status: GameStatus;
   data: OwnGameTemplate | QuizTemplate | CrocodileTemplate | WheelTemplate | StationTemplate;
   metadata: GameMetadata;

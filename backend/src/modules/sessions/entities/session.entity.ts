@@ -25,6 +25,28 @@ export interface CrocodileState {
   }>;
 }
 
+export type TicTacToeSymbol = 'cross' | 'circle' | 'heart' | 'star';
+
+export interface TicTacToeCell {
+  index: number;
+  questionId: string;
+  occupiedByTeamId: string | null;
+}
+
+export interface TicTacToeState {
+  setupComplete: boolean;
+  team1Id: string;
+  team2Id: string;
+  team1Symbol: TicTacToeSymbol;
+  team2Symbol: TicTacToeSymbol;
+  currentTurnTeamId: string;
+  cells: TicTacToeCell[];
+  removedQuestionIds: string[];
+  selectedCellIndex: number | null;
+  winnerTeamId: string | null;
+  isDraw?: boolean;
+}
+
 @Entity('sessions')
 export class Session {
   @PrimaryGeneratedColumn('uuid')
@@ -90,6 +112,9 @@ export class Session {
 
   @Column({ type: 'jsonb', nullable: true })
   crocodileState?: CrocodileState | null;
+
+  @Column({ type: 'jsonb', nullable: true })
+  tictactoeState?: TicTacToeState | null;
 
   @Column({ nullable: true })
   startedAt: Date;

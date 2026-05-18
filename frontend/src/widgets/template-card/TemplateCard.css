@@ -47,6 +47,11 @@
   height: 50px;
 }
 
+.template-icon-tictactoe {
+  width: 54px;
+  height: 54px;
+}
+
 @keyframes bounce {
   0%, 100% {
     transform: translateY(0);

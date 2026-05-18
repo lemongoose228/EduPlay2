@@ -31,7 +31,7 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)({
         type: 'enum',
-        enum: ['own', 'quiz', 'crocodile', 'wheel', 'station'],
+        enum: ['own', 'quiz', 'crocodile', 'wheel', 'station', 'tictactoe'],
         default: 'own',
     }),
     __metadata("design:type", String)

@@ -4,14 +4,16 @@ import ownIcon from '../../assets/own_icon.png';
 import quizIcon from '../../assets/quiz_icon.png';
 import crocodileIcon from '../../assets/crocodile_icon.png';
 import wheelIcon from '../../assets/wheel_icon.png';
+import tictactoeIcon from '../../assets/tictactoe_icon.png';
 
-export type GameType = 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station';
+export type GameType = 'own' | 'quiz' | 'crocodile' | 'wheel' | 'station' | 'tictactoe';
 
 const GAME_TYPE_IMAGE_SRC: Record<Exclude<GameType, 'station'>, string> = {
   own: ownIcon,
   quiz: quizIcon,
   crocodile: crocodileIcon,
   wheel: wheelIcon,
+  tictactoe: tictactoeIcon,
 };
 
 export interface GameTypeIconProps {
@@ -21,8 +23,12 @@ export interface GameTypeIconProps {
 }
 
 export const GameTypeIcon: React.FC<GameTypeIconProps> = ({ type, className, alt = '' }) => {
+  const classes = [className, type === 'tictactoe' ? 'game-type-icon-tictactoe' : '']
+    .filter(Boolean)
+    .join(' ');
+
   if (type === 'station') {
-    return <FaRoute className={className} aria-label={alt} title={alt || undefined} />;
+    return <FaRoute className={classes} aria-label={alt} title={alt || undefined} />;
   }
-  return <img src={GAME_TYPE_IMAGE_SRC[type]} alt={alt} className={className} />;
+  return <img src={GAME_TYPE_IMAGE_SRC[type]} alt={alt} className={classes} />;
 };
