@@ -131,6 +131,34 @@
   background: transparent;
 }
 
+.age-range-slider--compact {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+}
+
+.age-range-slider--compact .age-range-slider__meta {
+  flex: 0 0 auto;
+  padding: 0;
+}
+
+.age-range-slider--compact .age-range-slider__hint--edge {
+  display: none;
+}
+
+.age-range-slider--compact .age-range-slider__selection {
+  flex: 0 0 auto;
+  text-align: left;
+  font-size: 11px;
+}
+
+.age-range-slider--compact .age-range-slider__track-wrap {
+  flex: 1 1 auto;
+  min-width: 60px;
+  height: 22px;
+}
+
 @media (max-width: 360px) {
   .age-range-slider__selection {
     font-size: 11px;
@@ -138,5 +166,9 @@
 
   .age-range-slider__sep {
     margin: 0 2px;
+  }
+
+  .age-range-slider--compact .age-range-slider__selection {
+    font-size: 10px;
   }
 }

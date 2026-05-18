@@ -8,6 +8,7 @@ export type AgeRangeSliderProps = {
   onChange: (min: number, max: number) => void;
   id?: string;
   className?: string;
+  variant?: 'default' | 'compact';
 };
 
 export const AgeRangeSlider: React.FC<AgeRangeSliderProps> = ({
@@ -16,6 +17,7 @@ export const AgeRangeSlider: React.FC<AgeRangeSliderProps> = ({
   onChange,
   id = 'age-range',
   className = '',
+  variant = 'default',
 }) => {
   const [activeThumb, setActiveThumb] = useState<'min' | 'max' | null>(null);
 
@@ -43,8 +45,16 @@ export const AgeRangeSlider: React.FC<AgeRangeSliderProps> = ({
   const zMin = activeThumb === 'min' ? 4 : activeThumb === 'max' ? 2 : 3;
   const zMax = activeThumb === 'max' ? 4 : activeThumb === 'min' ? 2 : 3;
 
+  const rootClass = [
+    'age-range-slider',
+    variant === 'compact' ? 'age-range-slider--compact' : '',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <div className={`age-range-slider ${className}`.trim()}>
+    <div className={rootClass}>
       <div className="age-range-slider__meta" aria-hidden>
         <span className="age-range-slider__hint age-range-slider__hint--edge">до 3</span>
         <span className="age-range-slider__selection">

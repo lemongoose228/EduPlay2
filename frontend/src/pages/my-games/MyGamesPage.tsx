@@ -264,8 +264,9 @@ export const MyGamesPage: React.FC = () => {
                 />
               </div>
               <div className="my-games-filter-col my-games-age-section">
-                <span className="my-games-age-label">Возраст аудитории</span>
+                <span className="my-games-age-label">Возраст</span>
                 <AgeRangeSlider
+                  variant="compact"
                   id="mygames-age"
                   valueMin={filterAgeMin}
                   valueMax={filterAgeMax}
