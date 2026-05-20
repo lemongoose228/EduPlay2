@@ -76,7 +76,8 @@ export const TicTacToeGameBuilder: React.FC<TicTacToeGameBuilderProps> = ({
         <div>
           <h2 className="builder-title">Конструктор «Крестики-нолики»</h2>
           <p className="builder-subtitle">
-            Добавьте ровно {TEMPLATE_CONSTANTS.TICTACTOE_QUESTION_COUNT} вопросов для поля 3×3
+            Добавьте {TEMPLATE_CONSTANTS.TICTACTOE_QUESTION_COUNT} вопросов. При начале игры они
+            случайно распределятся по клеткам поля
           </p>
         </div>
         <div className="header-actions">
@@ -100,12 +101,11 @@ export const TicTacToeGameBuilder: React.FC<TicTacToeGameBuilderProps> = ({
       </Card>
 
       <Card title={`Вопросы (${questions.length})`}>
-        <div className="tictactoe-questions-grid">
+        <div className="tictactoe-questions-list">
           {questions.map((q, index) => (
             <div key={q.id} className="tictactoe-question-item">
-              <h4 className="tictactoe-question-label">Клетка {index + 1}</h4>
+              <span className="tictactoe-question-label">Вопрос {index + 1}</span>
               <Input
-                label="Вопрос"
                 value={q.question}
                 onChange={(e) => updateQuestion(q.id, e.target.value)}
                 placeholder="Введите вопрос"

@@ -198,6 +198,11 @@
   transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 
+.tictactoe-cell svg {
+  max-width: 75%;
+  max-height: 75%;
+}
+
 .tictactoe-cell--clickable {
   cursor: pointer;
 }

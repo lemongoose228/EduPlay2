@@ -301,7 +301,7 @@ export const TicTacToeGamePage: React.FC<TicTacToeGamePageProps> = ({
                       onClick={() => void handleCellClick(cell.index)}
                       disabled={!isClickable || isLoading}
                     >
-                      {symbol ? <TeamSymbol symbol={symbol} size={40} /> : null}
+                      {symbol ? <TeamSymbol symbol={symbol} size={64} /> : null}
                     </button>
                   );
                 })}

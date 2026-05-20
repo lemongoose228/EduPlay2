@@ -5,28 +5,25 @@
   animation: slideIn 0.5s ease;
 }
 
-.tictactoe-questions-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+.tictactoe-questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .tictactoe-question-item {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   padding: 16px;
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--bg-secondary, #f8f9fc);
   border: 1px solid rgba(102, 126, 234, 0.15);
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
 }
 
 .tictactoe-question-label {
-  margin: 0 0 12px;
   font-size: 14px;
   font-weight: 600;
   color: #667eea;
-}
-
-@media (max-width: 900px) {
-  .tictactoe-questions-grid {
-    grid-template-columns: 1fr;
-  }
 }
