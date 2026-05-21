@@ -5,7 +5,11 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
+import {
+  getSessionRetentionCutoffDate,
+  SESSION_WITHIN_RETENTION_WHERE,
+} from './session-retention.util';
 import {
   Session,
   CrocodileState,
@@ -421,14 +425,24 @@ export class SessionsService {
   }
 
   async findByUser(userId: string): Promise<Session[]> {
-    const sessions = await this.sessionsRepository.find({
-      where: [
-        { hostId: userId },
-        { teams: { players: { userId } } },
-      ],
-      relations: ['game', 'teams'],
-      order: { createdAt: 'DESC' },
-    });
+    const cutoff = getSessionRetentionCutoffDate();
+    const sessions = await this.sessionsRepository
+      .createQueryBuilder('session')
+      .leftJoinAndSelect('session.game', 'game')
+      .leftJoinAndSelect('session.teams', 'teams')
+      .leftJoin('teams.players', 'player')
+      .where(
+        new Brackets((qb) => {
+          qb.where('session.hostId = :userId', { userId }).orWhere(
+            'player.userId = :userId',
+            { userId },
+          );
+        }),
+      )
+      .andWhere(SESSION_WITHIN_RETENTION_WHERE, { cutoff })
+      .distinct(true)
+      .orderBy('session.createdAt', 'DESC')
+      .getMany();
     return sessions.map((s) => this.toClientSession(s));
   }
 

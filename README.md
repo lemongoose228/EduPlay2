@@ -45,7 +45,7 @@ diplom/
 - `modules/auth/` — регистрация, вход, JWT-стратегия.
 - `modules/users/` — пользователи, профиль, роли, блокировки.
 - `modules/games/` — сущности игр, категории, вопросы, CRUD и публикация.
-- `modules/sessions/` — сессии, REST, `sessions.gateway.ts` (Socket.IO), таймеры викторины (`sessions-timer.service.ts`, `sessions-timer.listener.ts`).
+- `modules/sessions/` — сессии, REST, `sessions.gateway.ts` (Socket.IO), таймеры викторины (`sessions-timer.service.ts`, `sessions-timer.listener.ts`), очистка просроченных сессий (`sessions-cleanup.service.ts`, 90 дней).
 - `modules/library/` — поиск и выдача опубликованных игр для общей библиотеки.
 - `modules/reports/` — создание жалоб на игры.
 - `modules/admin/` — панель администратора: блокировки, разбор жалоб, назначение админов (для супер-админа).
@@ -206,6 +206,12 @@ npm run dev
 |------------|------------|---------------|
 | `JWT_SECRET` | секрет подписи токенов | `your-secret-key` (смените в production) |
 | `JWT_EXPIRATION` | срок жизни токена | `7d` |
+
+### Сессии (`backend/src/modules/sessions`)
+
+| Переменная | Назначение | По умолчанию |
+|------------|------------|---------------|
+| `SESSION_RETENTION_DAYS` | срок хранения сессий в БД и в списке «Игровые сессии» (завершённые — по `finishedAt`, остальные — по `createdAt`); по истечении срока записи удаляются автоматически | `90` |
 
 ### Прочее
 

@@ -9,6 +9,7 @@ import { Player } from './entities/player.entity';
 import { GamesModule } from '../games/games.module';
 import { SessionsTimerService } from './sessions-timer.service';
 import { SessionsTimerListener } from './sessions-timer.listener';
+import { SessionsCleanupService } from './sessions-cleanup.service';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { SessionsTimerListener } from './sessions-timer.listener';
     SessionsGateway,
     SessionsTimerService,
     SessionsTimerListener,
+    SessionsCleanupService,
   ],
   exports: [SessionsService],
 })
