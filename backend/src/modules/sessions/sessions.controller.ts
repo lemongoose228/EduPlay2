@@ -2,7 +2,7 @@ import {
   Controller,
   Get,
   Post,
-  Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -14,6 +14,7 @@ import { JoinSessionDto } from './dto/join-session.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { UpdateScoreDto } from './dto/update-score.dto';
 import { AddTeamDto } from './dto/add-team.dto';
+import { UpdateTeamDto } from './dto/update-team.dto';
 import { MarkCrocodileTermDto } from './dto/mark-crocodile-term.dto';
 import { TicTacToeSetupDto } from './dto/tictactoe-setup.dto';
 import { TicTacToeOpenCellDto } from './dto/tictactoe-open-cell.dto';
@@ -179,6 +180,18 @@ export class SessionsController {
     return this.sessionsService.answerTicTacToe(id, user.id, dto.correct);
   }
 
+  @Post(':id/teams/:teamId/rename')
+  async renameTeam(
+    @Param('id') id: string,
+    @Param('teamId') teamId: string,
+    @CurrentUser() user: User,
+    @Body() dto: UpdateTeamDto,
+  ) {
+    const session = await this.sessionsService.updateTeam(id, teamId, user.id, dto);
+    this.sessionsGateway.emitSessionState(id, session);
+    return session;
+  }
+
   @Post(':id/teams')
   addTeam(
     @Param('id') id: string,
@@ -186,6 +199,18 @@ export class SessionsController {
     @Body() dto: AddTeamDto,
   ) {
     return this.sessionsService.addTeam(id, user.id, dto);
+  }
+
+  @Patch(':id/teams/:teamId')
+  async updateTeam(
+    @Param('id') id: string,
+    @Param('teamId') teamId: string,
+    @CurrentUser() user: User,
+    @Body() dto: UpdateTeamDto,
+  ) {
+    const session = await this.sessionsService.updateTeam(id, teamId, user.id, dto);
+    this.sessionsGateway.emitSessionState(id, session);
+    return session;
   }
 
   @Delete(':id')

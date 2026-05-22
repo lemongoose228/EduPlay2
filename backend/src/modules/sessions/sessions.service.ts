@@ -25,6 +25,7 @@ import { JoinSessionDto } from './dto/join-session.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { UpdateScoreDto } from './dto/update-score.dto';
 import { AddTeamDto } from './dto/add-team.dto';
+import { UpdateTeamDto } from './dto/update-team.dto';
 
 export interface QuizQuestionRef {
   categoryId: string;
@@ -320,23 +321,13 @@ export class SessionsService {
           (game.settings?.timePerTerm ?? 30),
         allowNegativeScores:
           createSessionDto.settings?.allowNegativeScores ??
-          (game.settings?.allowNegativeScores ?? false),
+          (game.settings?.allowNegativeScores ?? game.type === 'own'),
       },
       teams: [],
       answeredQuestions: [],
       crocodileState: game.type === 'crocodile' ? null : undefined,
       tictactoeState: game.type === 'tictactoe' ? null : undefined,
     });
-
-    if (game.type === 'wheel' || game.type === 'station') {
-      session.teams = [
-        this.teamsRepository.create({
-          name: game.type === 'station' ? 'Преподаватель' : 'Отвечено вопросов',
-          score: 0,
-          players: [],
-        }),
-      ];
-    }
 
     const savedSession = await this.sessionsRepository.save(session);
     await this.gamesService.incrementPlays(game.id);
@@ -726,6 +717,45 @@ export class SessionsService {
 
     const savedFinish = await this.sessionsRepository.save(session);
     return this.toClientSession(savedFinish);
+  }
+
+  async updateTeam(
+    id: string,
+    teamId: string,
+    userId: string,
+    dto: UpdateTeamDto,
+  ): Promise<Session> {
+    const session = await this.loadSessionById(id);
+
+    if (session.status !== 'waiting') {
+      throw new BadRequestException('Название команды можно изменить только до старта игры');
+    }
+
+    if (session.game?.type !== 'quiz') {
+      throw new BadRequestException('Переименование команд доступно только для викторины');
+    }
+
+    const team = session.teams.find((t) => t.id === teamId);
+    if (!team) {
+      throw new NotFoundException('Команда не найдена');
+    }
+
+    const isHost = session.hostId === userId;
+    const isTeamMember = team.players?.some((p) => p.userId === userId);
+    if (!isHost && !isTeamMember) {
+      throw new ForbiddenException('Нет прав на изменение этой команды');
+    }
+
+    const name = dto.name.trim();
+    const duplicate = session.teams.some((t) => t.id !== teamId && t.name === name);
+    if (duplicate) {
+      throw new BadRequestException('Команда с таким названием уже существует');
+    }
+
+    team.name = name;
+    await this.teamsRepository.save(team);
+
+    return this.findOne(session.id);
   }
 
   async addTeam(id: string, userId: string, dto: AddTeamDto): Promise<Session> {

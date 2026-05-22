@@ -125,11 +125,15 @@ export const MyGamesPage: React.FC = () => {
     try {
       const game = games.find((item) => item.id === gameId);
       const session = await createSessionApi({ gameId });
-      if (user && game?.type !== 'crocodile' && game?.type !== 'wheel' && game?.type !== 'station' && game?.type !== 'tictactoe') {
+      if (user && game?.type === 'quiz') {
         const trimmed = user.name?.trim();
-        const playerName = trimmed && trimmed.length >= 2 ? trimmed : 'Хост';
+        const displayName = trimmed && trimmed.length >= 2 ? trimmed : 'Хост';
         try {
-          await joinSessionApi({ inviteCode: session.inviteCode, playerName });
+          await joinSessionApi({
+            inviteCode: session.inviteCode,
+            playerName: displayName,
+            teamName: displayName,
+          });
         } catch (e) {
           console.warn('Auto-join host failed', e);
         }

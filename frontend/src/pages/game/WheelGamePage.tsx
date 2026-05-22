@@ -39,16 +39,10 @@ interface WheelCategory {
   questions: WheelQuestion[];
 }
 
-interface WheelTeam {
-  id: string;
-  name: string;
-  score: number;
-}
-
 interface WheelGamePageProps {
   title: string;
   categories: WheelCategory[];
-  teams: WheelTeam[];
+  correctCount: number;
   answeredKeys: Set<string>;
   isHost: boolean;
   onSuccess: (categoryId: string, questionId: string) => Promise<void>;
@@ -59,7 +53,7 @@ interface WheelGamePageProps {
 export const WheelGamePage: React.FC<WheelGamePageProps> = ({
   title,
   categories,
-  teams,
+  correctCount,
   answeredKeys,
   isHost,
   onSuccess,
@@ -178,8 +172,6 @@ export const WheelGamePage: React.FC<WheelGamePageProps> = ({
     }
   };
 
-  const firstTeam = teams[0];
-
   return (
     <div className="wheel-page">
       <div className="wheel-header">
@@ -278,14 +270,8 @@ export const WheelGamePage: React.FC<WheelGamePageProps> = ({
               <h3>Счёт</h3>
             </div>
             <div className="wheel-score-value">
-              {firstTeam ? (
-                <>
-                  <span className="team-name">Отвечено вопросов</span>
-                  <span className="team-score">{firstTeam.score}</span>
-                </>
-              ) : (
-                <span className="team-name">0</span>
-              )}
+              <span className="team-name">Отвечено вопросов</span>
+              <span className="team-score">{correctCount}</span>
             </div>
           </div>
 

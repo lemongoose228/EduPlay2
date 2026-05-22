@@ -115,6 +115,14 @@ export async function addTeamApi(sessionId: string, dto: { name?: string }) {
   return res.data.data;
 }
 
+export async function updateTeamApi(sessionId: string, teamId: string, dto: { name: string }) {
+  const res: AxiosResponse<ApiEnvelope<any>> = await axiosInstance.post(
+    `/sessions/${sessionId}/teams/${teamId}/rename`,
+    dto,
+  );
+  return res.data.data;
+}
+
 export async function deleteSessionApi(sessionId: string) {
   await axiosInstance.delete(`/sessions/${sessionId}`);
 }

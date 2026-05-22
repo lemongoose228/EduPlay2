@@ -18,6 +18,7 @@ import {
   answerTicTacToeApi,
   startSessionApi,
   updateScoreApi,
+  updateTeamApi,
 } from '../../features/sessions/api/sessionsApi';
 import { CrocodileGamePage } from './CrocodileGamePage';
 import { WheelGamePage } from './WheelGamePage';
@@ -29,7 +30,7 @@ import {
   getSessionsSocket,
   waitForSessionsSocketConnected,
 } from '../../features/sessions/api/sessionsSocket';
-import { FaTrophy, FaDownload, FaChartBar } from 'react-icons/fa';
+import { FaTrophy, FaDownload, FaChartBar, FaCheck, FaPen } from 'react-icons/fa';
 import { useDialogs } from '../../shared/ui/DialogProvider';
 import { GameFullscreenShell } from '../../shared/ui/GameFullscreenShell/GameFullscreenShell';
 
@@ -133,6 +134,9 @@ export const GamePage: React.FC = () => {
   const [submittedLocks, setSubmittedLocks] = useState<string[]>([]);
   const [submitSavedKey, setSubmitSavedKey] = useState<string | null>(null);
   const [tictactoeDismissed, setTictactoeDismissed] = useState(false);
+  const [editingTeamName, setEditingTeamName] = useState('');
+  const [isEditingTeamName, setIsEditingTeamName] = useState(false);
+  const [isSavingTeamName, setIsSavingTeamName] = useState(false);
 
   useEffect(() => {
     setTictactoeDismissed(false);
@@ -277,8 +281,6 @@ export const GamePage: React.FC = () => {
     );
   }, [session]);
 
-  const allowNegativeScores = session?.settings?.allowNegativeScores ?? false;
-
   const myPlayer = useMemo(() => {
     if (!session || !user?.id) return undefined;
     return session.teams
@@ -287,6 +289,53 @@ export const GamePage: React.FC = () => {
   }, [session, user?.id]);
 
   const myTeamId = myPlayer?.teamId;
+
+  const myTeam = useMemo(() => {
+    if (!session || !myTeamId) return undefined;
+    return session.teams.find((t) => t.id === myTeamId);
+  }, [session, myTeamId]);
+
+  useEffect(() => {
+    if (isEditingTeamName) return;
+    if (!session || session.status !== 'waiting' || session.game.type !== 'quiz' || !myTeam) {
+      return;
+    }
+    setEditingTeamName(myTeam.name);
+  }, [session?.id, session?.status, session?.game?.type, myTeam?.id, myTeam?.name, isEditingTeamName]);
+
+  const handleStartEditTeamName = () => {
+    if (!myTeam) return;
+    setEditingTeamName(myTeam.name);
+    setIsEditingTeamName(true);
+  };
+
+  const handleSaveTeamName = async () => {
+    if (!session || !myTeamId) return;
+    const trimmed = editingTeamName.trim();
+    if (!trimmed) {
+      await showAlert('Введите название');
+      return;
+    }
+    setIsSavingTeamName(true);
+    try {
+      const updated = await updateTeamApi(session.id, myTeamId, { name: trimmed });
+      setSession(updated);
+      setIsEditingTeamName(false);
+    } catch (e) {
+      console.error(e);
+      await showAlert('Не удалось сохранить название');
+    } finally {
+      setIsSavingTeamName(false);
+    }
+  };
+
+  const handleTeamNameAction = () => {
+    if (isEditingTeamName) {
+      void handleSaveTeamName();
+      return;
+    }
+    handleStartEditTeamName();
+  };
 
   const quizQuestionRefs = useMemo(() => {
     if (!session || session.game.type !== 'quiz') return [];
@@ -627,15 +676,10 @@ export const GamePage: React.FC = () => {
         <WheelGamePage
           title={session.game.title}
           categories={session.game.categories}
-          teams={session.teams}
+          correctCount={answeredSet.size}
           answeredKeys={answeredSet}
           isHost={isHost}
           onSuccess={async (categoryId, questionId) => {
-            const soloTeam = session.teams[0];
-            if (soloTeam) {
-              const scored = await updateScoreApi(session.id, { teamId: soloTeam.id, points: 1 });
-              setSession(scored);
-            }
             const answered = await answerQuestionApi(session.id, categoryId, questionId);
             setSession(answered);
           }}
@@ -678,7 +722,42 @@ export const GamePage: React.FC = () => {
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
 
+  if (session.game.type === 'wheel' && session.status === 'waiting') {
+    return (
+      <div className="game-page lobby">
+        <div className="game-container">
+          <h1 className="game-title">{session.game.title}</h1>
+          <p className="lobby-hint">Колесо Фортуны готово к запуску</p>
+          {isHost && (
+            <div className="game-actions">
+              <Button
+                variant="primary"
+                size="large"
+                onClick={() => {
+                  startSessionApi(session.id)
+                    .then((updated) => setSession(updated))
+                    .catch((e) => {
+                      console.error(e);
+                      void showAlert('Не удалось начать игру');
+                    });
+                }}
+              >
+                Начать игру
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   if (session.status === 'waiting') {
+    const isOwnGame = session.game.type === 'own';
+    const isQuizGame = session.game.type === 'quiz';
+    const canStart =
+      isHost &&
+      (isOwnGame || (isQuizGame && session.teams.length >= 1));
+
     return (
       <div className="game-page lobby">
         <div className="game-container">
@@ -691,26 +770,80 @@ export const GamePage: React.FC = () => {
             </div>
           ) : null}
 
-          <div className="teams-section">
-            <h2>Команды ({session.teams.length})</h2>
-            <div className="teams-list">
-              {session.teams.map((team) => (
-                <div key={team.id} className="team-item">
-                  <span className="team-name">{team.name}</span>
-                  {/* <span className="team-players">
-                    👥 {team.players.length} {team.players.length === 1 ? 'игрок' : 'игроков'}
-                  </span> */}
-                </div>
-              ))}
+          {isOwnGame ? (
+            <p className="lobby-hint">Команды добавьте после начала игры</p>
+          ) : (
+            <div className="teams-section">
+              <h2>Участники ({session.teams.length})</h2>
+              <div className="teams-list">
+                {session.teams.map((team) => {
+                  const isMyTeam = team.id === myTeamId;
+                  const playerNames = team.players.map((p) => p.name).join(', ');
+
+                  if (isQuizGame && isMyTeam) {
+                    return (
+                      <div key={team.id} className="team-item team-item--editable">
+                        <div className="team-name-row">
+                          <button
+                            type="button"
+                            className={`team-name-action ${isEditingTeamName ? 'team-name-action--save' : ''}`}
+                            onClick={() => handleTeamNameAction()}
+                            disabled={isSavingTeamName || (isEditingTeamName && !editingTeamName.trim())}
+                            aria-label={isEditingTeamName ? 'Сохранить название' : 'Изменить название'}
+                            title={isEditingTeamName ? 'Сохранить' : 'Изменить'}
+                          >
+                            {isEditingTeamName ? (
+                              <FaCheck aria-hidden />
+                            ) : (
+                              <FaPen aria-hidden />
+                            )}
+                          </button>
+                          {isEditingTeamName ? (
+                            <input
+                              className="team-name-input"
+                              value={editingTeamName}
+                              onChange={(e) => setEditingTeamName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  void handleSaveTeamName();
+                                }
+                                if (e.key === 'Escape') {
+                                  setIsEditingTeamName(false);
+                                  setEditingTeamName(myTeam?.name ?? '');
+                                }
+                              }}
+                              placeholder="Ваше название"
+                              autoFocus
+                              disabled={isSavingTeamName}
+                            />
+                          ) : (
+                            <span className="team-name">{team.name}</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div key={team.id} className="team-item">
+                      <span className="team-name">{team.name}</span>
+                      {!isQuizGame && playerNames ? (
+                        <span className="team-players">{playerNames}</span>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {isHost && (
             <div className="game-actions">
               <Button
                 variant="primary"
                 size="large"
-                disabled={session.teams.length < 1 || isQuizStartPending}
+                disabled={!canStart || isQuizStartPending}
                 onClick={() => {
                   if (session.game.type === 'quiz') {
                     void handleStartQuizSession();
@@ -1346,7 +1479,7 @@ export const GamePage: React.FC = () => {
                       <Button
                         variant="danger"
                         size="small"
-                        disabled={!isHost || !allowNegativeScores || isPointsLocked}
+                        disabled={!isHost || isPointsLocked}
                         onClick={() => handleSubtractScore(team.id, currentQuestionValue ?? 0)}
                       >
                         -{currentQuestionValue ?? 0}

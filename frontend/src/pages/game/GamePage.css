@@ -89,6 +89,92 @@
   gap: 12px;
 }
 
+.lobby-hint {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 16px;
+  margin: 16px 0 24px;
+}
+
+.team-item--editable {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  cursor: default;
+}
+
+.team-item--editable:hover {
+  transform: none;
+}
+
+.team-name-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.team-name-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  border: 1px solid rgba(102, 126, 234, 0.25);
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  color: #667eea;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 16px;
+}
+
+.team-name-action:hover:not(:disabled) {
+  border-color: rgba(102, 126, 234, 0.45);
+  background: rgba(102, 126, 234, 0.08);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
+.team-name-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.team-name-action--save {
+  color: #22a06b;
+  border-color: rgba(34, 160, 107, 0.35);
+}
+
+.team-name-action--save:hover:not(:disabled) {
+  background: rgba(34, 160, 107, 0.1);
+  border-color: rgba(34, 160, 107, 0.5);
+  box-shadow: 0 2px 8px rgba(34, 160, 107, 0.15);
+}
+
+.team-name-input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(102, 126, 234, 0.35);
+  background: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.team-name-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.team-name-input:disabled {
+  opacity: 0.7;
+}
+
 .team-item {
   display: flex;
   justify-content: space-between;

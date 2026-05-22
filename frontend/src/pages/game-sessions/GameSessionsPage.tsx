@@ -232,6 +232,7 @@ export const GameSessionsPage: React.FC = () => {
               status={session.status}
               teams={session.teams}
               maxTeams={session.maxTeams}
+              showTeamsCount={session.gameType === 'quiz' || session.gameType === 'own'}
               startedAt={session.startedAt}
               endedAt={session.endedAt}
               inviteCode={session.inviteCode}

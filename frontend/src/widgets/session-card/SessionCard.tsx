@@ -10,6 +10,7 @@ interface SessionCardProps {
   status: 'waiting' | 'active' | 'finished';
   teams: number;
   maxTeams?: number;
+  showTeamsCount?: boolean;
   startedAt?: string;
   endedAt?: string;
   inviteCode?: string;
@@ -26,8 +27,9 @@ export const SessionCard: React.FC<SessionCardProps> = ({
   gameTitle,
   gameType,
   status,
-  teams: _teams,
-  maxTeams: _maxTeams,
+  teams,
+  maxTeams,
+  showTeamsCount = false,
   startedAt,
   endedAt,
   inviteCode,
@@ -83,10 +85,12 @@ export const SessionCard: React.FC<SessionCardProps> = ({
         <h3 className="session-title">{gameTitle}</h3>
         
         <div className="session-meta">
-          {/* <div className="session-meta-item">
-            <span className="meta-icon">👥</span>
-            <span>{teams}{maxTeams ? ` / ${maxTeams}` : ''} команд</span>
-          </div> */}
+          {showTeamsCount && (
+            <div className="session-meta-item">
+              <span className="meta-icon">👥</span>
+              <span>{teams}{maxTeams ? ` / ${maxTeams}` : ''} команд</span>
+            </div>
+          )}
           {startedAt && (
             <div className="session-meta-item">
               <span className="meta-icon">🕐</span>
