@@ -3,10 +3,13 @@ PROJECT ARCHITECTURE (ACTUAL)
 
 Root
 ----
-diplom/
+EduPlay2/
 |-- backend/                 # NestJS API + WebSocket + TypeORM + Redis
-|-- frontend/                # React + TypeScript client
-|-- package.json             # root dependencies/scripts
+|-- frontend/                # React 19 + TypeScript + Vite client
+|-- arcitecture.txt          # this file
+|-- README.md
+|-- LICENSE.md
+|-- package.json             # minimal root dependencies
 `-- package-lock.json
 
 
@@ -16,16 +19,36 @@ backend/src/
 |-- main.ts
 |-- app.module.ts
 |-- config/
-|   `-- database.config.ts
+|   |-- database.config.ts
+|   `-- jwt.config.ts
 |-- common/
 |   |-- decorators/
 |   |   |-- current-user.decorator.ts
-|   |   `-- current-ws-user.decorator.ts
-|   `-- guards/
-|       |-- jwt-auth.guard.ts
-|       `-- ws-jwt-auth.guard.ts
+|   |   |-- current-ws-user.decorator.ts
+|   |   `-- roles.decorator.ts
+|   |-- filters/
+|   |   `-- http-exception.filter.ts
+|   |-- guards/
+|   |   |-- jwt-auth.guard.ts
+|   |   |-- ws-jwt-auth.guard.ts
+|   |   `-- roles.guard.ts
+|   `-- interceptors/
+|       `-- transform.interceptor.ts
+|-- database/
+|   |-- migrations/
+|   |   |-- 20260501_add_admin_and_reports.ts
+|   |   |-- 20260502_add_public_ids.ts
+|   |   |-- 20260505_add_question_image_url.ts
+|   |   |-- 20260516120000_add_game_age_range.ts
+|   |   |-- 20260516130000_fix_game_age_column_types.ts
+|   |   |-- 20260519120000_add_tictactoe_game_type.ts
+|   |   `-- 20260521120000_add_session_retention_indexes.ts
+|   |-- seeds/
+|   |   `-- initial.seed.ts
+|   `-- public-id-schema.service.ts
 |-- redis/
-|   `-- redis.module.ts
+|   |-- redis.module.ts
+|   `-- redis.service.ts
 `-- modules/
     |-- auth/
     |   |-- auth.module.ts
@@ -44,48 +67,76 @@ backend/src/
     |   |-- dto/
     |   |   `-- update-profile.dto.ts
     |   `-- entities/
-    |       `-- user.entity.ts
+    |       |-- user.entity.ts
+    |       `-- user-role.enum.ts
     |
     |-- games/
     |   |-- games.module.ts
     |   |-- games.controller.ts
     |   |-- games.service.ts
+    |   |-- game-age-query.util.ts
     |   |-- dto/
     |   |   |-- create-game.dto.ts
     |   |   |-- update-game.dto.ts
-    |   |   `-- publish-game.dto.ts
+    |   |   |-- publish-game.dto.ts
+    |   |   `-- my-games-query.dto.ts
     |   `-- entities/
-    |       |-- game.entity.ts
+    |       |-- game.entity.ts          # types: own, quiz, crocodile, wheel, station, tictactoe
     |       |-- category.entity.ts
-    |       |-- question.entity.ts
+    |       |-- question.entity.ts      # imageUrl for quiz/wheel/station
     |       `-- game-like.entity.ts
     |
     |-- sessions/
     |   |-- sessions.module.ts
     |   |-- sessions.controller.ts
     |   |-- sessions.service.ts
-    |   |-- sessions.gateway.ts               # real-time game events
+    |   |-- sessions.gateway.ts               # real-time events (quiz multiplayer)
     |   |-- sessions-timer.service.ts         # Redis TTL-based quiz timers
     |   |-- sessions-timer.listener.ts        # subscribes to expired timer events
+    |   |-- sessions-cleanup.service.ts       # cron: delete sessions older than SESSION_RETENTION_DAYS
+    |   |-- session-retention.util.ts
     |   |-- dto/
-    |   |   |-- create-session.dto.ts
+    |   |   |-- create-session.dto.ts         # optional settings override
     |   |   |-- join-session.dto.ts
     |   |   |-- add-team.dto.ts
+    |   |   |-- update-team.dto.ts
     |   |   |-- submit-answer.dto.ts
     |   |   |-- update-score.dto.ts
     |   |   |-- mark-crocodile-term.dto.ts
+    |   |   |-- tictactoe-setup.dto.ts
+    |   |   |-- tictactoe-open-cell.dto.ts
+    |   |   |-- tictactoe-answer.dto.ts
     |   |   `-- ws-session.dto.ts
     |   `-- entities/
-    |       |-- session.entity.ts
+    |       |-- session.entity.ts             # tictactoeState, crocodileState, settings
     |       |-- team.entity.ts
     |       `-- player.entity.ts
     |
-    `-- library/
-        |-- library.module.ts
-        |-- library.controller.ts
-        |-- library.service.ts
+    |-- library/
+    |   |-- library.module.ts
+    |   |-- library.controller.ts
+    |   |-- library.service.ts
+    |   `-- dto/
+    |       `-- search-games.dto.ts             # ageFrom/ageTo filters
+    |
+    |-- reports/
+    |   |-- reports.module.ts
+    |   |-- reports.controller.ts
+    |   |-- reports.service.ts
+    |   |-- dto/
+    |   |   `-- create-report.dto.ts
+    |   `-- entities/
+    |       `-- report.entity.ts
+    |
+    `-- admin/
+        |-- admin.module.ts
+        |-- admin.controller.ts
+        |-- admin.service.ts
         `-- dto/
-            `-- search-games.dto.ts
+            |-- block-game.dto.ts
+            |-- block-user.dto.ts
+            |-- review-report.dto.ts
+            `-- set-admin-role.dto.ts
 
 
 Frontend (React)
@@ -117,6 +168,15 @@ frontend/src/
 |   |   |-- api/sessionsSocket.ts            # Socket.IO connection layer
 |   |   `-- types/session.types.ts
 |   |
+|   |-- library/
+|   |   `-- api/libraryApi.ts
+|   |
+|   |-- reports/
+|   |   `-- api/reportsApi.ts
+|   |
+|   |-- admin/
+|   |   `-- api/adminApi.ts
+|   |
 |   `-- templates/
 |       |-- hooks/useTemplateBuilder.ts
 |       |-- types/template.types.ts
@@ -124,15 +184,35 @@ frontend/src/
 |
 |-- pages/
 |   |-- create-game/CreateGamePage.tsx
-|   |-- my-games/MyGamesPage.tsx
-|   |-- library/LibraryPage.tsx
+|   |-- my-games/MyGamesPage.tsx             # age range filter
+|   |-- library/LibraryPage.tsx              # age range filter, report modal
 |   |-- game-sessions/GameSessionsPage.tsx
-|   |-- template-builder/TemplateBuilderPage.tsx
+|   |-- template-builder/
+|   |   |-- TemplateBuilderPage.tsx
+|   |   `-- components/
+|   |       |-- BuilderLayout.tsx
+|   |       |-- GameAgeCategoryCard.tsx
+|   |       |-- QuestionImageField.tsx
+|   |       |-- OwnGameBuilder.tsx
+|   |       |-- QuizGameBuilder.tsx
+|   |       |-- CrocodileGameBuilder.tsx
+|   |       |-- WheelGameBuilder.tsx
+|   |       |-- StationGameBuilder.tsx
+|   |       `-- TicTacToeGameBuilder.tsx
 |   |-- settings/SettingsPage.tsx
+|   |-- admin/AdminPanelPage.tsx
 |   `-- game/
-|       |-- GamePage.tsx
+|       |-- GamePage.tsx                     # router to type-specific pages
+|       |-- OwnGamePage.tsx
+|       |-- QuizGamePage.tsx
+|       |-- CrocodileGamePage.tsx
 |       |-- WheelGamePage.tsx
-|       `-- CrocodileGamePage.tsx
+|       |-- StationGamePage.tsx
+|       |-- TicTacToeGamePage.tsx
+|       |-- TicTacToeResultsHero.tsx
+|       |-- QuestionContent.tsx              # question text + imageUrl
+|       `-- components/
+|           `-- TeamSymbol.tsx
 |
 |-- widgets/
 |   |-- menu/Menu.tsx
@@ -149,20 +229,31 @@ frontend/src/
     |-- lib/
     |   |-- constants.ts
     |   |-- helpers.ts
-    |   `-- resolveAvatarSrc.ts
+    |   |-- resolveAvatarSrc.ts
+    |   |-- gameAgeConstants.ts
+    |   |-- gameTypeIcons.tsx
+    |   |-- parseJwtRole.ts
+    |   `-- useFullscreen.ts
     |-- types/global.types.ts
     `-- ui/
         |-- Button/
         |-- Input/
         |-- Modal/
         |-- Card/
-        `-- Table/
+        |-- Table/
+        |-- AgeRangeSlider/
+        |-- DialogProvider/
+        `-- GameFullscreenShell/
 
 
 Runtime interaction
 -------------------
 1) Frontend works with backend via REST (axios) for CRUD and session actions.
-2) Frontend connects to `/sessions` namespace via Socket.IO for live game events.
+2) Frontend connects to `/sessions` namespace via Socket.IO for live quiz events.
 3) Backend `SessionsGateway` validates WS JWT and broadcasts state changes.
 4) Quiz timers are stored in Redis keys with TTL.
 5) On key expiration, `SessionsTimerListener` triggers reveal/transition logic and emits updates to clients.
+6) Local-only sessions (own, crocodile, wheel, station, tictactoe) run on the host screen; join-by-code is blocked for these types.
+7) Quiz is the only multiplayer session type (invite code + WebSocket sync).
+8) Tic-tac-toe uses REST endpoints (`/tictactoe/setup`, `/open-cell`, `/answer`), not WebSocket.
+9) `SessionsCleanupService` periodically deletes sessions older than `SESSION_RETENTION_DAYS` (default 90).
