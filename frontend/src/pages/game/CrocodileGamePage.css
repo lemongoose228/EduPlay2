@@ -59,7 +59,7 @@
   justify-content: center;
 }
 
-/* Активная игра */
+
 .crocodile-page.active {
   display: flex;
   flex-direction: column;
@@ -191,7 +191,7 @@
   border-radius: 60px;
 }
 
-/* Результаты */
+
 .crocodile-page.finished {
   display: flex;
   align-items: center;
@@ -287,7 +287,7 @@
   color: var(--text-secondary);
 }
 
-/* Блок с оценкой */
+
 .grade-container {
   text-align: center;
   margin-bottom: 40px;
@@ -478,7 +478,7 @@
   opacity: 0.8;
 }
 
-/* Подсказка для повторения */
+
 .practice-tip {
   background: linear-gradient(135deg, #fff9e6 0%, #fff1c1 100%);
   border: 1px solid #ffd666;

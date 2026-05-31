@@ -19,7 +19,7 @@ const DEFAULTS = {
   paddingY: 32,
 } as const;
 
-/** Vertical centers of station nodes; zig-zag around horizontal center (Duolingo-style). */
+
 export function getStationPathLayout(
   count: number,
   options?: Partial<{ width: number; stepY: number; amplitude: number; paddingY: number }>,
@@ -43,7 +43,7 @@ export function getStationPathLayout(
   return { points, width, height, stepY, amplitude, paddingY };
 }
 
-/** Smooth vertical S-curve between two node centers. */
+
 export function segmentCurveD(p0: PathPoint, p1: PathPoint): string {
   const midY = (p0.y + p1.y) / 2;
   return `M ${p0.x} ${p0.y} C ${p0.x} ${midY} ${p1.x} ${midY} ${p1.x} ${p1.y}`;

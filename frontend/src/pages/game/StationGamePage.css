@@ -1,4 +1,3 @@
-/* StationGamePage.css */
 .station-game-page {
   min-height: calc(100vh - 24px);
   padding: 24px;
@@ -29,7 +28,7 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-/* Header */
+
 .station-game-header {
   display: flex;
   justify-content: space-between;
@@ -96,7 +95,6 @@
   gap: 16px;
 }
 
-/* Как .quiz-meta / время в викторине (GamePage.css) */
 .station-timer {
   display: inline-flex;
   align-items: center;
@@ -133,7 +131,7 @@
   letter-spacing: 0.02em;
 }
 
-/* Lobby */
+
 .station-lobby {
   display: flex;
   align-items: center;
@@ -170,7 +168,7 @@
   margin-bottom: 28px;
 }
 
-/* Main content: left column (stations) + right column (task) */
+
 .station-main-layout {
   display: flex;
   gap: 24px;
@@ -191,7 +189,7 @@
   min-width: 320px;
 }
 
-/* Vertical path (Duolingo-style) */
+
 .station-path-panel {
   background: rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(10px);
@@ -378,7 +376,7 @@
   opacity: 1;
 }
 
-/* Station Nodes */
+
 .station-node-small {
   display: flex;
   flex-direction: column;
@@ -446,7 +444,7 @@
   font-weight: 600;
 }
 
-/* Station shape icons — только силуэт, без подложки и прямоугольной тени */
+
 .station-shape-wrap {
   display: inline-flex;
   align-items: center;
@@ -498,7 +496,7 @@
   filter: drop-shadow(0 3px 8px rgba(17, 24, 39, 0.2));
 }
 
-/* Task Panel (right column) */
+
 .station-task-panel {
   padding: 28px;
   height: 100%;
@@ -673,7 +671,7 @@
   color: #6c757d;
 }
 
-/* Stats inside task panel */
+
 .station-stats-compact {
   display: flex;
   gap: 16px;
@@ -700,7 +698,7 @@
   color: #6B4EFF;
 }
 
-/* Responsive */
+
 @media (max-width: 1024px) {
   .station-main-layout {
     flex-direction: column;

@@ -1,40 +1,111 @@
-import type { Game } from '../../games/types/game.types';
-
 export type SessionStatus = 'waiting' | 'active' | 'paused' | 'finished';
 
-export interface Team {
+export type GameType =
+  | 'own'
+  | 'quiz'
+  | 'crocodile'
+  | 'wheel'
+  | 'station'
+  | 'tictactoe';
+
+export interface SessionQuestion {
+  id: string;
+  value: number;
+  question: string;
+  answer: string;
+  imageUrl?: string;
+  isAnswered?: boolean;
+}
+
+export interface SessionCategory {
   id: string;
   name: string;
-  players: Player[];
+  questions: SessionQuestion[];
+}
+
+export interface SessionPlayer {
+  id?: string;
+  userId?: string;
+  teamId?: string;
+  name: string;
+  isHost?: boolean;
+}
+
+export interface SessionTeam {
+  id: string;
+  name: string;
   score: number;
+  players: SessionPlayer[];
 }
 
-export interface Player {
-  id: string;
-  name: string;
-  isHost: boolean;
+export interface AnsweredQuestion {
+  categoryId: string;
+  questionId: string;
+  userId?: string;
+  teamId?: string;
+  isCorrect?: boolean;
+  submittedAnswer?: string;
+  scored?: boolean;
 }
 
-export interface GameSession {
-  id: string;
-  gameId: string;
-  game?: Game;
-  inviteCode: string;
-  status: SessionStatus;
-  teams: Team[];
-  currentQuestion?: number;
-  startedAt?: string;
-  finishedAt?: string;
-  createdAt: string;
-  hostId: string;
-  settings: SessionSettings;
+export interface CrocodileState {
+  termOrder: string[];
+  currentTermId: string | null;
+  turnEndsAt: string | null;
+  termResults: Array<{ termId: string; result: 'guessed' | 'missed' }>;
+}
+
+export interface TicTacToeState {
+  setupComplete: boolean;
+  team1Id: string;
+  team2Id: string;
+  team1Symbol: 'cross' | 'circle' | 'heart' | 'star';
+  team2Symbol: 'cross' | 'circle' | 'heart' | 'star';
+  currentTurnTeamId: string;
+  cells: Array<{
+    index: number;
+    questionId: string;
+    occupiedByTeamId: string | null;
+  }>;
+  removedQuestionIds: string[];
+  selectedCellIndex: number | null;
+  winnerTeamId: string | null;
+  isDraw?: boolean;
 }
 
 export interface SessionSettings {
   maxTeams: number;
   maxPlayersPerTeam: number;
   timePerQuestion: number;
+  timePerTerm?: number;
   allowNegativeScores: boolean;
+}
+
+export interface GameSession {
+  id: string;
+  game: {
+    title: string;
+    type: GameType;
+    categories: SessionCategory[];
+    settings?: {
+      timePerQuestion?: number;
+      timePerTerm?: number;
+      allowNegativeScores?: boolean;
+    };
+  };
+  teams: SessionTeam[];
+  status: SessionStatus;
+  hostId: string;
+  currentQuestionIndex?: number;
+  answeredQuestions: AnsweredQuestion[];
+  inviteCode: string;
+  multiplayer?: boolean | null;
+  settings: SessionSettings;
+  crocodileState?: CrocodileState | null;
+  tictactoeState?: TicTacToeState | null;
+  questionStartedAt?: string | null;
+  startedAt?: string;
+  finishedAt?: string;
 }
 
 export interface CreateSessionDto {
@@ -45,68 +116,13 @@ export interface CreateSessionDto {
 export interface SessionResult {
   sessionId: string;
   gameId: string;
-  teams: Team[];
+  teams: SessionTeam[];
   duration: number;
   finishedAt: string;
 }
 
-export const mockSessions: GameSession[] = [
-  {
-    id: '1',
-    gameId: '1',
-    inviteCode: 'ABC123',
-    status: 'active',
-    teams: [
-      {
-        id: 'team1',
-        name: 'Команда А',
-        players: [
-          { id: 'p1', name: 'Игрок 1', isHost: true },
-          { id: 'p2', name: 'Игрок 2', isHost: false }
-        ],
-        score: 1500
-      },
-      {
-        id: 'team2',
-        name: 'Команда Б',
-        players: [
-          { id: 'p3', name: 'Игрок 3', isHost: false }
-        ],
-        score: 1200
-      }
-    ],
-    startedAt: '2024-01-25T15:30:00Z',
-    createdAt: '2024-01-25T15:00:00Z',
-    hostId: 'p1',
-    settings: {
-      maxTeams: 8,
-      maxPlayersPerTeam: 4,
-      timePerQuestion: 30,
-      allowNegativeScores: true
-    }
-  },
-  {
-    id: '2',
-    gameId: '2',
-    inviteCode: 'XYZ789',
-    status: 'waiting',
-    teams: [
-      {
-        id: 'team3',
-        name: 'Команда В',
-        players: [
-          { id: 'p4', name: 'Игрок 4', isHost: true }
-        ],
-        score: 0
-      }
-    ],
-    createdAt: '2024-01-25T16:00:00Z',
-    hostId: 'p4',
-    settings: {
-      maxTeams: 6,
-      maxPlayersPerTeam: 3,
-      timePerQuestion: 20,
-      allowNegativeScores: false
-    }
-  }
-];
+/** @deprecated Use SessionTeam */
+export type Team = SessionTeam;
+
+/** @deprecated Use SessionPlayer */
+export type Player = SessionPlayer;

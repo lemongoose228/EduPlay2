@@ -1,4 +1,3 @@
-// WheelGamePage.tsx
 import React, { useMemo, useState, useRef } from 'react';
 import { Button } from '../../shared/ui/Button/Button';
 import { FaCheck, FaTimes } from 'react-icons/fa';
@@ -6,7 +5,6 @@ import wheelIcon from '../../assets/wheel_icon.png';
 import { QuestionContent } from './QuestionContent';
 import './WheelGamePage.css';
 
-/** Согласованная пастельная палитра (ровная яркость, соседние сектора различимы) */
 const WHEEL_SECTOR_COLORS = [
   '#f2b8c6',
   '#bfe8d8',
@@ -128,7 +126,6 @@ export const WheelGamePage: React.FC<WheelGamePageProps> = ({
 
     setSelectedSectorIndex(selectedIndex);
 
-    // Рассчитываем точный угол остановки по центру выбранного сектора
     const sectorAngle = 360 / availableCategories.length;
     const targetCenterAngle = selectedIndex * sectorAngle + sectorAngle / 2;
     const targetRotationWithinCircle = (360 - targetCenterAngle) % 360;
@@ -136,7 +133,6 @@ export const WheelGamePage: React.FC<WheelGamePageProps> = ({
     const deltaToTarget =
       (targetRotationWithinCircle - currentRotationWithinCircle + 360) % 360;
 
-    // 5-7 полных оборотов для эффекта
     const fullRotations = 5 + Math.floor(Math.random() * 3);
     const nextRotation = rotationDeg + fullRotations * 360 + deltaToTarget;
 
@@ -146,7 +142,6 @@ export const WheelGamePage: React.FC<WheelGamePageProps> = ({
     setActiveQuestion(null);
     setShowAnswer(false);
 
-    // Ждем окончания анимации
     setTimeout(() => {
       setIsSpinning(false);
       setActiveCategoryId(selected.id);

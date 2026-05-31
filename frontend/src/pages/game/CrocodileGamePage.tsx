@@ -304,7 +304,7 @@ export const CrocodileGamePage: React.FC<CrocodileGamePageProps> = ({
           </div>
 
           <div className="results-details">
-            {/* Секция угаданных терминов */}
+            
             <div className={`results-section guessed ${hoveredTermId === 'guessed-section' ? 'hovered' : ''}`}
                  onMouseEnter={() => setHoveredTermId('guessed-section')}
                  onMouseLeave={() => setHoveredTermId(null)}>
@@ -338,7 +338,7 @@ export const CrocodileGamePage: React.FC<CrocodileGamePageProps> = ({
               </div>
             </div>
 
-            {/* Секция неугаданных терминов */}
+            
             <div className={`results-section not-guessed ${hoveredTermId === 'missed-section' ? 'hovered' : ''}`}
                  onMouseEnter={() => setHoveredTermId('missed-section')}
                  onMouseLeave={() => setHoveredTermId(null)}>
@@ -373,7 +373,7 @@ export const CrocodileGamePage: React.FC<CrocodileGamePageProps> = ({
             </div>
           </div>
 
-          {/* Блок с подсказками для повторения */}
+          
           {missedTerms.length > 0 && (
             <div className="practice-tip">
               <FaStar className="tip-icon" />

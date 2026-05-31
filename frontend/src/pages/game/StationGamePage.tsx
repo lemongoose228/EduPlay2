@@ -461,7 +461,7 @@ export const StationGamePage: React.FC<StationGamePageProps> = ({
 
   return (
     <div className="station-game-page">
-      {/* Header */}
+      
       <div className="station-game-header glass-card">
         <div className="station-header-left">
           <h1 className="station-title">{session.game.title}</h1>
@@ -491,7 +491,7 @@ export const StationGamePage: React.FC<StationGamePageProps> = ({
         </div>
       </div>
 
-      {/* Main content: left column (stations) + right column (task) */}
+      
       <div className="station-main-layout">
         <div className="station-left-column">
           <div className="station-path-panel glass-card">
@@ -617,7 +617,7 @@ export const StationGamePage: React.FC<StationGamePageProps> = ({
           </div>
         </div>
 
-        {/* Right column - Task Panel */}
+        
         <div className="station-right-column">
           <div className="station-task-panel glass-card">
             <div className="task-panel-header">
