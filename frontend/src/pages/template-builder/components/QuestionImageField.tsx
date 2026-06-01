@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { uploadQuestionImageApi } from '../../../features/games/api/gamesApi';
+import { resolveAvatarSrc } from '../../../shared/lib/resolveAvatarSrc';
 import { Button } from '../../../shared/ui/Button/Button';
 import { Input } from '../../../shared/ui/Input/Input';
 import { useDialogs } from '../../../shared/ui/DialogProvider';
@@ -81,7 +82,7 @@ export const QuestionImageField: React.FC<QuestionImageFieldProps> = ({ imageUrl
         <div className="question-image-preview-wrap">
           <img
             className="question-image-preview"
-            src={imageUrl}
+            src={resolveAvatarSrc(imageUrl)}
             alt="Превью вопроса"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';

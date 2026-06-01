@@ -241,6 +241,23 @@ npm run dev
 |------------|------------|---------------|
 | `SESSION_RETENTION_DAYS` | срок хранения сессий в БД и в списке «Игровые сессии» (завершённые — по `finishedAt`, остальные — по `createdAt`); по истечении срока записи удаляются автоматически | `90` |
 
+### Yandex Object Storage (`backend/src/storage/storage.service.ts`)
+
+Картинки к вопросам (`question-images/`) и аватары (`avatars/`) загружаются в бакет. Без `YC_KEY_ID` / `YC_SECRET_KEY` — fallback в локальный каталог `uploads/`.
+
+Скопируйте `backend/.env.example` → `backend/.env` и укажите статический ключ сервисного аккаунта (роль `storage.uploader` или выше).
+
+| Переменная | Назначение | По умолчанию |
+|------------|------------|---------------|
+| `YC_KEY_ID` | идентификатор ключа SA | — |
+| `YC_SECRET_KEY` | секрет ключа SA | — |
+| `YC_BUCKET` | имя бакета | `eduplay-media` |
+| `YC_REGION` | регион | `ru-central1` |
+| `YC_ENDPOINT` | S3 endpoint | `https://storage.yandexcloud.net` |
+| `YC_PUBLIC_URL_BASE` | база URL в ответах API | `{YC_ENDPOINT}/{YC_BUCKET}` |
+
+В бакете включите **чтение объектов** для публичных ссылок в играх.
+
 ### Прочее
 
 | Переменная | Назначение | По умолчанию |
@@ -259,6 +276,7 @@ npm run dev
 - **socket.io** (через платформу Nest) — real-time для сессий.
 - **ioredis** — клиент Redis для таймеров и слушателя истечений.
 - **multer** — загрузка файлов (в т.ч. аватары).
+- **@aws-sdk/client-s3** — Yandex Object Storage.
 - **dotenv** — загрузка переменных окружения.
 
 ### Frontend (`frontend/package.json`)

@@ -9,6 +9,7 @@ import { SessionsModule } from './modules/sessions/sessions.module';
 import { LibraryModule } from './modules/library/library.module';
 import databaseConfig from './config/database.config';
 import { RedisModule } from './redis/redis.module';
+import { StorageModule } from './storage/storage.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { PublicIdSchemaService } from './database/public-id-schema.service';
@@ -20,6 +21,7 @@ import { PublicIdSchemaService } from './database/public-id-schema.service';
       isGlobal: true,
       load: [databaseConfig],
     }),
+    StorageModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

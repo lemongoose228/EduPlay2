@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, In } from 'typeorm';
-import { promises as fs } from 'fs';
-import { join } from 'path';
+import { StorageService } from '../../storage/storage.service';
 import { Game } from './entities/game.entity';
 import { GameLike } from './entities/game-like.entity';
 import { Category } from './entities/category.entity';
@@ -16,10 +15,10 @@ import { applyGameAgeOverlapFilter } from './game-age-query.util';
 
 @Injectable()
 export class GamesService {
-  private readonly uploadRoot = join(process.cwd(), 'uploads');
   private readonly questionImagesSubdir = 'question-images';
 
   constructor(
+    private readonly storageService: StorageService,
     @InjectRepository(Game)
     private gamesRepository: Repository<Game>,
     @InjectRepository(GameLike)
@@ -31,10 +30,6 @@ export class GamesService {
     @InjectRepository(Session)
     private sessionsRepository: Repository<Session>,
   ) {}
-
-  private async ensureUploadDirs() {
-    await fs.mkdir(join(this.uploadRoot, this.questionImagesSubdir), { recursive: true });
-  }
 
   private resolveAgePair(
     ageFrom: number | null | undefined,
@@ -322,31 +317,11 @@ export class GamesService {
   }
 
   async storeQuestionImageUpload(file: Express.Multer.File): Promise<{ url: string }> {
-    if (!file?.buffer?.length) {
-      throw new BadRequestException('Пустой файл');
-    }
-
-    await this.ensureUploadDirs();
-
-    const ext = this.extensionFromMimetype(file.mimetype);
-    const filename = `question-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-    const diskPath = join(this.uploadRoot, this.questionImagesSubdir, filename);
-    await fs.writeFile(diskPath, file.buffer);
-
-    return {
-      url: `/uploads/${this.questionImagesSubdir}/${filename}`,
-    };
-  }
-
-  private extensionFromMimetype(mimetype: string): string {
-    const map: Record<string, string> = {
-      'image/jpeg': '.jpg',
-      'image/jpg': '.jpg',
-      'image/png': '.png',
-      'image/webp': '.webp',
-      'image/gif': '.gif',
-    };
-    return map[mimetype] || '.bin';
+    return this.storageService.uploadFile(
+      file,
+      this.questionImagesSubdir,
+      `question-${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+    );
   }
 
   /** Принимает UUID или числовой publicId из UI. */

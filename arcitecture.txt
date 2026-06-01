@@ -36,13 +36,6 @@ backend/src/
 |       `-- transform.interceptor.ts
 |-- database/
 |   |-- migrations/
-|   |   |-- 20260501_add_admin_and_reports.ts
-|   |   |-- 20260502_add_public_ids.ts
-|   |   |-- 20260505_add_question_image_url.ts
-|   |   |-- 20260516120000_add_game_age_range.ts
-|   |   |-- 20260516130000_fix_game_age_column_types.ts
-|   |   |-- 20260519120000_add_tictactoe_game_type.ts
-|   |   `-- 20260521120000_add_session_retention_indexes.ts
 |   |-- seeds/
 |   |   `-- initial.seed.ts
 |   `-- public-id-schema.service.ts
@@ -257,3 +250,12 @@ Runtime interaction
 7) Quiz is the only multiplayer session type (invite code + WebSocket sync).
 8) Tic-tac-toe uses REST endpoints (`/tictactoe/setup`, `/open-cell`, `/answer`), not WebSocket.
 9) `SessionsCleanupService` periodically deletes sessions older than `SESSION_RETENTION_DAYS` (default 90).
+
+
+Class diagrams (Mermaid)
+------------------------
+See class-diagram.md in the project root:
+  - domain model (User, Game, Category, Question, Session, Team, Player, Report, GameLike)
+  - application layer (controllers, services, gateway, Redis timers)
+  - NestJS modules
+  - quiz multiplayer sequence
