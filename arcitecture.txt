@@ -193,7 +193,8 @@ frontend/src/
 |   |       |-- QuizGameBuilder.tsx
 |   |       |-- CrocodileGameBuilder.tsx
 |   |       |-- WheelGameBuilder.tsx
-|   |       |-- StationGameBuilder.tsx
+|   |       |-- StationGameBuilder.tsx       # list form; linear connections (buildStationConnections); NOT React Flow
+|   |       |-- StationGameBuilder.css
 |   |       `-- TicTacToeGameBuilder.tsx
 |   |-- settings/SettingsPage.tsx
 |   |-- admin/AdminPanelPage.tsx
@@ -204,6 +205,8 @@ frontend/src/
 |       |-- CrocodileGamePage.tsx
 |       |-- WheelGamePage.tsx
 |       |-- StationGamePage.tsx
+|       |-- StationGamePage.css
+|       |-- stationPathUtils.ts                # SVG zigzag layout for station route on game screen
 |       |-- TicTacToeGamePage.tsx
 |       |-- TicTacToeResultsHero.tsx
 |       |-- QuestionContent.tsx              # question text + imageUrl
