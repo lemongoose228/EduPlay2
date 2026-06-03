@@ -10,6 +10,7 @@
 - [Структура репозитория](#структура-репозитория)
 - [Концепция и типы игр](#концепция-и-типы-игр)
 - [Конструктор игр](#конструктор-игр)
+- [Изображения: хранение и загрузка](#изображения-хранение-и-загрузка)
 - [Личная и общая библиотека](#личная-и-общая-библиотека)
 - [Поиск и фильтры](#поиск-и-фильтры)
 - [Жалобы и администрирование](#жалобы-и-администрирование)
@@ -23,7 +24,7 @@
 
 | Часть проекта | Стек |
 |---------------|------|
-| Backend | NestJS, TypeORM, PostgreSQL, Socket.IO, Redis (таймеры викторины), JWT, Passport |
+| Backend | NestJS, TypeORM, PostgreSQL, Socket.IO, Redis (таймеры викторины), JWT, Passport, Yandex Object Storage (S3 API) |
 | Frontend | React 19, TypeScript, Vite 8, Redux Toolkit, React Router, axios, socket.io-client, React Flow (конструктор «Станции»), React Compiler (`babel-plugin-react-compiler`) |
 
 ## Структура репозитория
@@ -40,9 +41,9 @@ EduPlay2/
 
 ### Backend (`backend/src`)
 
-NestJS-приложение с модулями `Auth`, `Users`, `Games`, `Sessions`, `Library`, `Reports`, `Admin` и интеграцией `Redis`. Общие guards, фильтры и интерцепторы — в `common/`, настройки БД и JWT — в `config/`. Каталог `database/` содержит миграции, seed-данные и сервис публичных ID. Сессии викторины синхронизируются через Socket.IO; таймеры — через Redis; просроченные сессии удаляются автоматически (90 дней по умолчанию).
+NestJS-приложение с модулями `Auth`, `Users`, `Games`, `Sessions`, `Library`, `Reports`, `Admin`, глобальным `StorageModule` (`storage/storage.service.ts`) и интеграцией `Redis`. Общие guards, фильтры и интерцепторы — в `common/`, настройки БД и JWT — в `config/`. Каталог `database/` содержит миграции, seed-данные и сервис публичных ID. Сессии викторины синхронизируются через Socket.IO; таймеры — через Redis; просроченные сессии удаляются автоматически (90 дней по умолчанию).
 
-HTTP API: префикс `/api`, порт `3001`. Загрузки раздаются по `/uploads/`.
+HTTP API: префикс `/api`, порт `3001`. Файлы изображений при настроенных ключах Yandex Cloud попадают в бакет; без ключей — в каталог `uploads/` и раздаются по `/uploads/` (см. [Изображения](#изображения-хранение-и-загрузка)).
 
 ### Frontend (`frontend/src`)
 
@@ -61,13 +62,19 @@ flowchart LR
   subgraph server [NestJS]
     API[Controllers]
     Gateway[SessionsGateway]
+    Storage[StorageService]
   end
   subgraph data [Данные]
     PG[(PostgreSQL)]
     RD[(Redis)]
+    S3[(Yandex Object Storage)]
+    Disk[(uploads/)]
   end
   REST --> API
   WS --> Gateway
+  API --> Storage
+  Storage --> S3
+  Storage --> Disk
   API --> PG
   Gateway --> PG
   Gateway --> RD
@@ -103,9 +110,74 @@ flowchart LR
 
 **Настройки шаблона:** таймеры на вопрос или термин, отрицательные очки (своя игра), а также параметры, специфичные для типа — категории и очки, варианты ответов, термины, секции колеса, граф станций (React Flow), ровно 9 вопросов для крестиков-ноликов.
 
-**Изображения к вопросам:** в викторине, колесе фортуны и станциях к вопросу можно прикрепить картинку; на игровом экране она показывается вместе с текстом.
+**Изображения к вопросам:** в викторине, колесе фортуны и станциях — загрузка файла или ввод внешнего URL; подробности в разделе [Изображения](#изображения-хранение-и-загрузка).
 
 **Сохранение:** игра сохраняется как черновик и доступна для повторного редактирования или публикации в общую библиотеку.
+
+## Изображения: хранение и загрузка
+
+Файлы **не хранятся в PostgreSQL**. В базе сохраняются только текстовые ссылки:
+
+| Таблица | Поле | Назначение |
+|---------|------|------------|
+| `questions` | `imageUrl` | картинка к вопросу (викторина, колесо, станции) |
+| `users` | `avatar` | аватар пользователя |
+
+Схема БД для Object Storage **не менялась**: при переходе на облако меняется только содержимое полей (полный `https://...` вместо `/uploads/...`). Поле `imageUrl` добавлено миграцией `20260505_add_question_image_url`.
+
+### Куда попадают файлы
+
+Сервис **`StorageService`** (`backend/src/storage/storage.service.ts`):
+
+- при заданных `YC_KEY_ID` и `YC_SECRET_KEY` — **Yandex Object Storage**, бакет по умолчанию `eduplay-media`:
+  - `question-images/` — картинки к вопросам;
+  - `avatars/` — загруженные фото профиля;
+- иначе — локальный каталог **`backend/uploads/`** с теми же подпапками.
+
+Публичный URL в облаке: `https://storage.yandexcloud.net/eduplay-media/question-images/...`  
+Локальный URL: `/uploads/question-images/...` (раздаёт NestJS в `main.ts`).
+
+### Загрузка через API
+
+Прямой загрузки из браузера в бакет нет — файл всегда идёт через backend (JWT).
+
+| Назначение | Метод | Ограничения |
+|------------|--------|-------------|
+| Картинка к вопросу | `POST /api/games/question-image`, поле `file` | до 5 МБ, JPEG/PNG/GIF/WebP |
+| Аватар | `POST /api/users/profile/avatar`, поле `file` | до 2 МБ, те же форматы |
+
+Ответ: `{ url: "..." }`. При сохранении игры URL записывается в `imageUrl` вопроса; при смене аватара — в `users.avatar`. Старый аватар при новой загрузке удаляется из хранилища (нужна роль SA с правом удаления, например `storage.editor`, если `storage.uploader` недостаточно).
+
+### Конструктор и отображение (frontend)
+
+- Компонент **`QuestionImageField`**: ввод URL вручную или кнопка «Загрузить файл» → `uploadQuestionImageApi`.
+- Показ картинок: **`resolveAvatarSrc`** — для `https://` URL без изменений; для `/uploads/...` добавляется origin API (`config.apiOrigin`).
+- В игре: **`QuestionContent`** с тем же разрешением URL.
+
+### Настройка Yandex Cloud
+
+1. Бакет (например `eduplay-media`), в настройках — **чтение объектов** для анонимного просмотра в `<img>`.
+2. Сервисный аккаунт со статическим ключом (`YC_KEY_ID`, `YC_SECRET_KEY`).
+3. Скопировать `backend/.env.example` → `backend/.env` и заполнить переменные (см. [ниже](#yandex-object-storage)).
+
+```mermaid
+flowchart LR
+  Browser[Браузер]
+  API[NestJS API]
+  Storage[StorageService]
+  S3[(Yandex Object Storage)]
+  Disk[(uploads/)]
+  PG[(PostgreSQL)]
+  Browser -->|multipart file| API
+  API --> Storage
+  Storage -->|YC_KEY задан| S3
+  Storage -->|ключей нет| Disk
+  API -->|url в JSON| Browser
+  Browser -->|сохранение игры| API
+  API -->|imageUrl / avatar| PG
+  Browser -->|img src| S3
+  Browser -->|img src /uploads| API
+```
 
 ## Личная и общая библиотека
 
@@ -151,7 +223,7 @@ API `POST /api/sessions` принимает опциональный блок `s
 
 ## Профиль, аватар и идентификаторы
 
-На странице **«Настройки»** можно сменить имя, загрузить фото профиля или выбрать аватар из предустановленного набора. Каждому пользователю и игре присваивается **числовой публичный идентификатор** — он отображается в профиле и используется для поиска (см. раздел «Поиск и фильтры»).
+На странице **«Настройки»** можно сменить имя, загрузить фото профиля (`POST /api/users/profile/avatar`) или выбрать аватар из предустановленного набора (внешние URL). Загруженный файл сохраняется через `StorageService` в `avatars/`; ссылка — в поле `users.avatar`. Каждому пользователю и игре присваивается **числовой публичный идентификатор** — он отображается в профиле и используется для поиска (см. раздел «Поиск и фильтры»).
 
 ## Сохранение результатов сессии
 
@@ -178,11 +250,12 @@ cd EduPlay2
 
 ```bash
 cd backend
+cp .env.example .env   # при необходимости — ключи Yandex Object Storage
 npm install
 npm run start:dev
 ```
 
-Сервер слушает порт **3001**, HTTP API доступно по префиксу **`/api`**. Для production: `npm run build` и `npm start` (запуск скомпилированного `dist/main.js`).
+Сервер слушает порт **3001**, HTTP API доступно по префиксу **`/api`**. При старте с ключами `YC_*` в логе: `Yandex Object Storage: bucket=...`. Для production: `npm run build` и `npm start` (запуск скомпилированного `dist/main.js`).
 
 ### Frontend
 
@@ -241,22 +314,20 @@ npm run dev
 |------------|------------|---------------|
 | `SESSION_RETENTION_DAYS` | срок хранения сессий в БД и в списке «Игровые сессии» (завершённые — по `finishedAt`, остальные — по `createdAt`); по истечении срока записи удаляются автоматически | `90` |
 
-### Yandex Object Storage (`backend/src/storage/storage.service.ts`)
+### Yandex Object Storage
 
-Картинки к вопросам (`question-images/`) и аватары (`avatars/`) загружаются в бакет. Без `YC_KEY_ID` / `YC_SECRET_KEY` — fallback в локальный каталог `uploads/`.
-
-Скопируйте `backend/.env.example` → `backend/.env` и укажите статический ключ сервисного аккаунта (роль `storage.uploader` или выше).
+Подробное описание потока загрузки — в разделе [Изображения](#изображения-хранение-и-загрузка). Кратко: без `YC_KEY_ID` / `YC_SECRET_KEY` файлы пишутся в `uploads/`; с ключами — в бакет `YC_BUCKET`.
 
 | Переменная | Назначение | По умолчанию |
 |------------|------------|---------------|
-| `YC_KEY_ID` | идентификатор ключа SA | — |
-| `YC_SECRET_KEY` | секрет ключа SA | — |
+| `YC_KEY_ID` | идентификатор статического ключа сервисного аккаунта | — |
+| `YC_SECRET_KEY` | секрет ключа | — |
 | `YC_BUCKET` | имя бакета | `eduplay-media` |
 | `YC_REGION` | регион | `ru-central1` |
-| `YC_ENDPOINT` | S3 endpoint | `https://storage.yandexcloud.net` |
-| `YC_PUBLIC_URL_BASE` | база URL в ответах API | `{YC_ENDPOINT}/{YC_BUCKET}` |
+| `YC_ENDPOINT` | S3-совместимый endpoint | `https://storage.yandexcloud.net` |
+| `YC_PUBLIC_URL_BASE` | база публичных URL в ответах API | `{YC_ENDPOINT}/{YC_BUCKET}` |
 
-В бакете включите **чтение объектов** для публичных ссылок в играх.
+Рекомендации для бакета: **чтение объектов** включено; **чтение списка объектов** — выключено. Для удаления старых аватаров у SA желательна роль не ниже `storage.editor`, если `storage.uploader` не даёт `DeleteObject`.
 
 ### Прочее
 

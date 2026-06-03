@@ -42,6 +42,9 @@ backend/src/
 |-- redis/
 |   |-- redis.module.ts
 |   `-- redis.service.ts
+|-- storage/                              # Yandex Object Storage (S3 API) or local uploads/
+|   |-- storage.module.ts                 # global module
+|   `-- storage.service.ts                # uploadFile, deleteByUrl; env: YC_*
 `-- modules/
     |-- auth/
     |   |-- auth.module.ts
@@ -55,7 +58,7 @@ backend/src/
     |
     |-- users/
     |   |-- users.module.ts
-    |   |-- users.controller.ts
+    |   |-- users.controller.ts           # POST profile/avatar -> StorageService
     |   |-- users.service.ts
     |   |-- dto/
     |   |   `-- update-profile.dto.ts
@@ -65,7 +68,7 @@ backend/src/
     |
     |-- games/
     |   |-- games.module.ts
-    |   |-- games.controller.ts
+    |   |-- games.controller.ts           # POST question-image -> StorageService
     |   |-- games.service.ts
     |   |-- game-age-query.util.ts
     |   |-- dto/
@@ -251,11 +254,11 @@ Runtime interaction
 8) Tic-tac-toe uses REST endpoints (`/tictactoe/setup`, `/open-cell`, `/answer`), not WebSocket.
 9) `SessionsCleanupService` periodically deletes sessions older than `SESSION_RETENTION_DAYS` (default 90).
 
-
-Class diagrams (Mermaid)
-------------------------
-See class-diagram.md in the project root:
-  - domain model (User, Game, Category, Question, Session, Team, Player, Report, GameLike)
-  - application layer (controllers, services, gateway, Redis timers)
-  - NestJS modules
-  - quiz multiplayer sequence
+Image storage (files not in PostgreSQL)
+---------------------------------------
+10) Question images: builder `QuestionImageField` -> POST /api/games/question-image -> `StorageService.uploadFile` -> folder `question-images/`.
+11) Avatars: SettingsPage -> POST /api/users/profile/avatar -> `StorageService.uploadFile` -> folder `avatars/`.
+12) If YC_KEY_ID + YC_SECRET_KEY are set: files go to Yandex Object Storage bucket (default eduplay-media); API returns https://storage.yandexcloud.net/... URL.
+13) If keys are missing: files go to backend/uploads/; API returns /uploads/... URL; Nest serves static files from uploads/ (main.ts).
+14) On game save, only URL string is stored in DB: questions.imageUrl, users.avatar (no schema change for cloud vs local).
+15) Frontend displays images via resolveAvatarSrc (absolute URLs as-is; /uploads/ prefixed with apiOrigin).
