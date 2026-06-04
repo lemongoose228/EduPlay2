@@ -145,6 +145,7 @@ export const TemplateBuilderPage: React.FC = () => {
                 value: q.value,
                 question: q.question,
                 answer: q.answer,
+                imageUrl: q.imageUrl || '',
               })),
             })) as OwnGameCategory[],
             createdAt: game.createdAt,
@@ -228,6 +229,7 @@ export const TemplateBuilderPage: React.FC = () => {
             (cat.questions || []).map((q: any) => ({
               id: q.id,
               question: q.question,
+              imageUrl: q.imageUrl || '',
             })),
           );
           const tictactoe: TicTacToeTemplate = {
@@ -270,6 +272,7 @@ export const TemplateBuilderPage: React.FC = () => {
             question: q.question,
             answer: q.answer,
             value: q.value,
+            imageUrl: q.imageUrl,
           })),
         })),
       };
@@ -325,6 +328,7 @@ export const TemplateBuilderPage: React.FC = () => {
               question: q.question,
               answer: '',
               value: 1,
+              imageUrl: q.imageUrl,
             })),
           },
         ],

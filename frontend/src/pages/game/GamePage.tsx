@@ -230,6 +230,7 @@ export const GamePage: React.FC = () => {
           id: q.id,
           question: q.question,
           answer: q.answer,
+          imageUrl: q.imageUrl,
         })),
       );
 

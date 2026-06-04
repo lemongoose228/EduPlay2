@@ -6,6 +6,7 @@ import { Card } from '../../../shared/ui/Card/Card';
 import { Table } from '../../../shared/ui/Table/Table';
 import { createEmptyCategory } from '../../../features/templates/utils/template.utils';
 import { useDialogs } from '../../../shared/ui/DialogProvider';
+import { QuestionImageField } from './QuestionImageField';
 import './OwnGameBuilder.css';
 
 interface OwnGameBuilderProps {
@@ -48,7 +49,7 @@ export const OwnGameBuilder: React.FC<OwnGameBuilderProps> = ({
   const updateQuestion = (
     categoryId: string,
     questionIndex: number,
-    field: 'question' | 'answer',
+    field: 'question' | 'answer' | 'imageUrl',
     value: string
   ) => {
     setCategories(categories.map(cat => {
@@ -130,7 +131,17 @@ export const OwnGameBuilder: React.FC<OwnGameBuilderProps> = ({
           placeholder="Введите ответ"
         />
       )
-    }
+    },
+    {
+      key: 'imageUrl',
+      title: 'Картинка',
+      render: (_: any, record: any, index: number) => (
+        <QuestionImageField
+          imageUrl={record.imageUrl}
+          onChange={(nextUrl) => updateQuestion(category.id, index, 'imageUrl', nextUrl)}
+        />
+      ),
+    },
   ];
 
   const totalQuestions = categories.reduce((acc, cat) => acc + cat.questions.length, 0);

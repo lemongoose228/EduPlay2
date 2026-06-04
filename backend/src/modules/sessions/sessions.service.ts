@@ -424,9 +424,9 @@ export class SessionsService {
       .leftJoin('teams.players', 'player')
       .where(
         new Brackets((qb) => {
-          qb.where('session.hostId = :userId', { userId }).orWhere(
-            'player.userId = :userId',
-            { userId },
+          qb.where('session.hostId = :hostUserId', { hostUserId: userId }).orWhere(
+            'player.userId = :playerUserId',
+            { playerUserId: userId },
           );
         }),
       )

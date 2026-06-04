@@ -2,6 +2,7 @@ export interface OwnGameQuestion {
   value: number;
   question: string;
   answer: string;
+  imageUrl?: string;
   isAnswered?: boolean;
 }
 
@@ -90,6 +91,7 @@ export interface TicTacToeQuestion {
   id: string;
   question: string;
   answer?: string;
+  imageUrl?: string;
 }
 
 export interface TicTacToeTemplate {

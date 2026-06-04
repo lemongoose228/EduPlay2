@@ -9,12 +9,14 @@ import {
   SYMBOL_LABELS,
   type TicTacToeSymbol,
 } from './components/TeamSymbol';
+import { QuestionContent } from './QuestionContent';
 import './TicTacToeGamePage.css';
 
 export interface TicTacToeQuestion {
   id: string;
   question: string;
   answer: string;
+  imageUrl?: string;
 }
 
 export interface TicTacToeCell {
@@ -312,7 +314,11 @@ export const TicTacToeGamePage: React.FC<TicTacToeGamePageProps> = ({
               {selectedQuestion ? (
                 <>
                   <h2 className="tictactoe-panel-title">Вопрос</h2>
-                  <p className="tictactoe-question-text">{selectedQuestion.question}</p>
+                  <QuestionContent
+                    text={selectedQuestion.question}
+                    imageUrl={selectedQuestion.imageUrl}
+                    textClassName="tictactoe-question-text"
+                  />
                   {isHost && (
                     <div className="tictactoe-answer-actions">
                       <Button

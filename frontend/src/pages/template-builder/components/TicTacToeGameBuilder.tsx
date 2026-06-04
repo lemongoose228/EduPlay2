@@ -6,6 +6,7 @@ import { Button } from '../../../shared/ui/Button/Button';
 import { Input } from '../../../shared/ui/Input/Input';
 import { Card } from '../../../shared/ui/Card/Card';
 import { useDialogs } from '../../../shared/ui/DialogProvider';
+import { QuestionImageField } from './QuestionImageField';
 import './TicTacToeGameBuilder.css';
 
 interface TicTacToeGameBuilderProps {
@@ -29,9 +30,13 @@ export const TicTacToeGameBuilder: React.FC<TicTacToeGameBuilderProps> = ({
       : createInitialTicTacToeQuestions(),
   );
 
-  const updateQuestion = (questionId: string, value: string) => {
+  const updateQuestion = (
+    questionId: string,
+    field: 'question' | 'imageUrl',
+    value: string,
+  ) => {
     setQuestions((prev) =>
-      prev.map((q) => (q.id === questionId ? { ...q, question: value } : q)),
+      prev.map((q) => (q.id === questionId ? { ...q, [field]: value } : q)),
     );
   };
 
@@ -107,8 +112,12 @@ export const TicTacToeGameBuilder: React.FC<TicTacToeGameBuilderProps> = ({
               <span className="tictactoe-question-label">Вопрос {index + 1}</span>
               <Input
                 value={q.question}
-                onChange={(e) => updateQuestion(q.id, e.target.value)}
+                onChange={(e) => updateQuestion(q.id, 'question', e.target.value)}
                 placeholder="Введите вопрос"
+              />
+              <QuestionImageField
+                imageUrl={q.imageUrl}
+                onChange={(nextUrl) => updateQuestion(q.id, 'imageUrl', nextUrl)}
               />
             </div>
           ))}
